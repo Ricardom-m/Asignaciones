@@ -513,11 +513,11 @@ function renderSpotlight(personId) {
   const lastRec = sorted[0];
   const lastDate = lastRec ? fmtDate(lastRec.fecha) : '—';
 
-  // Parejas ordenadas por frecuencia desc
+  // Parejas ordenadas por fecha más reciente desc
   const pairedList = Object.entries(pairData)
     .map(([id, { count, lastFecha }]) => ({ person: persons.find(p => p.id === id), count, lastFecha }))
     .filter(x => x.person)
-    .sort((a, b) => b.count - a.count);
+    .sort((a, b) => (b.lastFecha || '').localeCompare(a.lastFecha || ''));
 
   // Iniciales para el avatar
   const initials = (person.nombre[0] + (person.apellido[0] || '')).toUpperCase();
