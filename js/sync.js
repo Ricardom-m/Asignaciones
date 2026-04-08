@@ -38,18 +38,19 @@ function googleSignIn() {
   location.href = url;
 }
 
-// Handle OAuth token on page load
-(function checkOAuth() {
+// Handle OAuth token — llamado desde el init al final del archivo
+function checkOAuth() {
   if (!location.hash.includes('access_token')) return;
   const p = new URLSearchParams(location.hash.slice(1));
   driveToken = p.get('access_token');
-  history.replaceState(null,'',location.pathname);
-  setSyncStatus('synced','Conectado');
-  showToast('✅ Google Drive conectado','success');
+  history.replaceState(null, '', location.pathname);
+  setSyncStatus('synced', 'Conectado');
+  showToast('✅ Google Drive conectado', 'success');
+  const pb = document.getElementById('pull-btn');
+  if (pb) pb.style.display = 'flex';
   fetchGoogleProfile();
-  document.getElementById('pull-btn').style.display = 'flex';
-  setTimeout(() => { syncToDrive(); startAutoSyncLoop(); }, 100);
-})();
+  setTimeout(() => { syncToDrive(); startAutoSyncLoop(); }, 300);
+}
 
 // ── Lógica central compartida por syncToDrive y autoSync ──
 async function _syncCore({ silent = false } = {}) {
@@ -359,6 +360,7 @@ window.addEventListener('online', () => {
 initTheme();
 document.getElementById('f-fecha').value = new Date().toISOString().slice(0,10);
 updateTotalCount();
+checkOAuth();          // Procesa token OAuth si venimos de redirect de Google
 updateStatusBar();
 restoreProfileFromCache();
 window.addEventListener('resize', () => {
