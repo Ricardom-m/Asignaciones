@@ -206,9 +206,16 @@ async function pullFromDrive() {
 }
 
 function setSyncStatus(cls, label) {
-  const btn = document.getElementById('sync-btn');
-  btn.className = 'hbtn '+cls;
-  btn.textContent = (cls==='syncing'?'🔄':cls==='synced'?'☁️':cls==='error'?'⚠️':'☁️')+' '+(label||'Drive');
+  const wrap = document.getElementById('avatar-wrap');
+  if (!wrap) return;
+  // Mostrar indicador de estado en el dot del avatar
+  const dot = document.getElementById('avatar-dot');
+  if (dot) {
+    dot.style.display = 'block';
+    dot.style.background = cls === 'syncing' ? 'var(--amber)' : cls === 'error' ? 'var(--red)' : 'var(--green)';
+    dot.style.boxShadow  = cls === 'syncing' ? '0 0 4px var(--amber)' : cls === 'error' ? '0 0 4px var(--red)' : '0 0 4px var(--green)';
+  }
+  wrap.title = (cls === 'syncing' ? '🔄 ' : cls === 'error' ? '⚠️ ' : '☁️ ') + (label || 'Drive');
 }
 
 // ═══════════════════════════════════════════
@@ -254,12 +261,33 @@ function updateAvatarUI(p) {
 
 function handleAvatarClick() {
   if (!driveToken) {
-    handleSyncClick();
-  } else if (googleProfile) {
-    const msg = `✅ Sesión activa\n\n👤 ${googleProfile.name}\n📧 ${googleProfile.email}\n\n¿Qué deseas hacer?`;
-    if (confirm(msg + '\n\n(Aceptar = sincronizar ahora | Cancelar = cerrar)')) {
-      syncToDrive();
-    }
+    googleSignIn();
+    return;
+  }
+  const name  = googleProfile?.name  || 'Usuario';
+  const email = googleProfile?.email || '';
+  const action = confirm(
+    `☁️ Google Drive\n\n👤 ${name}\n📧 ${email}\n\n` +
+    `Aceptar → Sincronizar ahora\nCancelar → Cerrar sesión`
+  );
+  if (action) {
+    syncToDrive();
+  } else {
+    // Cerrar sesión
+    driveToken  = null;
+    driveFileId = null;
+    googleProfile = null;
+    localStorage.removeItem('asgn_profile');
+    const dot    = document.getElementById('avatar-dot');
+    const imgEl  = document.getElementById('avatar-img');
+    const infoEl = document.getElementById('avatar-info');
+    const pb     = document.getElementById('pull-btn');
+    if (dot)    { dot.style.display = 'none'; }
+    if (infoEl) { infoEl.style.display = 'none'; }
+    if (pb)     { pb.style.display = 'none'; }
+    if (imgEl)  { imgEl.textContent = '?'; imgEl.className = 'avatar-default'; }
+    document.getElementById('avatar-wrap').title = 'Conectar con Google Drive';
+    showToast('Sesión cerrada', '');
   }
 }
 
@@ -300,8 +328,8 @@ function updateSyncIndicator() {
   if (diff < 60)        label = 'hace ' + diff + 's';
   else if (diff < 3600) label = 'hace ' + Math.round(diff/60) + 'min';
   else                  label = 'hace ' + Math.round(diff/3600) + 'h';
-  const btn = document.getElementById('sync-btn');
-  if (btn && driveToken) btn.title = 'Última sync: ' + label;
+  const wrap = document.getElementById('avatar-wrap');
+  if (wrap && driveToken) wrap.title = `☁️ Última sync: ${label} · Clic para sincronizar`;
 }
 
 function startAutoSyncLoop() {
