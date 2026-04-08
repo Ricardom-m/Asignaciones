@@ -91,7 +91,11 @@
         </div>
         <div class="field-group">
           <label class="field-label">Sala</label>
-          <input type="text" id="f-sala" placeholder="Ej. Sala A" autocomplete="off">
+          <select id="f-sala">
+            <option value="Sala A">Sala A</option>
+            <option value="Sala B">Sala B</option>
+            <option value="Otro">Otro</option>
+          </select>
         </div>
       </div>
 
@@ -282,7 +286,7 @@
       </div>
       <div class="row-2">
         <div class="field-group"><label class="field-label">Fecha <span class="req">*</span></label><input type="date" id="edit-fecha"></div>
-        <div class="field-group"><label class="field-label">Sala</label><input type="text" id="edit-sala" autocomplete="off"></div>
+        <div class="field-group"><label class="field-label">Sala</label><select id="edit-sala"><option value="Sala A">Sala A</option><option value="Sala B">Sala B</option><option value="Otro">Otro</option></select></div>
       </div>
       <div class="field-group"><label class="field-label">Asignación <span class="req">*</span></label><input type="text" id="edit-asignacion" autocomplete="off"></div>
       <div class="divider"></div>
