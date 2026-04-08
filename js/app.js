@@ -39,7 +39,13 @@ function showPage(name, btn) {
   document.getElementById('page-'+name).classList.add('active');
   btn.classList.add('active');
   closeSel();
-  if (name === 'list')    { buildSortedData(); renderVList(); }
+  if (name === 'list') {
+    buildSortedData(); renderVList();
+    if (currentListView === 'spotlight') {
+      const id = document.getElementById('val-spotlight')?.value;
+      if (id) renderSpotlight(id);
+    }
+  }
   if (name === 'persons') renderPersons();
 }
 
@@ -585,7 +591,7 @@ function renderSpotlight(personId) {
               <div class="spotlight-pair-name">${esc(p.nombre)} ${esc(p.apellido)}</div>
               <div class="spotlight-pair-sub">
                 ${nextFecha ? `📅 Próxima: ${fmtDate(nextFecha)}` : `última: ${fmtDate(lastFecha)}`}
-                · ${count} vez${count !== 1 ? 'ces' : ''}
+                · ${count} ${count !== 1 ? 'veces' : 'vez'}
               </div>
             </div>
             <span class="spotlight-pair-count">×${count}</span>
