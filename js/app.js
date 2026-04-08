@@ -495,24 +495,27 @@ function renderSpotlight(personId) {
     r.asignadoId === personId || r.ayudanteId === personId
   );
 
-  // Calcular parejas y frecuencia
-  const pairCount = {};
+  // Calcular parejas: frecuencia y última fecha juntos
+  const pairData = {};
   myRecords.forEach(r => {
     const partnerId = r.asignadoId === personId ? r.ayudanteId : r.asignadoId;
-    if (partnerId) pairCount[partnerId] = (pairCount[partnerId] || 0) + 1;
+    if (!partnerId) return;
+    if (!pairData[partnerId]) pairData[partnerId] = { count: 0, lastFecha: '' };
+    pairData[partnerId].count++;
+    if ((r.fecha || '') > pairData[partnerId].lastFecha) pairData[partnerId].lastFecha = r.fecha;
   });
 
   // Personas que nunca han sido pareja
-  const neverPaired = persons.filter(p => p.id !== personId && !pairCount[p.id]);
+  const neverPaired = persons.filter(p => p.id !== personId && !pairData[p.id]);
 
-  // Última asignación
+  // Última asignación general
   const sorted = myRecords.slice().sort((a, b) => (b.fecha || '').localeCompare(a.fecha || ''));
   const lastRec = sorted[0];
   const lastDate = lastRec ? fmtDate(lastRec.fecha) : '—';
 
   // Parejas ordenadas por frecuencia desc
-  const pairedList = Object.entries(pairCount)
-    .map(([id, count]) => ({ person: persons.find(p => p.id === id), count }))
+  const pairedList = Object.entries(pairData)
+    .map(([id, { count, lastFecha }]) => ({ person: persons.find(p => p.id === id), count, lastFecha }))
     .filter(x => x.person)
     .sort((a, b) => b.count - a.count);
 
@@ -565,11 +568,11 @@ function renderSpotlight(personId) {
       ${pairedList.length ? `
       <div class="spotlight-section">
         <div class="spotlight-section-title">✅ Ha sido asignado con</div>
-        ${pairedList.map(({ person: p, count }) => `
+        ${pairedList.map(({ person: p, count, lastFecha }) => `
           <div class="spotlight-pair-row">
             <div>
               <div class="spotlight-pair-name">${esc(p.nombre)} ${esc(p.apellido)}</div>
-              <div class="spotlight-pair-sub">${count} vez${count !== 1 ? 'ces' : ''}</div>
+              <div class="spotlight-pair-sub">${count} vez${count !== 1 ? 'ces' : ''} · última: ${fmtDate(lastFecha)}</div>
             </div>
             <span class="spotlight-pair-count">×${count}</span>
           </div>
