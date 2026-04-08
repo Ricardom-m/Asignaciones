@@ -127,46 +127,78 @@
   <div class="page" id="page-list">
     <div class="page-inner">
     <div class="content-card">
-    <div class="list-toolbar">
-      <input class="list-search-input" id="list-search" type="text" placeholder="🔍 Filtrar…" oninput="onListFilter()">
-      <button class="sort-btn" id="sort-toggle-btn" onclick="toggleSortMenu()">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><line x1="3" y1="6" x2="21" y2="6"/><line x1="6" y1="12" x2="18" y2="12"/><line x1="9" y1="18" x2="15" y2="18"/></svg>
-        Ordenar
+
+    <!-- VIEW TOGGLE -->
+    <div class="view-toggle">
+      <button class="vt-btn active" id="vt-list" onclick="setListView('list')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+        Lista
       </button>
-      <div class="list-count" id="list-count">0 registros</div>
+      <button class="vt-btn" id="vt-spotlight" onclick="setListView('spotlight')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+        Por persona
+      </button>
     </div>
 
-    <div class="sort-menu" id="sort-menu">
-      <div class="sort-menu-title">Ordenar por</div>
-      <div class="sort-row">
-        <div class="sort-opt active" id="sopt-created" onclick="setSortField('createdAt')">
-          <div class="chk"></div>
-          <div>
-            <div style="font-size:.76rem;font-weight:500">Fecha de registro</div>
-            <div style="font-size:.63rem;color:var(--text3)">Cuándo se creó</div>
-          </div>
-        </div>
-        <div class="sort-opt" id="sopt-updated" onclick="setSortField('updatedAt')">
-          <div class="chk"></div>
-          <div>
-            <div style="font-size:.76rem;font-weight:500">Última actualización</div>
-            <div style="font-size:.63rem;color:var(--text3)">Cuándo se editó</div>
-          </div>
-        </div>
+    <!-- LIST VIEW -->
+    <div id="list-view-wrap">
+      <div class="list-toolbar">
+        <input class="list-search-input" id="list-search" type="text" placeholder="🔍 Filtrar…" oninput="onListFilter()">
+        <button class="sort-btn" id="sort-toggle-btn" onclick="toggleSortMenu()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><line x1="3" y1="6" x2="21" y2="6"/><line x1="6" y1="12" x2="18" y2="12"/><line x1="9" y1="18" x2="15" y2="18"/></svg>
+          Ordenar
+        </button>
+        <div class="list-count" id="list-count">0 registros</div>
       </div>
-      <div class="sort-dir-row">
-        <button class="sort-dir-btn active" id="dir-desc" onclick="setSortDir('desc')">↓ Más reciente</button>
-        <button class="sort-dir-btn" id="dir-asc" onclick="setSortDir('asc')">↑ Más antiguo</button>
-      </div>
-    </div>
 
-    <div id="records-render"></div>
-    <div id="load-more-wrap" style="text-align:center;padding:12px 0 4px;display:none">
-      <button class="btn btn-ghost" style="width:auto;padding:10px 28px" onclick="loadMoreRecords()">
-        Cargar más registros ↓
-      </button>
-      <div style="font-size:.65rem;color:var(--text3);margin-top:6px" id="load-more-info"></div>
-    </div>
+      <div class="sort-menu" id="sort-menu">
+        <div class="sort-menu-title">Ordenar por</div>
+        <div class="sort-row">
+          <div class="sort-opt active" id="sopt-created" onclick="setSortField('createdAt')">
+            <div class="chk"></div>
+            <div>
+              <div style="font-size:.76rem;font-weight:500">Fecha de registro</div>
+              <div style="font-size:.63rem;color:var(--text3)">Cuándo se creó</div>
+            </div>
+          </div>
+          <div class="sort-opt" id="sopt-updated" onclick="setSortField('updatedAt')">
+            <div class="chk"></div>
+            <div>
+              <div style="font-size:.76rem;font-weight:500">Última actualización</div>
+              <div style="font-size:.63rem;color:var(--text3)">Cuándo se editó</div>
+            </div>
+          </div>
+        </div>
+        <div class="sort-dir-row">
+          <button class="sort-dir-btn active" id="dir-desc" onclick="setSortDir('desc')">↓ Más reciente</button>
+          <button class="sort-dir-btn" id="dir-asc" onclick="setSortDir('asc')">↑ Más antiguo</button>
+        </div>
+      </div>
+
+      <div id="records-render"></div>
+      <div id="load-more-wrap" style="text-align:center;padding:12px 0 4px;display:none">
+        <button class="btn btn-ghost" style="width:auto;padding:10px 28px" onclick="loadMoreRecords()">
+          Cargar más registros ↓
+        </button>
+        <div style="font-size:.65rem;color:var(--text3);margin-top:6px" id="load-more-info"></div>
+      </div>
+    </div><!-- list-view-wrap -->
+
+    <!-- SPOTLIGHT VIEW -->
+    <div id="spotlight-view-wrap" style="display:none">
+      <div class="spotlight-search-wrap">
+        <div class="field-label" style="margin-bottom:6px">Selecciona una persona para analizar</div>
+        <div class="sel-wrap">
+          <button type="button" class="sel-trigger" id="trig-spotlight" onclick="openSel('spotlight')">
+            <span class="sel-trigger-text ph" id="text-spotlight">Buscar persona…</span>
+            <svg class="sel-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+        </div>
+        <input type="hidden" id="val-spotlight">
+      </div>
+      <div id="spotlight-content"></div>
+    </div><!-- spotlight-view-wrap -->
+
     </div><!-- content-card -->
     </div><!-- page-inner -->
   </div>

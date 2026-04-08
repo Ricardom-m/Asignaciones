@@ -118,7 +118,9 @@ function selectSelOpt(id, label) {
   const el = document.getElementById(activeSel.textId);
   el.textContent = label || 'Seleccionar…';
   el.classList.toggle('ph', !label);
+  const key = activeSel.key;
   closeSel();
+  if (key === 'spotlight') renderSpotlight(id);
 }
 
 document.addEventListener('click', e => {
@@ -452,6 +454,143 @@ function importData() {
     reader.readAsText(file);
   };
   inp.click();
+}
+
+// ═══════════════════════════════════════════
+//  LIST VIEW TOGGLE
+// ═══════════════════════════════════════════
+let currentListView = 'list';
+
+function setListView(mode) {
+  currentListView = mode;
+  document.getElementById('list-view-wrap').style.display      = mode === 'list'      ? '' : 'none';
+  document.getElementById('spotlight-view-wrap').style.display = mode === 'spotlight' ? '' : 'none';
+  document.getElementById('vt-list').classList.toggle('active',      mode === 'list');
+  document.getElementById('vt-spotlight').classList.toggle('active', mode === 'spotlight');
+
+  if (mode === 'list') { buildSortedData(); renderVList(); }
+  if (mode === 'spotlight') {
+    // Re-render if a person was already selected
+    const id = document.getElementById('val-spotlight')?.value;
+    if (id) renderSpotlight(id);
+  }
+}
+
+// ═══════════════════════════════════════════
+//  SPOTLIGHT — Por persona
+// ═══════════════════════════════════════════
+function renderSpotlight(personId) {
+  const container = document.getElementById('spotlight-content');
+  if (!personId) { container.innerHTML = ''; return; }
+
+  const persons  = getPersons();
+  const records  = getRecords();
+  const person   = persons.find(p => p.id === personId);
+  if (!person) { container.innerHTML = ''; return; }
+
+  const fullName = person.nombre + ' ' + person.apellido;
+
+  // Registros donde esta persona aparece (como asignado o ayudante)
+  const myRecords = records.filter(r =>
+    r.asignadoId === personId || r.ayudanteId === personId
+  );
+
+  // Calcular parejas y frecuencia
+  const pairCount = {};
+  myRecords.forEach(r => {
+    const partnerId = r.asignadoId === personId ? r.ayudanteId : r.asignadoId;
+    if (partnerId) pairCount[partnerId] = (pairCount[partnerId] || 0) + 1;
+  });
+
+  // Personas que nunca han sido pareja
+  const neverPaired = persons.filter(p => p.id !== personId && !pairCount[p.id]);
+
+  // Última asignación
+  const sorted = myRecords.slice().sort((a, b) => (b.fecha || '').localeCompare(a.fecha || ''));
+  const lastRec = sorted[0];
+  const lastDate = lastRec ? fmtDate(lastRec.fecha) : '—';
+
+  // Parejas ordenadas por frecuencia desc
+  const pairedList = Object.entries(pairCount)
+    .map(([id, count]) => ({ person: persons.find(p => p.id === id), count }))
+    .filter(x => x.person)
+    .sort((a, b) => b.count - a.count);
+
+  // Iniciales para el avatar
+  const initials = (person.nombre[0] + (person.apellido[0] || '')).toUpperCase();
+
+  // Últimas 3 asignaciones recientes
+  const recentRecs = sorted.slice(0, 3);
+
+  container.innerHTML = `
+    <div class="spotlight-card anim-pop">
+
+      <div class="spotlight-head">
+        <div class="spotlight-avatar">${esc(initials)}</div>
+        <div>
+          <div class="spotlight-name">${esc(fullName)}</div>
+          <div class="spotlight-meta">${myRecords.length} asignación${myRecords.length !== 1 ? 'es' : ''} · última: ${lastDate}</div>
+        </div>
+      </div>
+
+      <div class="spotlight-stats-row">
+        <div class="spotlight-stat">
+          <div class="spotlight-stat-val">${myRecords.length}</div>
+          <div class="spotlight-stat-lbl">Total</div>
+        </div>
+        <div class="spotlight-stat">
+          <div class="spotlight-stat-val">${pairedList.length}</div>
+          <div class="spotlight-stat-lbl">Con parejas</div>
+        </div>
+        <div class="spotlight-stat">
+          <div class="spotlight-stat-val" style="color:var(--amber)">${neverPaired.length}</div>
+          <div class="spotlight-stat-lbl">Sin pareja</div>
+        </div>
+      </div>
+
+      ${recentRecs.length ? `
+      <div class="spotlight-section">
+        <div class="spotlight-section-title">Asignaciones recientes</div>
+        ${recentRecs.map(r => `
+          <div class="spotlight-recent-row">
+            <div class="spotlight-recent-info">
+              <div class="spotlight-recent-asig">📌 ${esc(r.asignacion)}</div>
+              <div class="spotlight-recent-meta">${r.sala ? '🏛️ ' + esc(r.sala) + ' · ' : ''}${r.tipo ? esc(r.tipo) : ''}</div>
+            </div>
+            <div class="spotlight-recent-date">${fmtDate(r.fecha)}</div>
+          </div>
+        `).join('')}
+      </div>` : ''}
+
+      ${pairedList.length ? `
+      <div class="spotlight-section">
+        <div class="spotlight-section-title">✅ Ha sido asignado con</div>
+        ${pairedList.map(({ person: p, count }) => `
+          <div class="spotlight-pair-row">
+            <div>
+              <div class="spotlight-pair-name">${esc(p.nombre)} ${esc(p.apellido)}</div>
+              <div class="spotlight-pair-sub">${count} vez${count !== 1 ? 'ces' : ''}</div>
+            </div>
+            <span class="spotlight-pair-count">×${count}</span>
+          </div>
+        `).join('')}
+      </div>` : ''}
+
+      <div class="spotlight-section">
+        <div class="spotlight-section-title">⚠️ Nunca asignado con</div>
+        ${neverPaired.length === 0
+          ? `<div class="spotlight-empty">Ha sido asignado con todas las personas registradas.</div>`
+          : neverPaired.sort((a, b) => a.nombre.localeCompare(b.nombre)).map(p => `
+            <div class="spotlight-missing-row">
+              <div class="spotlight-missing-dot"></div>
+              <div class="spotlight-missing-name">${esc(p.nombre)} ${esc(p.apellido)}</div>
+            </div>
+          `).join('')
+        }
+      </div>
+
+    </div>
+  `;
 }
 
 // ═══════════════════════════════════════════
