@@ -102,9 +102,19 @@ function filterSelOpts() { renderSelOpts(document.getElementById('sel-search').v
 
 function renderSelOpts(q) {
   if (!activeSel) return;
-  const persons = getPersons().slice().sort((a,b) => a.nombre.localeCompare(b.nombre));
+  let persons = getPersons().slice().sort((a,b) => a.nombre.localeCompare(b.nombre));
   const curVal  = document.getElementById(activeSel.hiddenId)?.value || '';
   const q2      = q.toLowerCase().trim();
+
+  // Excluir la persona ya seleccionada en el campo opuesto
+  const oppositeId = {
+    'asignado':       document.getElementById('val-ayudante')?.value,
+    'ayudante':       document.getElementById('val-asignado')?.value,
+    'edit-asignado':  document.getElementById('val-edit-ayudante')?.value,
+    'edit-ayudante':  document.getElementById('val-edit-asignado')?.value,
+  }[activeSel.key] || '';
+  if (oppositeId) persons = persons.filter(p => p.id !== oppositeId);
+
   const filtered = q2 ? persons.filter(p => (p.nombre+' '+p.apellido).toLowerCase().includes(q2)) : persons;
   const opts    = document.getElementById('sel-options');
 
@@ -238,7 +248,6 @@ function clearForm() {
   ['text-asignado','text-ayudante'].forEach(id => { const el=document.getElementById(id); el.textContent='Seleccionar…'; el.classList.add('ph'); });
   document.getElementById('f-fecha').value = new Date().toISOString().slice(0,10);
   ['f-sala','f-asignacion'].forEach(id => document.getElementById(id).value='');
-  document.getElementById('f-tipo').value='';
 }
 
 function saveRecord() {
@@ -253,12 +262,12 @@ function saveRecord() {
   const persons=getPersons();
   const pA=persons.find(p=>p.id===asignadoId);
   const pB=ayudanteId?persons.find(p=>p.id===ayudanteId):null;
+  const tipo = ayudanteId ? 'Asignado' : '';
   const record={
     id:uid(), asignadoId, asignado:pA?pA.nombre+' '+pA.apellido:'—',
     ayudanteId:ayudanteId||'', ayudante:pB?pB.nombre+' '+pB.apellido:'',
     fecha, sala:document.getElementById('f-sala').value.trim(),
-    tipo:document.getElementById('f-tipo').value,
-    asignacion, createdAt:Date.now(), updatedAt:Date.now()
+    tipo, asignacion, createdAt:Date.now(), updatedAt:Date.now()
   };
   const data=getRecords(); data.push(record); saveRecords(data);
   clearForm();
@@ -279,7 +288,6 @@ function openEdit(id) {
   const tb=document.getElementById('text-edit-ayudante'); tb.textContent=rec.ayudante||'Seleccionar…'; tb.classList.toggle('ph',!rec.ayudante);
   document.getElementById('edit-fecha').value=rec.fecha;
   document.getElementById('edit-sala').value=rec.sala;
-  document.getElementById('edit-tipo').value=rec.tipo;
   document.getElementById('edit-asignacion').value=rec.asignacion;
   const modal = document.getElementById('edit-modal');
   modal.classList.add('open');
@@ -299,10 +307,11 @@ function updateRecord() {
   const pA=persons.find(p=>p.id===asignadoId);
   const pB=ayudanteId?persons.find(p=>p.id===ayudanteId):null;
   const data=getRecords(); const idx=data.findIndex(r=>r.id===id); if(idx===-1) return;
+  const tipo = ayudanteId ? 'Asignado' : '';
   data[idx]={...data[idx], asignadoId, asignado:pA?pA.nombre+' '+pA.apellido:'—',
     ayudanteId, ayudante:pB?pB.nombre+' '+pB.apellido:'',
     fecha, sala:document.getElementById('edit-sala').value.trim(),
-    tipo:document.getElementById('edit-tipo').value, asignacion, updatedAt:Date.now()};
+    tipo, asignacion, updatedAt:Date.now()};
   saveRecords(data); closeModal('edit-modal'); buildSortedData(); renderVList();
   showToast('✏️ Registro actualizado','success');
   setTimeout(()=>{
