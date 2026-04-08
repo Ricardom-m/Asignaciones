@@ -495,14 +495,20 @@ function renderSpotlight(personId) {
     r.asignadoId === personId || r.ayudanteId === personId
   );
 
-  // Calcular parejas: frecuencia y última fecha juntos
+  // Calcular parejas: frecuencia, última fecha y próxima fecha futura
+  const today = new Date().toISOString().slice(0, 10);
   const pairData = {};
   myRecords.forEach(r => {
     const partnerId = r.asignadoId === personId ? r.ayudanteId : r.asignadoId;
     if (!partnerId) return;
-    if (!pairData[partnerId]) pairData[partnerId] = { count: 0, lastFecha: '' };
+    if (!pairData[partnerId]) pairData[partnerId] = { count: 0, lastFecha: '', nextFecha: '' };
     pairData[partnerId].count++;
     if ((r.fecha || '') > pairData[partnerId].lastFecha) pairData[partnerId].lastFecha = r.fecha;
+    // Próxima: la fecha futura más cercana (>= hoy)
+    if ((r.fecha || '') >= today) {
+      if (!pairData[partnerId].nextFecha || r.fecha < pairData[partnerId].nextFecha)
+        pairData[partnerId].nextFecha = r.fecha;
+    }
   });
 
   // Personas que nunca han sido pareja
@@ -513,11 +519,16 @@ function renderSpotlight(personId) {
   const lastRec = sorted[0];
   const lastDate = lastRec ? fmtDate(lastRec.fecha) : '—';
 
-  // Parejas ordenadas por fecha más reciente desc
+  // Parejas: primero las que tienen fecha futura (asc), luego las sin fecha futura (por última fecha desc)
   const pairedList = Object.entries(pairData)
-    .map(([id, { count, lastFecha }]) => ({ person: persons.find(p => p.id === id), count, lastFecha }))
+    .map(([id, { count, lastFecha, nextFecha }]) => ({ person: persons.find(p => p.id === id), count, lastFecha, nextFecha }))
     .filter(x => x.person)
-    .sort((a, b) => (b.lastFecha || '').localeCompare(a.lastFecha || ''));
+    .sort((a, b) => {
+      if (a.nextFecha && b.nextFecha) return a.nextFecha.localeCompare(b.nextFecha);
+      if (a.nextFecha) return -1;
+      if (b.nextFecha) return 1;
+      return (b.lastFecha || '').localeCompare(a.lastFecha || '');
+    });
 
   // Iniciales para el avatar
   const initials = (person.nombre[0] + (person.apellido[0] || '')).toUpperCase();
@@ -568,11 +579,14 @@ function renderSpotlight(personId) {
       ${pairedList.length ? `
       <div class="spotlight-section">
         <div class="spotlight-section-title">✅ Ha sido asignado con</div>
-        ${pairedList.map(({ person: p, count, lastFecha }) => `
+        ${pairedList.map(({ person: p, count, lastFecha, nextFecha }) => `
           <div class="spotlight-pair-row">
             <div>
               <div class="spotlight-pair-name">${esc(p.nombre)} ${esc(p.apellido)}</div>
-              <div class="spotlight-pair-sub">${count} vez${count !== 1 ? 'ces' : ''} · última: ${fmtDate(lastFecha)}</div>
+              <div class="spotlight-pair-sub">
+                ${nextFecha ? `📅 Próxima: ${fmtDate(nextFecha)}` : `última: ${fmtDate(lastFecha)}`}
+                · ${count} vez${count !== 1 ? 'ces' : ''}
+              </div>
             </div>
             <span class="spotlight-pair-count">×${count}</span>
           </div>
