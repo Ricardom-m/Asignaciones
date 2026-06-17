@@ -25,6 +25,10 @@ export function EditRecordModal({ rec, persons, onClose }: Props) {
   });
   const [saving, setSaving] = useState(false);
 
+  // Solo personas activas, pero conservando las ya referidas en este registro.
+  const formPersons = persons.filter(
+    (p) => p.active || p.id === rec.asignadoId || p.id === rec.ayudanteId,
+  );
   const patch = (p: Partial<RecordFormState>) => setForm((f) => ({ ...f, ...p }));
 
   const save = async () => {
@@ -61,7 +65,7 @@ export function EditRecordModal({ rec, persons, onClose }: Props) {
           </button>
         </div>
         <div className="form-grid">
-          <RecordFields persons={persons} state={form} onChange={patch} />
+          <RecordFields persons={formPersons} state={form} onChange={patch} />
           <div className="divider" />
           <div className="form-actions">
             <button className="btn btn-primary" onClick={save} disabled={saving}>

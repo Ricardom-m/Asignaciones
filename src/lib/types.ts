@@ -1,9 +1,18 @@
 // Tipos que comparten cliente y servidor (lo que devuelve la API en JSON).
 
+export interface Role {
+  id: string;
+  nombre: string;
+  color: string;
+  active: boolean;
+}
+
 export interface Person {
   id: string;
   nombre: string;
   apellido: string;
+  active: boolean;
+  roles: Role[];
   createdAt: string;
   updatedAt: string;
 }

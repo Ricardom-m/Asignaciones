@@ -2,11 +2,16 @@
 
 import useSWR from "swr";
 import { fetcher } from "@/lib/client";
-import type { Person, RecordItem } from "@/lib/types";
+import type { Person, RecordItem, Role } from "@/lib/types";
 
 export function usePersons() {
   const { data, error, isLoading, mutate } = useSWR<Person[]>("/api/persons", fetcher);
   return { persons: data ?? [], error, isLoading, mutate };
+}
+
+export function useRoles() {
+  const { data, error, isLoading, mutate } = useSWR<Role[]>("/api/roles", fetcher);
+  return { roles: data ?? [], error, isLoading, mutate };
 }
 
 export function useRecords(sort = "createdAt", dir: "asc" | "desc" = "desc") {

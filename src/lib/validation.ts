@@ -5,10 +5,21 @@ const fechaSchema = z
   .string()
   .regex(/^\d{4}-\d{2}-\d{2}$/, "Fecha inválida (usa YYYY-MM-DD)");
 
+// ── Roles ─────────────────────────────────────────────────
+const HEX = /^#[0-9a-fA-F]{6}$/;
+export const roleInput = z.object({
+  nombre: z.string().trim().min(1, "El nombre del rol es obligatorio").max(40),
+  color: z.string().regex(HEX, "Color inválido").optional(),
+  active: z.boolean().optional(),
+});
+export type RoleInput = z.infer<typeof roleInput>;
+
 // ── Personas ──────────────────────────────────────────────
 export const personInput = z.object({
   nombre: z.string().trim().min(1, "El nombre es obligatorio").max(80),
   apellido: z.string().trim().min(1, "El apellido es obligatorio").max(80),
+  roleIds: z.array(z.string()).optional(),
+  active: z.boolean().optional(),
 });
 export type PersonInput = z.infer<typeof personInput>;
 

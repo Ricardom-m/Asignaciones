@@ -1,31 +1,42 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { usePersons } from "@/lib/hooks";
+import { usePersons, useRoles } from "@/lib/hooks";
 import { useToast } from "@/components/Toast";
 import { createPerson, updatePerson, deletePerson } from "@/lib/client";
+import { RoleBadge, RoleMultiSelect } from "@/components/RoleBadge";
+import { RolesManager } from "@/components/RolesManager";
 import type { Person } from "@/lib/types";
 
 const PAGE = 30;
 
 export default function PersonasPage() {
   const { persons, mutate } = usePersons();
+  const { roles } = useRoles();
   const toast = useToast();
 
   const [nombre, setNombre] = useState("");
   const [apellido, setApellido] = useState("");
+  const [newRoles, setNewRoles] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
+
   const [query, setQuery] = useState("");
+  const [roleFilter, setRoleFilter] = useState<string>(""); // "" = todos
+  const [showInactive, setShowInactive] = useState(false);
   const [limit, setLimit] = useState(PAGE);
+
   const [editing, setEditing] = useState<Person | null>(null);
+  const [manageRoles, setManageRoles] = useState(false);
 
   const filtered = useMemo(() => {
     const q = query.toLowerCase().trim();
-    const all = persons.slice().sort((a, b) => a.nombre.localeCompare(b.nombre));
-    return q
-      ? all.filter((p) => `${p.nombre} ${p.apellido}`.toLowerCase().includes(q))
-      : all;
-  }, [persons, query]);
+    return persons
+      .slice()
+      .sort((a, b) => a.nombre.localeCompare(b.nombre))
+      .filter((p) => (showInactive ? true : p.active))
+      .filter((p) => (roleFilter ? p.roles.some((r) => r.id === roleFilter) : true))
+      .filter((p) => (q ? `${p.nombre} ${p.apellido}`.toLowerCase().includes(q) : true));
+  }, [persons, query, roleFilter, showInactive]);
 
   const visible = filtered.slice(0, limit);
 
@@ -34,10 +45,11 @@ export default function PersonasPage() {
     if (!apellido.trim()) return toast("⚠️ El apellido es obligatorio", "error");
     setSaving(true);
     try {
-      await createPerson({ nombre: nombre.trim(), apellido: apellido.trim() });
+      await createPerson({ nombre: nombre.trim(), apellido: apellido.trim(), roleIds: newRoles });
       await mutate();
       setNombre("");
       setApellido("");
+      setNewRoles([]);
       toast("✅ Persona agregada", "success");
     } catch (e) {
       toast("❌ " + (e as Error).message, "error");
@@ -47,7 +59,8 @@ export default function PersonasPage() {
   };
 
   const remove = async (p: Person) => {
-    if (!confirm(`¿Eliminar a ${p.nombre} ${p.apellido}?`)) return;
+    if (!confirm(`¿Eliminar a ${p.nombre} ${p.apellido}? (Si solo quieres ocultarla, mejor desactívala.)`))
+      return;
     try {
       await deletePerson(p.id);
       await mutate();
@@ -60,34 +73,33 @@ export default function PersonasPage() {
   return (
     <div className="page-inner fade-up">
       <div className="content-card">
-        <div className="section-label">Nueva persona</div>
-        <div className="form-grid">
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div className="section-label" style={{ margin: 0 }}>
+            Nueva persona
+          </div>
+          <button className="btn btn-ghost btn-sm" onClick={() => setManageRoles(true)}>
+            🏷️ Roles
+          </button>
+        </div>
+
+        <div className="form-grid" style={{ marginTop: 10 }}>
           <div className="row-2">
             <div className="field-group">
               <label className="field-label">
                 Nombre <span className="req">*</span>
               </label>
-              <input
-                type="text"
-                value={nombre}
-                onChange={(e) => setNombre(e.target.value)}
-                placeholder="Ej. Juan"
-                autoComplete="off"
-              />
+              <input type="text" value={nombre} onChange={(e) => setNombre(e.target.value)} placeholder="Ej. Juan" autoComplete="off" />
             </div>
             <div className="field-group">
               <label className="field-label">
                 Apellido <span className="req">*</span>
               </label>
-              <input
-                type="text"
-                value={apellido}
-                onChange={(e) => setApellido(e.target.value)}
-                placeholder="Ej. Pérez"
-                autoComplete="off"
-                onKeyDown={(e) => e.key === "Enter" && add()}
-              />
+              <input type="text" value={apellido} onChange={(e) => setApellido(e.target.value)} placeholder="Ej. Pérez" autoComplete="off" onKeyDown={(e) => e.key === "Enter" && add()} />
             </div>
+          </div>
+          <div className="field-group">
+            <label className="field-label">Roles</label>
+            <RoleMultiSelect roles={roles} selected={newRoles} onChange={setNewRoles} />
           </div>
           <button className="btn btn-primary" onClick={add} disabled={saving}>
             {saving ? "Agregando…" : "Agregar persona"}
@@ -96,6 +108,27 @@ export default function PersonasPage() {
 
         <div className="divider" />
         <div className="section-label">Personas registradas</div>
+
+        {/* Filtros por rol */}
+        <div className="role-filter-bar">
+          <button
+            className="role-chip"
+            onClick={() => setRoleFilter("")}
+            style={!roleFilter ? { color: "var(--accent)", borderColor: "var(--accent)", background: "var(--accent-dim)" } : undefined}
+          >
+            Todos
+          </button>
+          {roles.map((r) => (
+            <button
+              key={r.id}
+              className="role-chip"
+              onClick={() => setRoleFilter(roleFilter === r.id ? "" : r.id)}
+              style={roleFilter === r.id ? { color: r.color, borderColor: r.color, background: r.color + "22" } : undefined}
+            >
+              {r.nombre}
+            </button>
+          ))}
+        </div>
 
         <div className="persons-search-wrap">
           <span className="persons-search-ico">⌕</span>
@@ -111,24 +144,41 @@ export default function PersonasPage() {
             autoComplete="off"
           />
         </div>
-        <div className="persons-count">
-          {filtered.length} persona{filtered.length !== 1 ? "s" : ""}
-          {query ? ` encontrada${filtered.length !== 1 ? "s" : ""}` : ""}
+
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+          <div className="persons-count" style={{ margin: 0 }}>
+            {filtered.length} persona{filtered.length !== 1 ? "s" : ""}
+          </div>
+          <label className="switch">
+            <input type="checkbox" checked={showInactive} onChange={(e) => setShowInactive(e.target.checked)} />
+            <span className="track" />
+            Mostrar inactivos
+          </label>
         </div>
 
         {filtered.length === 0 ? (
           <div className="empty-state">
             <div className="empty-icon">👤</div>
-            <h3>{query ? "Sin coincidencias" : "Sin personas registradas"}</h3>
-            <p>{query ? "Prueba con otro nombre." : "Agrega personas para usarlas en los registros."}</p>
+            <h3>Sin coincidencias</h3>
+            <p>Ajusta el filtro o agrega personas.</p>
           </div>
         ) : (
           <div className="persons-list">
             {visible.map((p) => (
-              <div className="person-row anim-slide" key={p.id}>
-                <span className="person-name">
-                  {p.nombre} {p.apellido}
-                </span>
+              <div className={`person-row anim-slide${p.active ? "" : " inactive"}`} key={p.id}>
+                <div className="person-main">
+                  <span className="person-name">
+                    {p.nombre} {p.apellido}
+                    {!p.active && <span className="person-badge-inactive">inactivo</span>}
+                  </span>
+                  {p.roles.length > 0 && (
+                    <div className="person-roles">
+                      {p.roles.map((r) => (
+                        <RoleBadge key={r.id} role={r} />
+                      ))}
+                    </div>
+                  )}
+                </div>
                 <div className="person-actions">
                   <button className="btn btn-edit btn-sm" onClick={() => setEditing(p)}>
                     Editar
@@ -144,11 +194,7 @@ export default function PersonasPage() {
 
         {limit < filtered.length && (
           <div style={{ textAlign: "center", padding: "10px 0" }}>
-            <button
-              className="btn btn-ghost"
-              style={{ width: "auto", padding: "8px 24px", fontSize: ".78rem" }}
-              onClick={() => setLimit((l) => l + PAGE)}
-            >
+            <button className="btn btn-ghost" style={{ width: "auto", padding: "8px 24px", fontSize: ".78rem" }} onClick={() => setLimit((l) => l + PAGE)}>
               Cargar más ↓
             </button>
           </div>
@@ -165,6 +211,7 @@ export default function PersonasPage() {
           }}
         />
       )}
+      {manageRoles && <RolesManager onClose={() => setManageRoles(false)} />}
     </div>
   );
 }
@@ -179,8 +226,11 @@ function EditPersonModal({
   onSaved: () => void;
 }) {
   const toast = useToast();
+  const { roles } = useRoles();
   const [nombre, setNombre] = useState(person.nombre);
   const [apellido, setApellido] = useState(person.apellido);
+  const [roleIds, setRoleIds] = useState<string[]>(person.roles.map((r) => r.id));
+  const [active, setActive] = useState(person.active);
   const [saving, setSaving] = useState(false);
 
   const save = async () => {
@@ -188,7 +238,7 @@ function EditPersonModal({
     if (!apellido.trim()) return toast("⚠️ El apellido es obligatorio", "error");
     setSaving(true);
     try {
-      await updatePerson(person.id, { nombre: nombre.trim(), apellido: apellido.trim() });
+      await updatePerson(person.id, { nombre: nombre.trim(), apellido: apellido.trim(), roleIds, active });
       toast("✏️ Persona actualizada", "success");
       onSaved();
     } catch (e) {
@@ -221,6 +271,17 @@ function EditPersonModal({
               </label>
               <input type="text" value={apellido} onChange={(e) => setApellido(e.target.value)} autoComplete="off" />
             </div>
+          </div>
+          <div className="field-group">
+            <label className="field-label">Roles</label>
+            <RoleMultiSelect roles={roles} selected={roleIds} onChange={setRoleIds} />
+          </div>
+          <div className="field-group">
+            <label className="switch" style={{ fontSize: ".8rem" }}>
+              <input type="checkbox" checked={active} onChange={(e) => setActive(e.target.checked)} />
+              <span className="track" />
+              {active ? "Activa (visible y asignable)" : "Inactiva (oculta, sin borrar)"}
+            </label>
           </div>
           <div className="divider" />
           <div className="form-actions">

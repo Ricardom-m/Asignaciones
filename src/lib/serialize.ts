@@ -1,5 +1,9 @@
-import type { Person as PrismaPerson, Record as PrismaRecord } from "@prisma/client";
-import type { Person, RecordItem } from "@/lib/types";
+import type {
+  Person as PrismaPerson,
+  Record as PrismaRecord,
+  Role as PrismaRole,
+} from "@prisma/client";
+import type { Person, RecordItem, Role } from "@/lib/types";
 
 type RecordWithPeople = PrismaRecord & {
   asignado: PrismaPerson;
@@ -11,11 +15,17 @@ const fullName = (p: PrismaPerson) => `${p.nombre} ${p.apellido}`.trim();
 // Una fecha @db.Date vuelve como Date a medianoche UTC → tomamos solo YYYY-MM-DD.
 const toYMD = (d: Date) => d.toISOString().slice(0, 10);
 
-export function serializePerson(p: PrismaPerson): Person {
+export function serializeRole(r: PrismaRole): Role {
+  return { id: r.id, nombre: r.nombre, color: r.color, active: r.active };
+}
+
+export function serializePerson(p: PrismaPerson & { roles?: PrismaRole[] }): Person {
   return {
     id: p.id,
     nombre: p.nombre,
     apellido: p.apellido,
+    active: p.active,
+    roles: (p.roles ?? []).map(serializeRole),
     createdAt: p.createdAt.toISOString(),
     updatedAt: p.updatedAt.toISOString(),
   };

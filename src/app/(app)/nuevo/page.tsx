@@ -22,6 +22,7 @@ export default function NuevoPage() {
   const [form, setForm] = useState<RecordFormState>(emptyForm);
   const [saving, setSaving] = useState(false);
 
+  const activePersons = persons.filter((p) => p.active);
   const patch = (p: Partial<RecordFormState>) => setForm((f) => ({ ...f, ...p }));
 
   const save = async () => {
@@ -53,7 +54,7 @@ export default function NuevoPage() {
       <div className="content-card">
         <div className="section-label">Nuevo registro</div>
         <div className="form-grid">
-          <RecordFields persons={persons} state={form} onChange={patch} />
+          <RecordFields persons={activePersons} state={form} onChange={patch} />
           <div className="divider" />
           <div className="form-actions">
             <button className="btn btn-primary" onClick={save} disabled={saving}>

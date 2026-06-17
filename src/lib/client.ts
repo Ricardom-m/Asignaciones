@@ -1,4 +1,4 @@
-import type { Person, RecordItem } from "@/lib/types";
+import type { Person, RecordItem, Role } from "@/lib/types";
 
 // Wrapper de fetch que lanza con el mensaje de error de la API.
 export async function apiFetch<T>(url: string, init?: RequestInit): Promise<T> {
@@ -16,14 +16,30 @@ export async function apiFetch<T>(url: string, init?: RequestInit): Promise<T> {
 export const fetcher = <T>(url: string) => apiFetch<T>(url);
 
 // ── Personas ──────────────────────────────────────────────
-export const createPerson = (data: { nombre: string; apellido: string }) =>
+export interface PersonPayload {
+  nombre: string;
+  apellido: string;
+  roleIds?: string[];
+  active?: boolean;
+}
+export const createPerson = (data: PersonPayload) =>
   apiFetch<Person>("/api/persons", { method: "POST", body: JSON.stringify(data) });
 
-export const updatePerson = (id: string, data: { nombre: string; apellido: string }) =>
+export const updatePerson = (id: string, data: Partial<PersonPayload>) =>
   apiFetch<Person>(`/api/persons/${id}`, { method: "PATCH", body: JSON.stringify(data) });
 
 export const deletePerson = (id: string) =>
   apiFetch<{ deleted: boolean }>(`/api/persons/${id}`, { method: "DELETE" });
+
+// ── Roles ─────────────────────────────────────────────────
+export const createRole = (data: { nombre: string; color?: string }) =>
+  apiFetch<Role>("/api/roles", { method: "POST", body: JSON.stringify(data) });
+
+export const updateRole = (id: string, data: { nombre?: string; color?: string; active?: boolean }) =>
+  apiFetch<Role>(`/api/roles/${id}`, { method: "PATCH", body: JSON.stringify(data) });
+
+export const deleteRole = (id: string) =>
+  apiFetch<{ deleted: boolean }>(`/api/roles/${id}`, { method: "DELETE" });
 
 // ── Registros ─────────────────────────────────────────────
 export interface RecordPayload {
