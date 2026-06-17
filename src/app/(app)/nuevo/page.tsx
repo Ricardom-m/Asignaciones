@@ -5,6 +5,7 @@ import { useSWRConfig } from "swr";
 import { usePersons } from "@/lib/hooks";
 import { useToast } from "@/components/Toast";
 import { RecordFields, type RecordFormState } from "@/components/RecordFields";
+import { PageHeader } from "@/components/PageHeader";
 import { createRecord, todayYMD } from "@/lib/client";
 
 const emptyForm = (): RecordFormState => ({
@@ -51,8 +52,8 @@ export default function NuevoPage() {
 
   return (
     <div className="page-inner fade-up">
+      <PageHeader title="Nuevo registro" subtitle="Registra una asignación del equipo" />
       <div className="content-card">
-        <div className="section-label">Nuevo registro</div>
         <div className="form-grid">
           <RecordFields persons={activePersons} state={form} onChange={patch} />
           <div className="divider" />

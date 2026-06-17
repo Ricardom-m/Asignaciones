@@ -1,12 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { signOut } from "next-auth/react";
 import { useRecords } from "@/lib/hooks";
-import { ThemeToggle } from "@/components/ThemeToggle";
-import { ImportExport } from "@/components/ImportExport";
+import { AccountMenu } from "@/components/AccountMenu";
 
 interface Props {
   user: { name: string; email: string; image: string };
@@ -14,6 +11,7 @@ interface Props {
 }
 
 const NAV = [
+  { href: "/inicio", label: "Inicio", icon: IconHome },
   { href: "/nuevo", label: "Nuevo", icon: IconEdit },
   { href: "/registros", label: "Registros", icon: IconList },
   { href: "/personas", label: "Personas", icon: IconPeople },
@@ -22,18 +20,6 @@ const NAV = [
 export function AppShell({ user, children }: Props) {
   const pathname = usePathname();
   const { records } = useRecords();
-
-  const initials =
-    (user.name || user.email || "?")
-      .split(" ")
-      .map((w) => w[0])
-      .slice(0, 2)
-      .join("")
-      .toUpperCase() || "?";
-
-  const handleSignOut = () => {
-    if (confirm("¿Cerrar sesión?")) signOut({ callbackUrl: "/login" });
-  };
 
   return (
     <div className="app-shell">
@@ -46,31 +32,8 @@ export function AppShell({ user, children }: Props) {
           </div>
         </div>
         <div className="header-right">
-          <ThemeToggle />
-          <ImportExport />
-          <button
-            className="avatar-wrap"
-            onClick={handleSignOut}
-            title={`${user.email} · cerrar sesión`}
-          >
-            {user.image ? (
-              <Image
-                className="avatar-img"
-                src={user.image}
-                alt={user.name}
-                width={26}
-                height={26}
-                referrerPolicy="no-referrer"
-              />
-            ) : (
-              <span className="avatar-default">{initials}</span>
-            )}
-            <span className="avatar-info">
-              <span className="avatar-name">{(user.name || "").split(" ")[0]}</span>
-              <span className="avatar-email">{user.email}</span>
-            </span>
-          </button>
-          <div className="total-badge">{records.length}</div>
+          <div className="total-badge">{records.length} reg.</div>
+          <AccountMenu user={user} />
         </div>
       </header>
 
@@ -91,6 +54,15 @@ export function AppShell({ user, children }: Props) {
   );
 }
 
+function IconHome() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+      <path d="M3 9.5L12 3l9 6.5" />
+      <path d="M5 10v9a1 1 0 001 1h12a1 1 0 001-1v-9" />
+      <path d="M9 20v-6h6v6" />
+    </svg>
+  );
+}
 function IconEdit() {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">

@@ -6,6 +6,7 @@ import { useToast } from "@/components/Toast";
 import { createPerson, updatePerson, deletePerson } from "@/lib/client";
 import { RoleBadge, RoleMultiSelect } from "@/components/RoleBadge";
 import { RolesManager } from "@/components/RolesManager";
+import { PageHeader } from "@/components/PageHeader";
 import type { Person } from "@/lib/types";
 
 const PAGE = 30;
@@ -40,6 +41,13 @@ export default function PersonasPage() {
 
   const visible = filtered.slice(0, limit);
 
+  const roleCounts = useMemo(() => {
+    const m: Record<string, number> = {};
+    for (const p of persons) for (const r of p.roles) m[r.id] = (m[r.id] ?? 0) + 1;
+    return m;
+  }, [persons]);
+  const activeCount = persons.filter((p) => p.active).length;
+
   const add = async () => {
     if (!nombre.trim()) return toast("⚠️ El nombre es obligatorio", "error");
     if (!apellido.trim()) return toast("⚠️ El apellido es obligatorio", "error");
@@ -72,17 +80,18 @@ export default function PersonasPage() {
 
   return (
     <div className="page-inner fade-up">
-      <div className="content-card">
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <div className="section-label" style={{ margin: 0 }}>
-            Nueva persona
-          </div>
+      <PageHeader
+        title="Personas"
+        subtitle={`${activeCount} activas · ${persons.length} en total`}
+        right={
           <button className="btn btn-ghost btn-sm" onClick={() => setManageRoles(true)}>
             🏷️ Roles
           </button>
-        </div>
-
-        <div className="form-grid" style={{ marginTop: 10 }}>
+        }
+      />
+      <div className="content-card">
+        <div className="section-label">Nueva persona</div>
+        <div className="form-grid">
           <div className="row-2">
             <div className="field-group">
               <label className="field-label">
@@ -125,7 +134,7 @@ export default function PersonasPage() {
               onClick={() => setRoleFilter(roleFilter === r.id ? "" : r.id)}
               style={roleFilter === r.id ? { color: r.color, borderColor: r.color, background: r.color + "22" } : undefined}
             >
-              {r.nombre}
+              {r.nombre} <span style={{ opacity: 0.6, fontFamily: "var(--mono)" }}>{roleCounts[r.id] ?? 0}</span>
             </button>
           ))}
         </div>

@@ -8,7 +8,7 @@ export default async function LoginPage({
   searchParams: Promise<{ error?: string }>;
 }) {
   const session = await auth();
-  if (session?.user) redirect("/nuevo");
+  if (session?.user) redirect("/inicio");
   const { error } = await searchParams;
   return <LoginForm error={error} />;
 }

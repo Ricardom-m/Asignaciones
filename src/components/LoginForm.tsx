@@ -8,7 +8,7 @@ export function LoginForm({ error }: { error?: string }) {
 
   const handleSignIn = () => {
     setLoading(true);
-    signIn("google", { callbackUrl: "/nuevo" });
+    signIn("google", { callbackUrl: "/inicio" });
   };
 
   return (

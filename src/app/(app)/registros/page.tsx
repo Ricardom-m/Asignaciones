@@ -8,8 +8,23 @@ import { RecordCard } from "@/components/RecordCard";
 import { EditRecordModal } from "@/components/EditRecordModal";
 import { Spotlight } from "@/components/Spotlight";
 import { PersonSelect } from "@/components/PersonSelect";
+import { PageHeader } from "@/components/PageHeader";
 import { deleteRecord } from "@/lib/client";
 import type { RecordItem } from "@/lib/types";
+
+// Agrupa registros por mes/año del campo de orden activo.
+function groupByMonth(items: RecordItem[], field: "createdAt" | "updatedAt") {
+  const groups: { key: string; items: RecordItem[] }[] = [];
+  for (const r of items) {
+    const d = new Date(r[field]);
+    const label = d.toLocaleDateString("es-MX", { month: "long", year: "numeric" });
+    const key = label.charAt(0).toUpperCase() + label.slice(1);
+    const last = groups[groups.length - 1];
+    if (last && last.key === key) last.items.push(r);
+    else groups.push({ key, items: [r] });
+  }
+  return groups;
+}
 
 type SortField = "createdAt" | "updatedAt";
 const PAGE_SIZE = 25;
@@ -39,6 +54,10 @@ export default function RegistrosPage() {
   }, [records, query]);
 
   const visible = filtered.slice(0, limit);
+  const groups = groupByMonth(visible, sortField);
+  const esteMes = records.filter((r) =>
+    (r.fecha || "").startsWith(new Date().toISOString().slice(0, 7)),
+  ).length;
 
   const onDelete = async (rec: RecordItem) => {
     if (!confirm("¿Eliminar este registro?")) return;
@@ -53,6 +72,7 @@ export default function RegistrosPage() {
 
   return (
     <div className="page-inner fade-up">
+      <PageHeader title="Registros" subtitle={`${records.length} en total · ${esteMes} este mes`} />
       <div className="view-toggle">
         <button
           className={`vt-btn${view === "list" ? " active" : ""}`}
@@ -147,8 +167,13 @@ export default function RegistrosPage() {
             </div>
           ) : (
             <>
-              {visible.map((rec) => (
-                <RecordCard key={rec.id} rec={rec} onEdit={setEditing} onDelete={onDelete} />
+              {groups.map((g) => (
+                <div key={g.key}>
+                  <div className="month-group-title">{g.key}</div>
+                  {g.items.map((rec) => (
+                    <RecordCard key={rec.id} rec={rec} onEdit={setEditing} onDelete={onDelete} />
+                  ))}
+                </div>
               ))}
               {limit < filtered.length && (
                 <div style={{ textAlign: "center", padding: "12px 0 4px" }}>
