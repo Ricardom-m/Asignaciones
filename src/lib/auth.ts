@@ -24,6 +24,8 @@ export function isEmailAllowed(email?: string | null): boolean {
 export const { handlers, auth, signIn, signOut } = NextAuth({
   providers: [Google],
   session: { strategy: "jwt" },
+  // Railway sirve detrás de un proxy; sin esto Auth.js rechaza el host ("UntrustedHost").
+  trustHost: true,
   pages: {
     signIn: "/login",
     error: "/login",
