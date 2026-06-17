@@ -1,0 +1,48 @@
+// Asignaciones v2 — esquema de base de datos
+// Datos COMPARTIDOS por todo el equipo: no hay userId en los registros.
+// El control de acceso es por allowlist de correos en Auth.js (ver src/lib/auth.ts),
+// con sesiones JWT, por lo que no se necesitan tablas de usuarios aquí.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL") // conexión con pooler (runtime)
+  directUrl = env("DIRECT_URL")   // conexión directa, sin pooler (migraciones)
+}
+
+model Person {
+  id        String   @id @default(cuid())
+  nombre    String
+  apellido  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Una persona puede aparecer como asignado principal o como ayudante.
+  asignadoRecords Record[] @relation("Asignado")
+  ayudanteRecords Record[] @relation("Ayudante")
+
+  @@index([nombre, apellido])
+}
+
+model Record {
+  id         String  @id @default(cuid())
+  asignadoId String
+  asignado   Person  @relation("Asignado", fields: [asignadoId], references: [id])
+  ayudanteId String?
+  ayudante   Person? @relation("Ayudante", fields: [ayudanteId], references: [id], onDelete: SetNull)
+
+  fecha      DateTime @db.Date // fecha de la asignación (solo día)
+  sala       String?
+  asignacion String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([fecha])
+  @@index([asignadoId])
+  @@index([ayudanteId])
+  @@index([createdAt])
+}

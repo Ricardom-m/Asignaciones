@@ -1,0 +1,41 @@
+import type { Person as PrismaPerson, Record as PrismaRecord } from "@prisma/client";
+import type { Person, RecordItem } from "@/lib/types";
+
+type RecordWithPeople = PrismaRecord & {
+  asignado: PrismaPerson;
+  ayudante: PrismaPerson | null;
+};
+
+const fullName = (p: PrismaPerson) => `${p.nombre} ${p.apellido}`.trim();
+
+// Una fecha @db.Date vuelve como Date a medianoche UTC → tomamos solo YYYY-MM-DD.
+const toYMD = (d: Date) => d.toISOString().slice(0, 10);
+
+export function serializePerson(p: PrismaPerson): Person {
+  return {
+    id: p.id,
+    nombre: p.nombre,
+    apellido: p.apellido,
+    createdAt: p.createdAt.toISOString(),
+    updatedAt: p.updatedAt.toISOString(),
+  };
+}
+
+export function serializeRecord(r: RecordWithPeople): RecordItem {
+  return {
+    id: r.id,
+    asignadoId: r.asignadoId,
+    asignado: r.asignado ? fullName(r.asignado) : "—",
+    ayudanteId: r.ayudanteId,
+    ayudante: r.ayudante ? fullName(r.ayudante) : null,
+    fecha: toYMD(r.fecha),
+    sala: r.sala,
+    tipo: r.ayudanteId ? "Asignado" : "",
+    asignacion: r.asignacion,
+    createdAt: r.createdAt.toISOString(),
+    updatedAt: r.updatedAt.toISOString(),
+  };
+}
+
+// Include estándar para traer las personas relacionadas en una consulta.
+export const recordInclude = { asignado: true, ayudante: true } as const;

@@ -1,0 +1,53 @@
+import { z } from "zod";
+
+// Fecha en formato YYYY-MM-DD (la que produce <input type="date">).
+const fechaSchema = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/, "Fecha inválida (usa YYYY-MM-DD)");
+
+// ── Personas ──────────────────────────────────────────────
+export const personInput = z.object({
+  nombre: z.string().trim().min(1, "El nombre es obligatorio").max(80),
+  apellido: z.string().trim().min(1, "El apellido es obligatorio").max(80),
+});
+export type PersonInput = z.infer<typeof personInput>;
+
+// ── Registros ─────────────────────────────────────────────
+export const recordInput = z.object({
+  asignadoId: z.string().min(1, "Selecciona el asignado"),
+  ayudanteId: z.string().min(1).nullish(),
+  fecha: fechaSchema,
+  sala: z.string().trim().max(80).nullish(),
+  asignacion: z.string().trim().min(1, "La asignación es obligatoria").max(500),
+});
+export type RecordInput = z.infer<typeof recordInput>;
+
+// ── Importación del JSON de la app vieja (v1) ─────────────
+// Tolerante: acepta el export { records, persons, exportedAt }.
+const legacyPerson = z.object({
+  id: z.string(),
+  nombre: z.string().trim().min(1),
+  apellido: z.string().trim().default(""),
+  createdAt: z.number().optional(),
+});
+
+const legacyRecord = z.object({
+  id: z.string().optional(),
+  asignadoId: z.string().optional(),
+  asignado: z.string().optional(),
+  ayudanteId: z.string().optional().nullable(),
+  ayudante: z.string().optional().nullable(),
+  fecha: z.string().optional(),
+  sala: z.string().optional().nullable(),
+  asignacion: z.string().optional(),
+  createdAt: z.number().optional(),
+  updatedAt: z.number().optional(),
+});
+
+export const importInput = z.object({
+  persons: z.array(legacyPerson).default([]),
+  records: z.array(legacyRecord).default([]),
+});
+export type ImportInput = z.infer<typeof importInput>;
+export type LegacyPerson = z.infer<typeof legacyPerson>;
+export type LegacyRecord = z.infer<typeof legacyRecord>;
