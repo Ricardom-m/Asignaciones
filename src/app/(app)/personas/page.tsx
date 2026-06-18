@@ -17,17 +17,12 @@ export default function PersonasPage() {
   const { roles } = useRoles();
   const toast = useToast();
 
-  const [nombre, setNombre] = useState("");
-  const [apellido, setApellido] = useState("");
-  const [genero, setGenero] = useState<"H" | "M">("H");
-  const [newRoles, setNewRoles] = useState<string[]>([]);
-  const [saving, setSaving] = useState(false);
-
   const [query, setQuery] = useState("");
-  const [roleFilter, setRoleFilter] = useState<string>(""); // "" = todos
+  const [roleFilter, setRoleFilter] = useState("");
   const [showInactive, setShowInactive] = useState(false);
   const [limit, setLimit] = useState(PAGE);
 
+  const [adding, setAdding] = useState(false);
   const [editing, setEditing] = useState<Person | null>(null);
   const [manageRoles, setManageRoles] = useState(false);
 
@@ -42,7 +37,6 @@ export default function PersonasPage() {
   }, [persons, query, roleFilter, showInactive]);
 
   const visible = filtered.slice(0, limit);
-
   const roleCounts = useMemo(() => {
     const m: Record<string, number> = {};
     for (const p of persons) for (const r of p.roles) m[r.id] = (m[r.id] ?? 0) + 1;
@@ -50,28 +44,8 @@ export default function PersonasPage() {
   }, [persons]);
   const activeCount = persons.filter((p) => p.active).length;
 
-  const add = async () => {
-    if (!nombre.trim()) return toast("⚠️ El nombre es obligatorio", "error");
-    if (!apellido.trim()) return toast("⚠️ El apellido es obligatorio", "error");
-    setSaving(true);
-    try {
-      await createPerson({ nombre: nombre.trim(), apellido: apellido.trim(), genero, roleIds: newRoles });
-      await mutate();
-      setNombre("");
-      setApellido("");
-      setGenero("H");
-      setNewRoles([]);
-      toast("✅ Persona agregada", "success");
-    } catch (e) {
-      toast("❌ " + (e as Error).message, "error");
-    } finally {
-      setSaving(false);
-    }
-  };
-
   const remove = async (p: Person) => {
-    if (!confirm(`¿Eliminar a ${p.nombre} ${p.apellido}? (Si solo quieres ocultarla, mejor desactívala.)`))
-      return;
+    if (!confirm(`¿Eliminar a ${p.nombre} ${p.apellido}? (Si solo quieres ocultarla, mejor desactívala.)`)) return;
     try {
       await deletePerson(p.id);
       await mutate();
@@ -87,144 +61,115 @@ export default function PersonasPage() {
         title="Personas"
         subtitle={`${activeCount} activas · ${persons.length} en total`}
         right={
-          <button className="btn btn-ghost btn-sm" onClick={() => setManageRoles(true)}>
-            🏷️ Roles
-          </button>
+          <>
+            <button className="btn btn-primary btn-sm" onClick={() => setAdding(true)}>
+              + Nueva
+            </button>
+            <button className="btn btn-ghost btn-sm" onClick={() => setManageRoles(true)}>
+              🏷️ Roles
+            </button>
+          </>
         }
       />
-      <div className="content-card">
-        <div className="section-label">Nueva persona</div>
-        <div className="form-grid">
-          <div className="row-2">
-            <div className="field-group">
-              <label className="field-label">
-                Nombre <span className="req">*</span>
-              </label>
-              <input type="text" value={nombre} onChange={(e) => setNombre(e.target.value)} placeholder="Ej. Juan" autoComplete="off" />
-            </div>
-            <div className="field-group">
-              <label className="field-label">
-                Apellido <span className="req">*</span>
-              </label>
-              <input type="text" value={apellido} onChange={(e) => setApellido(e.target.value)} placeholder="Ej. Pérez" autoComplete="off" onKeyDown={(e) => e.key === "Enter" && add()} />
-            </div>
-          </div>
-          <div className="field-group">
-            <label className="field-label">Género</label>
-            <GeneroToggle value={genero} onChange={setGenero} />
-          </div>
-          <div className="field-group">
-            <label className="field-label">Roles</label>
-            <RoleMultiSelect roles={roles} selected={newRoles} onChange={setNewRoles} />
-          </div>
-          <button className="btn btn-primary" onClick={add} disabled={saving}>
-            {saving ? "Agregando…" : "Agregar persona"}
-          </button>
-        </div>
 
-        <div className="divider" />
-        <div className="section-label">Personas registradas</div>
-
-        {/* Filtros por rol */}
-        <div className="role-filter-bar">
+      {/* Filtros por rol */}
+      <div className="role-filter-bar">
+        <button
+          className="role-chip"
+          onClick={() => setRoleFilter("")}
+          style={!roleFilter ? { color: "var(--accent)", borderColor: "var(--accent)", background: "var(--accent-dim)" } : undefined}
+        >
+          Todos
+        </button>
+        {roles.map((r) => (
           <button
+            key={r.id}
             className="role-chip"
-            onClick={() => setRoleFilter("")}
-            style={!roleFilter ? { color: "var(--accent)", borderColor: "var(--accent)", background: "var(--accent-dim)" } : undefined}
+            onClick={() => setRoleFilter(roleFilter === r.id ? "" : r.id)}
+            style={roleFilter === r.id ? { color: r.color, borderColor: r.color, background: r.color + "22" } : undefined}
           >
-            Todos
+            {r.nombre} <span style={{ opacity: 0.6, fontFamily: "var(--mono)" }}>{roleCounts[r.id] ?? 0}</span>
           </button>
-          {roles.map((r) => (
-            <button
-              key={r.id}
-              className="role-chip"
-              onClick={() => setRoleFilter(roleFilter === r.id ? "" : r.id)}
-              style={roleFilter === r.id ? { color: r.color, borderColor: r.color, background: r.color + "22" } : undefined}
-            >
-              {r.nombre} <span style={{ opacity: 0.6, fontFamily: "var(--mono)" }}>{roleCounts[r.id] ?? 0}</span>
-            </button>
-          ))}
-        </div>
-
-        <div className="persons-search-wrap">
-          <span className="persons-search-ico">⌕</span>
-          <input
-            className="persons-search-input"
-            type="text"
-            placeholder="Buscar persona…"
-            value={query}
-            onChange={(e) => {
-              setQuery(e.target.value);
-              setLimit(PAGE);
-            }}
-            autoComplete="off"
-          />
-        </div>
-
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-          <div className="persons-count" style={{ margin: 0 }}>
-            {filtered.length} persona{filtered.length !== 1 ? "s" : ""}
-          </div>
-          <label className="switch">
-            <input type="checkbox" checked={showInactive} onChange={(e) => setShowInactive(e.target.checked)} />
-            <span className="track" />
-            Mostrar inactivos
-          </label>
-        </div>
-
-        {filtered.length === 0 ? (
-          <div className="empty-state">
-            <div className="empty-icon">👤</div>
-            <h3>Sin coincidencias</h3>
-            <p>Ajusta el filtro o agrega personas.</p>
-          </div>
-        ) : (
-          <div className="persons-list">
-            {visible.map((p) => (
-              <div className={`person-row anim-slide${p.active ? "" : " inactive"}`} key={p.id}>
-                <div className="person-main">
-                  <span className="person-name">
-                    {p.nombre} {p.apellido}
-                    {!p.active && <span className="person-badge-inactive">inactivo</span>}
-                  </span>
-                  {p.roles.length > 0 && (
-                    <div className="person-roles">
-                      {p.roles.map((r) => (
-                        <RoleBadge key={r.id} role={r} />
-                      ))}
-                    </div>
-                  )}
-                </div>
-                <div className="person-actions">
-                  <button className="btn btn-edit btn-sm" onClick={() => setEditing(p)}>
-                    Editar
-                  </button>
-                  <button className="btn btn-danger btn-sm" onClick={() => remove(p)}>
-                    Borrar
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {limit < filtered.length && (
-          <div style={{ textAlign: "center", padding: "10px 0" }}>
-            <button className="btn btn-ghost" style={{ width: "auto", padding: "8px 24px", fontSize: ".78rem" }} onClick={() => setLimit((l) => l + PAGE)}>
-              Cargar más ↓
-            </button>
-          </div>
-        )}
+        ))}
       </div>
 
-      {editing && (
-        <EditPersonModal
-          person={editing}
-          onClose={() => setEditing(null)}
-          onSaved={() => {
-            mutate();
-            setEditing(null);
+      <div className="persons-search-wrap">
+        <span className="persons-search-ico">⌕</span>
+        <input
+          className="persons-search-input"
+          type="text"
+          placeholder="Buscar persona…"
+          value={query}
+          onChange={(e) => {
+            setQuery(e.target.value);
+            setLimit(PAGE);
           }}
+          autoComplete="off"
+        />
+      </div>
+
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+        <div className="persons-count" style={{ margin: 0 }}>
+          {filtered.length} persona{filtered.length !== 1 ? "s" : ""}
+        </div>
+        <label className="switch">
+          <input type="checkbox" checked={showInactive} onChange={(e) => setShowInactive(e.target.checked)} />
+          <span className="track" />
+          Mostrar inactivos
+        </label>
+      </div>
+
+      {filtered.length === 0 ? (
+        <div className="empty-state">
+          <div className="empty-icon">👤</div>
+          <h3>Sin coincidencias</h3>
+          <p>Ajusta el filtro o agrega personas.</p>
+        </div>
+      ) : (
+        <div className="persons-list">
+          {visible.map((p) => (
+            <div className={`person-row anim-slide${p.active ? "" : " inactive"}`} key={p.id}>
+              <div className="person-main">
+                <span className="person-name">
+                  {p.nombre} {p.apellido}
+                  {!p.active && <span className="person-badge-inactive">inactivo</span>}
+                </span>
+                {p.roles.length > 0 && (
+                  <div className="person-roles">
+                    {p.roles.map((r) => (
+                      <RoleBadge key={r.id} role={r} />
+                    ))}
+                  </div>
+                )}
+              </div>
+              <div className="person-actions">
+                <button className="btn btn-edit btn-sm" onClick={() => setEditing(p)}>
+                  Editar
+                </button>
+                <button className="btn btn-danger btn-sm" onClick={() => remove(p)}>
+                  Borrar
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {limit < filtered.length && (
+        <div style={{ textAlign: "center", padding: "12px 0" }}>
+          <button className="btn btn-ghost" style={{ width: "auto", padding: "8px 24px", fontSize: ".78rem" }} onClick={() => setLimit((l) => l + PAGE)}>
+            Cargar más ↓
+          </button>
+        </div>
+      )}
+
+      {adding && <PersonModal roles={roles} onClose={() => setAdding(false)} onSaved={() => { mutate(); setAdding(false); }} />}
+      {editing && (
+        <PersonModal
+          person={editing}
+          roles={roles}
+          onClose={() => setEditing(null)}
+          onSaved={() => { mutate(); setEditing(null); }}
         />
       )}
       {manageRoles && <RolesManager onClose={() => setManageRoles(false)} />}
@@ -232,22 +177,25 @@ export default function PersonasPage() {
   );
 }
 
-function EditPersonModal({
+// Modal de alta/edición de persona (mismo formulario para ambos).
+function PersonModal({
   person,
+  roles,
   onClose,
   onSaved,
 }: {
-  person: Person;
+  person?: Person;
+  roles: { id: string; nombre: string; color: string; active: boolean }[];
   onClose: () => void;
   onSaved: () => void;
 }) {
   const toast = useToast();
-  const { roles } = useRoles();
-  const [nombre, setNombre] = useState(person.nombre);
-  const [apellido, setApellido] = useState(person.apellido);
-  const [genero, setGenero] = useState<"H" | "M">(person.genero ?? "H");
-  const [roleIds, setRoleIds] = useState<string[]>(person.roles.map((r) => r.id));
-  const [active, setActive] = useState(person.active);
+  const isEdit = !!person;
+  const [nombre, setNombre] = useState(person?.nombre ?? "");
+  const [apellido, setApellido] = useState(person?.apellido ?? "");
+  const [genero, setGenero] = useState<"H" | "M">(person?.genero ?? "H");
+  const [roleIds, setRoleIds] = useState<string[]>(person?.roles.map((r) => r.id) ?? []);
+  const [active, setActive] = useState(person?.active ?? true);
   const [saving, setSaving] = useState(false);
 
   const save = async () => {
@@ -255,8 +203,13 @@ function EditPersonModal({
     if (!apellido.trim()) return toast("⚠️ El apellido es obligatorio", "error");
     setSaving(true);
     try {
-      await updatePerson(person.id, { nombre: nombre.trim(), apellido: apellido.trim(), genero, roleIds, active });
-      toast("✏️ Persona actualizada", "success");
+      if (isEdit) {
+        await updatePerson(person!.id, { nombre: nombre.trim(), apellido: apellido.trim(), genero, roleIds, active });
+        toast("✏️ Persona actualizada", "success");
+      } else {
+        await createPerson({ nombre: nombre.trim(), apellido: apellido.trim(), genero, roleIds });
+        toast("✅ Persona agregada", "success");
+      }
       onSaved();
     } catch (e) {
       toast("❌ " + (e as Error).message, "error");
@@ -266,20 +219,27 @@ function EditPersonModal({
   };
 
   return (
-    <Modal title="Editar persona" onClose={onClose}>
+    <Modal title={isEdit ? "Editar persona" : "Nueva persona"} onClose={onClose}>
       <div className="form-grid">
         <div className="row-2">
           <div className="field-group">
             <label className="field-label">
               Nombre <span className="req">*</span>
             </label>
-            <input type="text" value={nombre} onChange={(e) => setNombre(e.target.value)} autoComplete="off" />
+            <input type="text" value={nombre} onChange={(e) => setNombre(e.target.value)} placeholder="Ej. Juan" autoComplete="off" autoFocus />
           </div>
           <div className="field-group">
             <label className="field-label">
               Apellido <span className="req">*</span>
             </label>
-            <input type="text" value={apellido} onChange={(e) => setApellido(e.target.value)} autoComplete="off" />
+            <input
+              type="text"
+              value={apellido}
+              onChange={(e) => setApellido(e.target.value)}
+              placeholder="Ej. Pérez"
+              autoComplete="off"
+              onKeyDown={(e) => e.key === "Enter" && save()}
+            />
           </div>
         </div>
         <div className="field-group">
@@ -290,17 +250,19 @@ function EditPersonModal({
           <label className="field-label">Roles</label>
           <RoleMultiSelect roles={roles} selected={roleIds} onChange={setRoleIds} />
         </div>
-        <div className="field-group">
-          <label className="switch" style={{ fontSize: ".8rem" }}>
-            <input type="checkbox" checked={active} onChange={(e) => setActive(e.target.checked)} />
-            <span className="track" />
-            {active ? "Activa (visible y asignable)" : "Inactiva (oculta, sin borrar)"}
-          </label>
-        </div>
+        {isEdit && (
+          <div className="field-group">
+            <label className="switch" style={{ fontSize: ".8rem" }}>
+              <input type="checkbox" checked={active} onChange={(e) => setActive(e.target.checked)} />
+              <span className="track" />
+              {active ? "Activa (visible y asignable)" : "Inactiva (oculta, sin borrar)"}
+            </label>
+          </div>
+        )}
         <div className="divider" />
         <div className="form-actions">
           <button className="btn btn-primary" onClick={save} disabled={saving}>
-            {saving ? "Guardando…" : "Guardar cambios"}
+            {saving ? "Guardando…" : isEdit ? "Guardar cambios" : "Agregar persona"}
           </button>
           <button className="btn btn-ghost" onClick={onClose}>
             Cancelar
