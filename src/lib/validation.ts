@@ -14,6 +14,19 @@ export const roleInput = z.object({
 });
 export type RoleInput = z.infer<typeof roleInput>;
 
+// ── Reuniones ─────────────────────────────────────────────
+export const meetingInput = z.object({
+  fecha: fechaSchema,
+  nota: z.string().trim().max(120).nullish(),
+});
+export type MeetingInput = z.infer<typeof meetingInput>;
+
+export const meetingBulkInput = z.object({
+  fechas: z.array(fechaSchema).min(1).max(60),
+  nota: z.string().trim().max(120).nullish(),
+});
+export type MeetingBulkInput = z.infer<typeof meetingBulkInput>;
+
 // ── Personas ──────────────────────────────────────────────
 export const personInput = z.object({
   nombre: z.string().trim().min(1, "El nombre es obligatorio").max(80),

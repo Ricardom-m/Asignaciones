@@ -42,6 +42,16 @@ model Person {
   @@index([nombre, apellido])
 }
 
+model Meeting {
+  id        String   @id @default(cuid())
+  fecha     DateTime @unique @db.Date // una reunión por fecha
+  nota      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([fecha])
+}
+
 model Record {
   id         String  @id @default(cuid())
   asignadoId String

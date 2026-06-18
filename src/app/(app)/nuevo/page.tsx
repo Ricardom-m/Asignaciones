@@ -2,12 +2,12 @@
 
 import { useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
-import { usePersons, useRecords } from "@/lib/hooks";
+import { usePersons, useRecords, useMeetings } from "@/lib/hooks";
 import { useToast } from "@/components/Toast";
 import { PageHeader } from "@/components/PageHeader";
 import { PersonSelect } from "@/components/PersonSelect";
 import { RoleBadge } from "@/components/RoleBadge";
-import { createRecord, fmtDate, todayYMD } from "@/lib/client";
+import { createRecord, fmtDate, todayYMD, addDaysYMD, fmtShort } from "@/lib/client";
 import { suggestHelpers } from "@/lib/suggest";
 
 const SALAS = ["Sala A", "Sala B", "Otro"];
@@ -21,16 +21,10 @@ interface FormState {
 }
 const empty = (): FormState => ({ asignadoId: "", ayudanteId: "", fecha: "", sala: "Sala A", asignacion: "" });
 
-// Suma días a una fecha YYYY-MM-DD (en UTC, consistente con todayYMD()).
-function addDaysYMD(ymd: string, n: number): string {
-  const d = new Date(ymd + "T00:00:00Z");
-  d.setUTCDate(d.getUTCDate() + n);
-  return d.toISOString().slice(0, 10);
-}
-
 export default function NuevoPage() {
   const { persons } = usePersons();
   const { records } = useRecords();
+  const { meetings } = useMeetings();
   const { mutate } = useSWRConfig();
   const toast = useToast();
   const [form, setForm] = useState<FormState>(empty);
@@ -39,15 +33,20 @@ export default function NuevoPage() {
   const activePersons = useMemo(() => persons.filter((p) => p.active), [persons]);
   const patch = (p: Partial<FormState>) => setForm((f) => ({ ...f, ...p }));
 
-  // Chips rápidos de fecha
+  // Chips rápidos de fecha: Hoy, Mañana y las próximas reuniones.
   const today = todayYMD();
-  const day = new Date(today + "T00:00:00Z").getUTCDay();
-  const nextSunday = addDaysYMD(today, (7 - day) % 7);
-  const dateChips = [
-    { label: "Hoy", ymd: today },
-    { label: "Mañana", ymd: addDaysYMD(today, 1) },
-    { label: "Domingo", ymd: nextSunday },
-  ];
+  const manana = addDaysYMD(today, 1);
+  const dateChips = useMemo(() => {
+    const base = [
+      { label: "Hoy", ymd: today },
+      { label: "Mañana", ymd: manana },
+    ];
+    const reuniones = meetings
+      .filter((m) => m.fecha >= today && m.fecha !== today && m.fecha !== manana)
+      .slice(0, 4)
+      .map((m) => ({ label: fmtShort(m.fecha), ymd: m.fecha }));
+    return [...base, ...reuniones];
+  }, [meetings, today, manana]);
 
   // Sugerencias de ayudante (personas con quienes casi no ha trabajado)
   const suggestions = useMemo(

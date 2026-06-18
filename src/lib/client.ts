@@ -1,4 +1,4 @@
-import type { Person, RecordItem, Role } from "@/lib/types";
+import type { Person, RecordItem, Role, Meeting } from "@/lib/types";
 
 // Wrapper de fetch que lanza con el mensaje de error de la API.
 export async function apiFetch<T>(url: string, init?: RequestInit): Promise<T> {
@@ -41,6 +41,16 @@ export const updateRole = (id: string, data: { nombre?: string; color?: string; 
 export const deleteRole = (id: string) =>
   apiFetch<{ deleted: boolean }>(`/api/roles/${id}`, { method: "DELETE" });
 
+// ── Reuniones ─────────────────────────────────────────────
+export const createMeetings = (fechas: string[], nota?: string) =>
+  apiFetch<Meeting[]>("/api/meetings", { method: "POST", body: JSON.stringify({ fechas, nota }) });
+
+export const updateMeeting = (id: string, data: { fecha?: string; nota?: string | null }) =>
+  apiFetch<Meeting>(`/api/meetings/${id}`, { method: "PATCH", body: JSON.stringify(data) });
+
+export const deleteMeeting = (id: string) =>
+  apiFetch<{ deleted: boolean }>(`/api/meetings/${id}`, { method: "DELETE" });
+
 // ── Registros ─────────────────────────────────────────────
 export interface RecordPayload {
   asignadoId: string;
@@ -74,3 +84,32 @@ export function fmtDT(iso?: string | null): string {
   );
 }
 export const todayYMD = () => new Date().toISOString().slice(0, 10);
+
+// Suma días a una fecha YYYY-MM-DD (en UTC, consistente con todayYMD()).
+export function addDaysYMD(ymd: string, n: number): string {
+  const d = new Date(ymd + "T00:00:00Z");
+  d.setUTCDate(d.getUTCDate() + n);
+  return d.toISOString().slice(0, 10);
+}
+
+const DIAS = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
+export const weekdayOf = (ymd: string) => new Date(ymd + "T00:00:00Z").getUTCDay();
+export const weekdayLabel = (n: number) => DIAS[n] ?? "";
+
+// "Jue 19 jun" — etiqueta corta con día de la semana.
+export function fmtShort(ymd: string): string {
+  const d = new Date(ymd + "T00:00:00Z");
+  const mes = d.toLocaleDateString("es-MX", { month: "short", timeZone: "UTC" }).replace(".", "");
+  return `${weekdayLabel(d.getUTCDay())} ${d.getUTCDate()} ${mes}`;
+}
+
+// Genera las fechas (YMD) de los días de la semana indicados en las próximas N semanas.
+export function nextWeekdayDates(weekdays: number[], weeks: number, from = todayYMD()): string[] {
+  const set = new Set(weekdays);
+  const out: string[] = [];
+  for (let i = 0; i < weeks * 7; i++) {
+    const ymd = addDaysYMD(from, i);
+    if (set.has(weekdayOf(ymd))) out.push(ymd);
+  }
+  return out;
+}

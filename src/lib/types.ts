@@ -7,6 +7,12 @@ export interface Role {
   active: boolean;
 }
 
+export interface Meeting {
+  id: string;
+  fecha: string; // YYYY-MM-DD
+  nota: string | null;
+}
+
 export interface Person {
   id: string;
   nombre: string;

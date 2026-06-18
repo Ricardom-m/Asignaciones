@@ -425,6 +425,15 @@ input:focus, select:focus, .list-search-input:focus, .sel-search:focus, .cmd-inp
   .record-card:hover, .person-row:hover, .stat-card:hover, .suggest-chip:hover { transform:none; }
 }
 
+/* REUNIONES */
+.meeting-row { display:flex; align-items:center; gap:10px; background:var(--surface); border:1px solid var(--border); border-radius:var(--r2); padding:9px 11px; }
+.meeting-row:hover { border-color:var(--border2); }
+.meeting-day { font-size:.62rem; font-family:var(--mono); color:var(--accent); border:1px solid var(--border); background:var(--surface2); border-radius:6px; padding:3px 8px; flex-shrink:0; min-width:38px; text-align:center; }
+.meeting-date { flex:1; min-width:0; }
+
+/* Barra inferior con 5 pestañas: etiquetas un poco más chicas en móvil. */
+@media (max-width:520px) { .nav-btn { font-size:.55rem; } .nav-btn svg { width:18px; height:18px; } }
+
 /* SCROLLBAR */
 ::-webkit-scrollbar { width:5px; height:5px; }
 ::-webkit-scrollbar-track { background:transparent; }
