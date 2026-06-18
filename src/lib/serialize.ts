@@ -29,6 +29,7 @@ export function serializePerson(p: PrismaPerson & { roles?: PrismaRole[] }): Per
     id: p.id,
     nombre: p.nombre,
     apellido: p.apellido,
+    genero: p.genero,
     active: p.active,
     roles: (p.roles ?? []).map(serializeRole),
     createdAt: p.createdAt.toISOString(),

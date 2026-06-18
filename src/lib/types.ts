@@ -13,10 +13,13 @@ export interface Meeting {
   nota: string | null;
 }
 
+export type Genero = "H" | "M";
+
 export interface Person {
   id: string;
   nombre: string;
   apellido: string;
+  genero: Genero | null;
   active: boolean;
   roles: Role[];
   createdAt: string;

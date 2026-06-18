@@ -24,10 +24,16 @@ model Role {
   persons Person[] @relation("PersonRoles")
 }
 
+enum Genero {
+  H // Hombre
+  M // Mujer
+}
+
 model Person {
   id        String   @id @default(cuid())
   nombre    String
   apellido  String
+  genero    Genero? // para la compatibilidad de pareja en las sugerencias
   active    Boolean  @default(true) // desactivar = ocultar sin borrar (soft-delete)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

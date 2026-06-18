@@ -27,11 +27,12 @@ export async function POST(req: Request) {
   if (!parsed.success)
     return fail("Datos inválidos", 422, parsed.error.flatten().fieldErrors);
 
-  const { nombre, apellido, roleIds, active } = parsed.data;
+  const { nombre, apellido, genero, roleIds, active } = parsed.data;
   const person = await prisma.person.create({
     data: {
       nombre,
       apellido,
+      ...(genero !== undefined ? { genero } : {}),
       ...(active !== undefined ? { active } : {}),
       ...(roleIds?.length ? { roles: { connect: roleIds.map((id) => ({ id })) } } : {}),
     },

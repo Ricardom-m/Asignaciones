@@ -96,7 +96,9 @@ export function suggestHelpers(opts: {
   if (!asignadoId) return [];
 
   const asignado = persons.find((p) => p.id === asignadoId);
-  const asignadoRoleIds = new Set((asignado?.roles ?? []).map((r) => r.id));
+  const asignadoGenero = asignado?.genero ?? null;
+  const isNombrado = (p: Person) => p.roles.some((r) => r.nombre === "Nombrados");
+  const asignadoIsNombrado = asignado ? isNombrado(asignado) : false;
 
   const pairs = pairCountsFor(asignadoId, records);
   const last = lastFechaMap(records);
@@ -105,11 +107,18 @@ export function suggestHelpers(opts: {
 
   let pool = persons.filter((p) => p.id !== asignadoId && p.active && !busyOnDate.has(p.id));
 
-  // Compatibilidad por rol (con fallback si nadie coincide).
-  if (asignadoRoleIds.size > 0) {
-    const sameRole = pool.filter((p) => p.roles.some((r) => asignadoRoleIds.has(r.id)));
-    if (sameRole.length > 0) pool = sameRole;
-  }
+  // Compatibilidad por género: mismo género que el asignado, salvo los Nombrados
+  // (si el asignado O el candidato es Nombrado, va con cualquiera). Con fallback
+  // si nadie coincide (no dejar la lista vacía).
+  const compatible = pool.filter(
+    (p) =>
+      asignadoIsNombrado ||
+      isNombrado(p) ||
+      !asignadoGenero ||
+      !p.genero ||
+      p.genero === asignadoGenero,
+  );
+  if (compatible.length > 0) pool = compatible;
 
   return pool
     .map((person) => ({

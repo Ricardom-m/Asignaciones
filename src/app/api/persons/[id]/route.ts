@@ -21,12 +21,13 @@ export async function PATCH(req: Request, { params }: Params) {
   const exists = await prisma.person.findUnique({ where: { id } });
   if (!exists) return fail("Persona no encontrada", 404);
 
-  const { nombre, apellido, roleIds, active } = parsed.data;
+  const { nombre, apellido, genero, roleIds, active } = parsed.data;
   const person = await prisma.person.update({
     where: { id },
     data: {
       nombre,
       apellido,
+      ...(genero !== undefined ? { genero } : {}),
       ...(active !== undefined ? { active } : {}),
       // `set` reemplaza el conjunto de roles por el indicado (asignar/quitar).
       ...(roleIds !== undefined ? { roles: { set: roleIds.map((rid) => ({ id: rid })) } } : {}),

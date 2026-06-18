@@ -31,6 +31,7 @@ export type MeetingBulkInput = z.infer<typeof meetingBulkInput>;
 export const personInput = z.object({
   nombre: z.string().trim().min(1, "El nombre es obligatorio").max(80),
   apellido: z.string().trim().min(1, "El apellido es obligatorio").max(80),
+  genero: z.enum(["H", "M"]).nullish(),
   roleIds: z.array(z.string()).optional(),
   active: z.boolean().optional(),
 });

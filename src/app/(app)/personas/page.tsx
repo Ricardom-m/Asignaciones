@@ -19,6 +19,7 @@ export default function PersonasPage() {
 
   const [nombre, setNombre] = useState("");
   const [apellido, setApellido] = useState("");
+  const [genero, setGenero] = useState<"H" | "M">("H");
   const [newRoles, setNewRoles] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
 
@@ -54,10 +55,11 @@ export default function PersonasPage() {
     if (!apellido.trim()) return toast("⚠️ El apellido es obligatorio", "error");
     setSaving(true);
     try {
-      await createPerson({ nombre: nombre.trim(), apellido: apellido.trim(), roleIds: newRoles });
+      await createPerson({ nombre: nombre.trim(), apellido: apellido.trim(), genero, roleIds: newRoles });
       await mutate();
       setNombre("");
       setApellido("");
+      setGenero("H");
       setNewRoles([]);
       toast("✅ Persona agregada", "success");
     } catch (e) {
@@ -106,6 +108,10 @@ export default function PersonasPage() {
               </label>
               <input type="text" value={apellido} onChange={(e) => setApellido(e.target.value)} placeholder="Ej. Pérez" autoComplete="off" onKeyDown={(e) => e.key === "Enter" && add()} />
             </div>
+          </div>
+          <div className="field-group">
+            <label className="field-label">Género</label>
+            <GeneroToggle value={genero} onChange={setGenero} />
           </div>
           <div className="field-group">
             <label className="field-label">Roles</label>
@@ -239,6 +245,7 @@ function EditPersonModal({
   const { roles } = useRoles();
   const [nombre, setNombre] = useState(person.nombre);
   const [apellido, setApellido] = useState(person.apellido);
+  const [genero, setGenero] = useState<"H" | "M">(person.genero ?? "H");
   const [roleIds, setRoleIds] = useState<string[]>(person.roles.map((r) => r.id));
   const [active, setActive] = useState(person.active);
   const [saving, setSaving] = useState(false);
@@ -248,7 +255,7 @@ function EditPersonModal({
     if (!apellido.trim()) return toast("⚠️ El apellido es obligatorio", "error");
     setSaving(true);
     try {
-      await updatePerson(person.id, { nombre: nombre.trim(), apellido: apellido.trim(), roleIds, active });
+      await updatePerson(person.id, { nombre: nombre.trim(), apellido: apellido.trim(), genero, roleIds, active });
       toast("✏️ Persona actualizada", "success");
       onSaved();
     } catch (e) {
@@ -276,6 +283,10 @@ function EditPersonModal({
           </div>
         </div>
         <div className="field-group">
+          <label className="field-label">Género</label>
+          <GeneroToggle value={genero} onChange={setGenero} />
+        </div>
+        <div className="field-group">
           <label className="field-label">Roles</label>
           <RoleMultiSelect roles={roles} selected={roleIds} onChange={setRoleIds} />
         </div>
@@ -297,5 +308,27 @@ function EditPersonModal({
         </div>
       </div>
     </Modal>
+  );
+}
+
+function GeneroToggle({ value, onChange }: { value: "H" | "M"; onChange: (g: "H" | "M") => void }) {
+  const opts: { v: "H" | "M"; label: string }[] = [
+    { v: "H", label: "Hombre" },
+    { v: "M", label: "Mujer" },
+  ];
+  return (
+    <div className="role-chips">
+      {opts.map((o) => (
+        <button
+          key={o.v}
+          type="button"
+          className="role-chip"
+          onClick={() => onChange(o.v)}
+          style={value === o.v ? { color: "var(--accent)", borderColor: "var(--accent)", background: "var(--accent-dim)" } : undefined}
+        >
+          {o.label}
+        </button>
+      ))}
+    </div>
   );
 }
