@@ -417,7 +417,8 @@ input[type=date]::-webkit-calendar-picker-indicator { filter:invert(.55); }
 .hp-avatar { width:30px; height:30px; border-radius:50%; background:var(--surface2); border:1px solid var(--border2); display:flex; align-items:center; justify-content:center; font-size:.66rem; font-weight:600; color:var(--text2); flex-shrink:0; }
 .hp-main { flex:1; min-width:0; }
 .hp-name { display:flex; align-items:center; gap:6px; font-size:.82rem; font-weight:500; }
-.hp-gender { font-size:.8rem; }
+.hp-gender { display:inline-flex; align-items:center; }
+.hp-gender svg { width:15px; height:15px; }
 .hp-gender.h { color:var(--accent); }
 .hp-gender.m { color:#e87db5; }
 .hp-sub { font-size:.62rem; color:var(--text3); margin-top:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
