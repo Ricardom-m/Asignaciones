@@ -7,6 +7,7 @@ import { createPerson, updatePerson, deletePerson } from "@/lib/client";
 import { RoleBadge, RoleMultiSelect } from "@/components/RoleBadge";
 import { RolesManager } from "@/components/RolesManager";
 import { PageHeader } from "@/components/PageHeader";
+import { Modal } from "@/components/Modal";
 import type { Person } from "@/lib/types";
 
 const PAGE = 30;
@@ -258,51 +259,43 @@ function EditPersonModal({
   };
 
   return (
-    <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="modal">
-        <div className="modal-header">
-          <span className="modal-title">Editar persona</span>
-          <button className="modal-close" onClick={onClose}>
-            ✕
+    <Modal title="Editar persona" onClose={onClose}>
+      <div className="form-grid">
+        <div className="row-2">
+          <div className="field-group">
+            <label className="field-label">
+              Nombre <span className="req">*</span>
+            </label>
+            <input type="text" value={nombre} onChange={(e) => setNombre(e.target.value)} autoComplete="off" />
+          </div>
+          <div className="field-group">
+            <label className="field-label">
+              Apellido <span className="req">*</span>
+            </label>
+            <input type="text" value={apellido} onChange={(e) => setApellido(e.target.value)} autoComplete="off" />
+          </div>
+        </div>
+        <div className="field-group">
+          <label className="field-label">Roles</label>
+          <RoleMultiSelect roles={roles} selected={roleIds} onChange={setRoleIds} />
+        </div>
+        <div className="field-group">
+          <label className="switch" style={{ fontSize: ".8rem" }}>
+            <input type="checkbox" checked={active} onChange={(e) => setActive(e.target.checked)} />
+            <span className="track" />
+            {active ? "Activa (visible y asignable)" : "Inactiva (oculta, sin borrar)"}
+          </label>
+        </div>
+        <div className="divider" />
+        <div className="form-actions">
+          <button className="btn btn-primary" onClick={save} disabled={saving}>
+            {saving ? "Guardando…" : "Guardar cambios"}
+          </button>
+          <button className="btn btn-ghost" onClick={onClose}>
+            Cancelar
           </button>
         </div>
-        <div className="form-grid">
-          <div className="row-2">
-            <div className="field-group">
-              <label className="field-label">
-                Nombre <span className="req">*</span>
-              </label>
-              <input type="text" value={nombre} onChange={(e) => setNombre(e.target.value)} autoComplete="off" />
-            </div>
-            <div className="field-group">
-              <label className="field-label">
-                Apellido <span className="req">*</span>
-              </label>
-              <input type="text" value={apellido} onChange={(e) => setApellido(e.target.value)} autoComplete="off" />
-            </div>
-          </div>
-          <div className="field-group">
-            <label className="field-label">Roles</label>
-            <RoleMultiSelect roles={roles} selected={roleIds} onChange={setRoleIds} />
-          </div>
-          <div className="field-group">
-            <label className="switch" style={{ fontSize: ".8rem" }}>
-              <input type="checkbox" checked={active} onChange={(e) => setActive(e.target.checked)} />
-              <span className="track" />
-              {active ? "Activa (visible y asignable)" : "Inactiva (oculta, sin borrar)"}
-            </label>
-          </div>
-          <div className="divider" />
-          <div className="form-actions">
-            <button className="btn btn-primary" onClick={save} disabled={saving}>
-              {saving ? "Guardando…" : "Guardar cambios"}
-            </button>
-            <button className="btn btn-ghost" onClick={onClose}>
-              Cancelar
-            </button>
-          </div>
-        </div>
       </div>
-    </div>
+    </Modal>
   );
 }

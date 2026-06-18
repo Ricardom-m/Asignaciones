@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useSWRConfig } from "swr";
 import { RecordFields, type RecordFormState } from "@/components/RecordFields";
 import { useToast } from "@/components/Toast";
+import { Modal } from "@/components/Modal";
 import { updateRecord } from "@/lib/client";
 import type { Person, RecordItem } from "@/lib/types";
 
@@ -56,27 +57,19 @@ export function EditRecordModal({ rec, persons, onClose }: Props) {
   };
 
   return (
-    <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="modal">
-        <div className="modal-header">
-          <span className="modal-title">Editar registro</span>
-          <button className="modal-close" onClick={onClose}>
-            ✕
+    <Modal title="Editar registro" onClose={onClose}>
+      <div className="form-grid">
+        <RecordFields persons={formPersons} state={form} onChange={patch} />
+        <div className="divider" />
+        <div className="form-actions">
+          <button className="btn btn-primary" onClick={save} disabled={saving}>
+            {saving ? "Guardando…" : "Guardar cambios"}
+          </button>
+          <button className="btn btn-ghost" onClick={onClose}>
+            Cancelar
           </button>
         </div>
-        <div className="form-grid">
-          <RecordFields persons={formPersons} state={form} onChange={patch} />
-          <div className="divider" />
-          <div className="form-actions">
-            <button className="btn btn-primary" onClick={save} disabled={saving}>
-              {saving ? "Guardando…" : "Guardar cambios"}
-            </button>
-            <button className="btn btn-ghost" onClick={onClose}>
-              Cancelar
-            </button>
-          </div>
-        </div>
       </div>
-    </div>
+    </Modal>
   );
 }

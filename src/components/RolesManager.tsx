@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRoles } from "@/lib/hooks";
 import { useToast } from "@/components/Toast";
+import { Modal } from "@/components/Modal";
 import { createRole, updateRole, deleteRole } from "@/lib/client";
 import type { Role } from "@/lib/types";
 
@@ -29,48 +30,39 @@ export function RolesManager({ onClose }: { onClose: () => void }) {
   };
 
   return (
-    <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="modal">
-        <div className="modal-header">
-          <span className="modal-title">Gestionar roles</span>
-          <button className="modal-close" onClick={onClose}>
-            ✕
+    <Modal title="Gestionar roles" onClose={onClose}>
+      <div className="form-grid">
+        <div className="section-label">Nuevo rol</div>
+        <div className="role-manage-row">
+          <input
+            type="color"
+            value={color}
+            onChange={(e) => setColor(e.target.value)}
+            title="Color del distintivo"
+          />
+          <input
+            className="role-name-input"
+            type="text"
+            placeholder="Nombre del rol (ej. Acomodadores)"
+            value={nombre}
+            onChange={(e) => setNombre(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && add()}
+            autoComplete="off"
+          />
+          <button className="btn btn-primary btn-sm" onClick={add} disabled={busy}>
+            Agregar
           </button>
         </div>
 
-        <div className="form-grid">
-          <div className="section-label">Nuevo rol</div>
-          <div className="role-manage-row">
-            <input
-              type="color"
-              value={color}
-              onChange={(e) => setColor(e.target.value)}
-              title="Color del distintivo"
-            />
-            <input
-              className="role-name-input"
-              type="text"
-              placeholder="Nombre del rol (ej. Acomodadores)"
-              value={nombre}
-              onChange={(e) => setNombre(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && add()}
-              autoComplete="off"
-            />
-            <button className="btn btn-primary btn-sm" onClick={add} disabled={busy}>
-              Agregar
-            </button>
-          </div>
-
-          <div className="divider" />
-          <div className="section-label">Roles existentes</div>
-          {roles.length === 0 ? (
-            <div style={{ fontSize: ".75rem", color: "var(--text3)" }}>Aún no hay roles.</div>
-          ) : (
-            roles.map((r) => <RoleRow key={r.id} role={r} onChanged={mutate} />)
-          )}
-        </div>
+        <div className="divider" />
+        <div className="section-label">Roles existentes</div>
+        {roles.length === 0 ? (
+          <div style={{ fontSize: ".75rem", color: "var(--text3)" }}>Aún no hay roles.</div>
+        ) : (
+          roles.map((r) => <RoleRow key={r.id} role={r} onChanged={mutate} />)
+        )}
       </div>
-    </div>
+    </Modal>
   );
 }
 
