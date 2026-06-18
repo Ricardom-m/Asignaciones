@@ -399,16 +399,35 @@ input[type=date]::-webkit-calendar-picker-indicator { filter:invert(.55); }
 .date-chip { font-size:.78rem; padding:9px 14px; border-radius:10px; border:1px solid var(--border); background:transparent; color:var(--text2); cursor:pointer; transition:all .18s cubic-bezier(.2,.8,.3,1); }
 .date-chip:hover { border-color:var(--border2); color:var(--text); }
 .date-chip.on { border-color:var(--accent); background:var(--accent-dim); color:var(--text); }
-.suggest-block { margin-top:10px; }
-.suggest-tip { font-size:.66rem; color:var(--text3); margin-bottom:7px; }
-.suggest-list { display:flex; flex-direction:column; gap:6px; }
-.suggest-item { display:flex; align-items:center; justify-content:space-between; gap:8px; width:100%; text-align:left; padding:9px 12px; border:1px solid var(--border); border-radius:var(--r2); background:transparent; color:var(--text); cursor:pointer; transition:all .18s cubic-bezier(.2,.8,.3,1); }
-.suggest-item:hover { border-color:var(--accent); transform:translateY(-1px); }
-.suggest-item.on { border-color:var(--accent); background:var(--accent-dim); }
-.suggest-item-main { min-width:0; }
-.suggest-item-name { display:flex; align-items:center; gap:7px; font-size:.82rem; font-weight:500; }
-.suggest-item-reason { font-size:.62rem; color:var(--text3); margin-top:3px; }
-.suggest-check { color:var(--accent); font-weight:700; flex-shrink:0; }
+.suggest-tip { font-size:.66rem; color:var(--text3); }
+
+/* HELPER PICKER */
+.hp { margin-top:10px; display:flex; flex-direction:column; gap:9px; }
+.hp-head { display:flex; align-items:center; justify-content:space-between; }
+.hp-count { font-size:.62rem; font-family:var(--mono); color:var(--text3); background:var(--surface2); border-radius:20px; padding:2px 8px; }
+.hp-filters { display:flex; flex-wrap:wrap; gap:6px; }
+.hp-toolbar { display:flex; gap:8px; }
+.hp-sort { flex-shrink:0; width:auto; min-width:0; padding:8px 30px 8px 11px; font-size:.74rem; }
+.hp-search { flex:1; min-width:0; background:var(--surface2); border:1px solid var(--border); border-radius:var(--r2); color:var(--text); padding:8px 11px; font-family:var(--head); font-size:.78rem; outline:none; }
+.hp-list { display:flex; flex-direction:column; gap:6px; }
+.hp-list.expanded { max-height:340px; overflow-y:auto; padding-right:2px; }
+.hp-card { display:flex; align-items:center; gap:10px; width:100%; text-align:left; padding:9px 11px; border:1px solid var(--border); border-radius:var(--r2); background:transparent; color:var(--text); cursor:pointer; transition:all .18s cubic-bezier(.2,.8,.3,1); }
+.hp-card:hover { border-color:var(--accent); transform:translateY(-1px); }
+.hp-card.on { border-color:var(--accent); background:var(--accent-dim); }
+.hp-avatar { width:30px; height:30px; border-radius:50%; background:var(--surface2); border:1px solid var(--border2); display:flex; align-items:center; justify-content:center; font-size:.66rem; font-weight:600; color:var(--text2); flex-shrink:0; }
+.hp-main { flex:1; min-width:0; }
+.hp-name { display:flex; align-items:center; gap:6px; font-size:.82rem; font-weight:500; }
+.hp-gender { font-size:.8rem; }
+.hp-gender.h { color:var(--accent); }
+.hp-gender.m { color:#e87db5; }
+.hp-sub { font-size:.62rem; color:var(--text3); margin-top:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.hp-warn { color:var(--amber); }
+.hp-score { font-size:.72rem; font-family:var(--mono); font-weight:600; border-radius:8px; padding:3px 8px; flex-shrink:0; border:1px solid; }
+.hp-score.alto { color:var(--green); border-color:var(--green); background:var(--green-dim); }
+.hp-score.medio { color:var(--amber); border-color:var(--amber); background:var(--amber-dim); }
+.hp-score.bajo { color:var(--text3); border-color:var(--border); background:var(--surface2); }
+.hp-check { color:var(--accent); font-weight:700; flex-shrink:0; }
+.hp-more { align-self:flex-start; background:transparent; border:none; color:var(--accent); font-family:var(--head); font-size:.74rem; cursor:pointer; padding:2px 0; }
 
 /* ════ MICROINTERACCIONES ════ */
 /* glow de foco */

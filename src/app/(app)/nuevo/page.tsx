@@ -2,13 +2,13 @@
 
 import { useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
-import { usePersons, useRecords, useMeetings } from "@/lib/hooks";
+import { usePersons, useRecords, useMeetings, useRoles } from "@/lib/hooks";
 import { useToast } from "@/components/Toast";
 import { PageHeader } from "@/components/PageHeader";
 import { PersonSelect } from "@/components/PersonSelect";
-import { RoleBadge } from "@/components/RoleBadge";
+import { HelperPicker } from "@/components/HelperPicker";
 import { createRecord, fmtDate, todayYMD, addDaysYMD, fmtShort } from "@/lib/client";
-import { suggestHelpers } from "@/lib/suggest";
+import { rankHelpers } from "@/lib/suggest";
 
 const SALAS = ["Sala A", "Sala B", "Otro"];
 
@@ -25,6 +25,7 @@ export default function NuevoPage() {
   const { persons } = usePersons();
   const { records } = useRecords();
   const { meetings } = useMeetings();
+  const { roles } = useRoles();
   const { mutate } = useSWRConfig();
   const toast = useToast();
   const [form, setForm] = useState<FormState>(empty);
@@ -48,11 +49,11 @@ export default function NuevoPage() {
     return [...base, ...reuniones];
   }, [meetings, today, manana]);
 
-  // Sugerencias de ayudante (personas con quienes casi no ha trabajado)
-  const suggestions = useMemo(
+  // Candidatos a ayudante, rankeados (compatibles por género, con puntaje).
+  const candidates = useMemo(
     () =>
       form.asignadoId
-        ? suggestHelpers({ asignadoId: form.asignadoId, persons: activePersons, records, fecha: form.fecha, max: 3 })
+        ? rankHelpers({ asignadoId: form.asignadoId, persons: activePersons, records, fecha: form.fecha })
         : [],
     [form.asignadoId, form.fecha, activePersons, records],
   );
@@ -123,30 +124,12 @@ export default function NuevoPage() {
                   excludeId={form.asignadoId}
                   onChange={(id) => patch({ ayudanteId: id })}
                 />
-                {suggestions.length > 0 && (
-                  <div className="suggest-block">
-                    <div className="suggest-tip">💡 Sugerencias de ayudante</div>
-                    <div className="suggest-list">
-                      {suggestions.map((s) => (
-                        <button
-                          key={s.person.id}
-                          type="button"
-                          className={`suggest-item${form.ayudanteId === s.person.id ? " on" : ""}`}
-                          onClick={() => patch({ ayudanteId: s.person.id })}
-                        >
-                          <div className="suggest-item-main">
-                            <div className="suggest-item-name">
-                              {s.person.nombre} {s.person.apellido}
-                              {s.person.roles[0] && <RoleBadge role={s.person.roles[0]} />}
-                            </div>
-                            <div className="suggest-item-reason">{s.reason}</div>
-                          </div>
-                          {form.ayudanteId === s.person.id && <span className="suggest-check">✓</span>}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
+                <HelperPicker
+                  candidates={candidates}
+                  roles={roles}
+                  value={form.ayudanteId}
+                  onChange={(id) => patch({ ayudanteId: id })}
+                />
               </div>
 
               {/* 3 · Fecha + chips */}
