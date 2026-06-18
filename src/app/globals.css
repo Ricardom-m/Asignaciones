@@ -119,6 +119,9 @@ input[type=date]::-webkit-calendar-picker-indicator { filter:invert(.55); }
 .btn-sm { padding:6px 12px; font-size:.72rem; border-radius:8px; width:auto; }
 
 /* SEARCHABLE SELECT */
+/* Eleva el campo activo (el del select abierto) por encima de los campos
+   siguientes para que su desplegable flote sobre ellos sin quedar atrapado. */
+.field-group:focus-within { position:relative; z-index:30; }
 .sel-wrap { position:relative; }
 .sel-trigger { width:100%; min-width:0; background:var(--surface2); border:1px solid var(--border); border-radius:var(--r2); color:var(--text); padding:11px 12px 11px 13px; font-family:var(--head); font-size:.85rem; text-align:left; cursor:pointer; transition:border-color .15s; display:flex; align-items:center; justify-content:space-between; gap:4px; overflow:hidden; }
 .sel-trigger.open, .sel-trigger:focus-visible { border-color:var(--border2); outline:none; }
