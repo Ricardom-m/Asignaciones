@@ -10,9 +10,10 @@ import type { Person, RecordItem } from "@/lib/types";
 
 interface Props {
   user: { name: string; email: string; image: string };
+  showName?: boolean; // muestra nombre+apellidos junto al avatar (sidebar)
 }
 
-export function AccountMenu({ user }: Props) {
+export function AccountMenu({ user, showName = false }: Props) {
   const [open, setOpen] = useState(false);
   const [light, setLight] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -97,13 +98,18 @@ export function AccountMenu({ user }: Props) {
   };
 
   return (
-    <div className="account-wrap" ref={wrapRef}>
-      <button className="avatar-wrap" onClick={() => setOpen((o) => !o)} title="Cuenta">
+    <div className={`account-wrap${showName ? " account-wrap-full" : ""}`} ref={wrapRef}>
+      <button
+        className={`avatar-wrap${showName ? " account-trigger-full" : ""}`}
+        onClick={() => setOpen((o) => !o)}
+        title="Cuenta"
+      >
         {user.image ? (
           <Image className="avatar-img" src={user.image} alt={user.name} width={25} height={25} referrerPolicy="no-referrer" />
         ) : (
           <span className="avatar-default">{initials}</span>
         )}
+        {showName && <span className="account-trigger-name">{user.name || user.email}</span>}
       </button>
 
       {open && (

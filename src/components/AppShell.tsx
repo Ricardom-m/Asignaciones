@@ -2,9 +2,9 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useRecords } from "@/lib/hooks";
 import { AccountMenu } from "@/components/AccountMenu";
 import { CommandPalette } from "@/components/CommandPalette";
+import { ThemeToggleButton } from "@/components/ThemeToggleButton";
 
 interface Props {
   user: { name: string; email: string; image: string };
@@ -23,7 +23,6 @@ const openCmd = () => window.dispatchEvent(new Event("open-command-palette"));
 
 export function AppShell({ user, children }: Props) {
   const pathname = usePathname();
-  const { records } = useRecords();
 
   return (
     <div className="app-shell">
@@ -51,8 +50,8 @@ export function AppShell({ user, children }: Props) {
           ))}
         </nav>
         <div className="sidebar-foot">
-          <div className="total-badge">{records.length} reg.</div>
-          <AccountMenu user={user} />
+          <AccountMenu user={user} showName />
+          <ThemeToggleButton />
         </div>
       </aside>
 
@@ -68,7 +67,7 @@ export function AppShell({ user, children }: Props) {
           </div>
           <div className="header-right">
             <button className="hbtn" onClick={openCmd} title="Buscar (⌘K)" aria-label="Buscar">🔍</button>
-            <div className="total-badge">{records.length} reg.</div>
+            <ThemeToggleButton />
             <AccountMenu user={user} />
           </div>
         </header>

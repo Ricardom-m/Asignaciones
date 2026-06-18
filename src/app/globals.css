@@ -335,6 +335,11 @@ input[type=date]::-webkit-calendar-picker-indicator { filter:invert(.55); }
 .account-item.danger:hover { background:var(--red-dim); }
 /* En el sidebar (escritorio) el avatar está abajo: el menú abre hacia ARRIBA. */
 .sidebar-foot .account-menu { top:auto; bottom:calc(100% + 8px); right:auto; left:0; }
+/* Trigger de cuenta con nombre (sidebar) */
+.account-wrap-full { flex:1; min-width:0; }
+.account-trigger-full { width:100%; justify-content:flex-start; gap:9px; border-radius:var(--r2); padding:7px 10px; }
+.account-trigger-name { font-size:.82rem; font-weight:500; color:var(--text); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0; }
+.theme-quick { font-size:.95rem; padding:6px 9px; flex-shrink:0; }
 
 /* MONTH GROUP (registros) */
 .month-group-title { font-size:.62rem; font-weight:600; letter-spacing:.05em; text-transform:uppercase; color:var(--text3); margin:14px 2px 9px; }
