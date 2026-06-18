@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
 import { usePersons, useRecords } from "@/lib/hooks";
 import { useToast } from "@/components/Toast";
@@ -43,6 +43,16 @@ export default function RegistrosPage() {
   const { records, isLoading } = useRecords(sortField, sortDir);
   const { mutate } = useSWRConfig();
   const toast = useToast();
+
+  // Llegada desde la paleta de comandos (⌘K → ver análisis de una persona).
+  useEffect(() => {
+    const id = sessionStorage.getItem("asgn_spotlight");
+    if (id) {
+      sessionStorage.removeItem("asgn_spotlight");
+      setView("spotlight");
+      setSpotlightId(id);
+    }
+  }, []);
 
   const filtered = useMemo(() => {
     const q = query.toLowerCase().trim();

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useRecords } from "@/lib/hooks";
 import { AccountMenu } from "@/components/AccountMenu";
+import { CommandPalette } from "@/components/CommandPalette";
 
 interface Props {
   user: { name: string; email: string; image: string };
@@ -17,39 +18,71 @@ const NAV = [
   { href: "/personas", label: "Personas", icon: IconPeople },
 ];
 
+const openCmd = () => window.dispatchEvent(new Event("open-command-palette"));
+
 export function AppShell({ user, children }: Props) {
   const pathname = usePathname();
   const { records } = useRecords();
 
   return (
     <div className="app-shell">
-      <header>
-        <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
+      <CommandPalette />
+
+      {/* Sidebar (escritorio) */}
+      <aside className="sidebar">
+        <div className="sidebar-brand">
           <div className="header-icon">📋</div>
           <div>
             <div className="header-title">Asignaciones</div>
             <div className="header-sub">Registro de actividades</div>
           </div>
         </div>
-        <div className="header-right">
-          <div className="total-badge">{records.length} reg.</div>
-          <AccountMenu user={user} />
-        </div>
-      </header>
-
-      <div className="scroll-area">{children}</div>
-
-      <nav className="bottom">
-        {NAV.map(({ href, label, icon: Icon }) => {
-          const active = pathname === href;
-          return (
-            <Link key={href} href={href} className={`nav-btn${active ? " active" : ""}`}>
+        <button className="sidebar-search" onClick={openCmd}>
+          <span>⌕ Buscar…</span>
+          <kbd>⌘K</kbd>
+        </button>
+        <nav className="sidebar-nav">
+          {NAV.map(({ href, label, icon: Icon }) => (
+            <Link key={href} href={href} className={`sidebar-link${pathname === href ? " active" : ""}`}>
               <Icon />
               {label}
             </Link>
-          );
-        })}
-      </nav>
+          ))}
+        </nav>
+        <div className="sidebar-foot">
+          <div className="total-badge">{records.length} reg.</div>
+          <AccountMenu user={user} />
+        </div>
+      </aside>
+
+      {/* Columna principal */}
+      <div className="app-main">
+        <header className="topbar">
+          <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
+            <div className="header-icon">📋</div>
+            <div>
+              <div className="header-title">Asignaciones</div>
+              <div className="header-sub">Registro de actividades</div>
+            </div>
+          </div>
+          <div className="header-right">
+            <button className="hbtn" onClick={openCmd} title="Buscar (⌘K)" aria-label="Buscar">🔍</button>
+            <div className="total-badge">{records.length} reg.</div>
+            <AccountMenu user={user} />
+          </div>
+        </header>
+
+        <div className="scroll-area">{children}</div>
+
+        <nav className="bottom">
+          {NAV.map(({ href, label, icon: Icon }) => (
+            <Link key={href} href={href} className={`nav-btn${pathname === href ? " active" : ""}`}>
+              <Icon />
+              {label}
+            </Link>
+          ))}
+        </nav>
+      </div>
     </div>
   );
 }

@@ -1,36 +1,68 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
-import { usePersons } from "@/lib/hooks";
+import { usePersons, useRecords } from "@/lib/hooks";
 import { useToast } from "@/components/Toast";
-import { RecordFields, type RecordFormState } from "@/components/RecordFields";
 import { PageHeader } from "@/components/PageHeader";
-import { createRecord, todayYMD } from "@/lib/client";
+import { PersonSelect } from "@/components/PersonSelect";
+import { createRecord, fmtDate, todayYMD } from "@/lib/client";
+import { suggestHelpers } from "@/lib/suggest";
 
-const emptyForm = (): RecordFormState => ({
-  asignadoId: "",
-  ayudanteId: "",
-  fecha: todayYMD(),
-  sala: "Sala A",
-  asignacion: "",
-});
+const SALAS = ["Sala A", "Sala B", "Otro"];
+
+interface FormState {
+  asignadoId: string;
+  ayudanteId: string;
+  fecha: string;
+  sala: string;
+  asignacion: string;
+}
+const empty = (): FormState => ({ asignadoId: "", ayudanteId: "", fecha: "", sala: "Sala A", asignacion: "" });
+
+// Suma días a una fecha YYYY-MM-DD (en UTC, consistente con todayYMD()).
+function addDaysYMD(ymd: string, n: number): string {
+  const d = new Date(ymd + "T00:00:00Z");
+  d.setUTCDate(d.getUTCDate() + n);
+  return d.toISOString().slice(0, 10);
+}
 
 export default function NuevoPage() {
   const { persons } = usePersons();
+  const { records } = useRecords();
   const { mutate } = useSWRConfig();
   const toast = useToast();
-  const [form, setForm] = useState<RecordFormState>(emptyForm);
+  const [form, setForm] = useState<FormState>(empty);
   const [saving, setSaving] = useState(false);
 
-  const activePersons = persons.filter((p) => p.active);
-  const patch = (p: Partial<RecordFormState>) => setForm((f) => ({ ...f, ...p }));
+  const activePersons = useMemo(() => persons.filter((p) => p.active), [persons]);
+  const patch = (p: Partial<FormState>) => setForm((f) => ({ ...f, ...p }));
+
+  // Chips rápidos de fecha
+  const today = todayYMD();
+  const day = new Date(today + "T00:00:00Z").getUTCDay();
+  const nextSunday = addDaysYMD(today, (7 - day) % 7);
+  const dateChips = [
+    { label: "Hoy", ymd: today },
+    { label: "Mañana", ymd: addDaysYMD(today, 1) },
+    { label: "Domingo", ymd: nextSunday },
+  ];
+
+  // Sugerencias de ayudante (personas con quienes casi no ha trabajado)
+  const suggestions = useMemo(
+    () => (form.asignadoId ? suggestHelpers(form.asignadoId, activePersons, records, 3) : []),
+    [form.asignadoId, activePersons, records],
+  );
+
+  // Revelado progresivo
+  const hasAsignado = !!form.asignadoId;
+  const hasFecha = !!form.fecha;
+  const required = [form.asignadoId, form.fecha, form.asignacion.trim()].filter(Boolean).length;
+  const progress = Math.round((required / 3) * 100);
+  const canSave = required === 3;
 
   const save = async () => {
-    if (!form.asignadoId) return toast("⚠️ Selecciona el nombre del asignado", "error");
-    if (!form.fecha) return toast("⚠️ La fecha es obligatoria", "error");
-    if (!form.asignacion.trim()) return toast("⚠️ La asignación es obligatoria", "error");
-
+    if (!canSave) return;
     setSaving(true);
     try {
       await createRecord({
@@ -41,7 +73,7 @@ export default function NuevoPage() {
         asignacion: form.asignacion.trim(),
       });
       await mutate((k) => typeof k === "string" && k.startsWith("/api/records"));
-      setForm(emptyForm());
+      setForm(empty());
       toast("✅ Registro guardado", "success");
     } catch (e) {
       toast("❌ " + (e as Error).message, "error");
@@ -52,19 +84,122 @@ export default function NuevoPage() {
 
   return (
     <div className="page-inner fade-up">
-      <PageHeader title="Nuevo registro" subtitle="Registra una asignación del equipo" />
+      <PageHeader title="Nuevo registro" subtitle="Completa los campos paso a paso" />
+
+      {/* Barra de progreso */}
+      <div className="progress-wrap">
+        <div className="progress-track">
+          <div className="progress-fill" style={{ width: `${progress}%` }} />
+        </div>
+        <span className="progress-label">{required}/3</span>
+      </div>
+
       <div className="content-card">
         <div className="form-grid">
-          <RecordFields persons={activePersons} state={form} onChange={patch} />
-          <div className="divider" />
-          <div className="form-actions">
-            <button className="btn btn-primary" onClick={save} disabled={saving}>
-              {saving ? "Guardando…" : "Guardar registro"}
-            </button>
-            <button className="btn btn-ghost" onClick={() => setForm(emptyForm())}>
-              Limpiar
-            </button>
+          {/* 1 · Asignado */}
+          <div className="field-group field-reveal">
+            <label className="field-label">
+              ¿Quién es el asignado? <span className="req">*</span>
+            </label>
+            <PersonSelect
+              persons={activePersons}
+              value={form.asignadoId}
+              excludeId={form.ayudanteId}
+              onChange={(id) => patch({ asignadoId: id })}
+            />
           </div>
+
+          {hasAsignado && (
+            <>
+              {/* 2 · Ayudante + sugerencias */}
+              <div className="field-group field-reveal">
+                <label className="field-label">Ayudante (opcional)</label>
+                <PersonSelect
+                  persons={activePersons}
+                  value={form.ayudanteId}
+                  excludeId={form.asignadoId}
+                  onChange={(id) => patch({ ayudanteId: id })}
+                />
+                {suggestions.length > 0 && (
+                  <div className="suggest-row">
+                    <span className="suggest-tip">💡 Sugerencias:</span>
+                    {suggestions.map((s) => (
+                      <button
+                        key={s.person.id}
+                        type="button"
+                        className={`suggest-chip${form.ayudanteId === s.person.id ? " on" : ""}`}
+                        onClick={() => patch({ ayudanteId: s.person.id })}
+                        title={s.pairCount === 0 ? "Nunca han trabajado juntos" : `Han trabajado ${s.pairCount} ${s.pairCount === 1 ? "vez" : "veces"}`}
+                      >
+                        {s.person.nombre} {s.person.apellido}
+                        <span className="suggest-meta">{s.pairCount === 0 ? "nuevo" : "×" + s.pairCount}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* 3 · Fecha + chips */}
+              <div className="field-group field-reveal">
+                <label className="field-label">
+                  ¿Para cuándo? <span className="req">*</span>
+                </label>
+                <div className="date-chips">
+                  {dateChips.map((c) => (
+                    <button
+                      key={c.label}
+                      type="button"
+                      className={`date-chip${form.fecha === c.ymd ? " on" : ""}`}
+                      onClick={() => patch({ fecha: c.ymd })}
+                    >
+                      {c.label}
+                    </button>
+                  ))}
+                  <input type="date" value={form.fecha} onChange={(e) => patch({ fecha: e.target.value })} style={{ flex: 1, minWidth: 130 }} />
+                </div>
+                {form.fecha && <div className="field-hint">📅 {fmtDate(form.fecha)}</div>}
+              </div>
+            </>
+          )}
+
+          {hasAsignado && hasFecha && (
+            <>
+              {/* 4 · Sala */}
+              <div className="field-group field-reveal">
+                <label className="field-label">Sala</label>
+                <select value={form.sala} onChange={(e) => patch({ sala: e.target.value })}>
+                  {SALAS.map((s) => (
+                    <option key={s} value={s}>{s}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* 5 · Asignación */}
+              <div className="field-group field-reveal">
+                <label className="field-label">
+                  ¿Qué asignación? <span className="req">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={form.asignacion}
+                  onChange={(e) => patch({ asignacion: e.target.value })}
+                  placeholder="Describe la asignación"
+                  autoComplete="off"
+                  autoFocus
+                />
+              </div>
+
+              <div className="divider" />
+              <div className="form-actions field-reveal">
+                <button className={`btn btn-primary${canSave ? " ready" : ""}`} onClick={save} disabled={!canSave || saving}>
+                  {saving ? "Guardando…" : "Guardar registro"}
+                </button>
+                <button className="btn btn-ghost" onClick={() => setForm(empty())}>
+                  Limpiar
+                </button>
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>
