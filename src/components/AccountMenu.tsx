@@ -51,10 +51,11 @@ export function AccountMenu({ user, showName = false }: Props) {
 
   const handleExport = async () => {
     try {
-      const [persons, records] = await Promise.all([
+      const [persons, recordsRes] = await Promise.all([
         apiFetch<Person[]>("/api/persons"),
-        apiFetch<RecordItem[]>("/api/records?sort=createdAt&dir=desc"),
+        apiFetch<{ items: RecordItem[] }>("/api/records?all=1"),
       ]);
+      const records = recordsRes.items;
       const payload = JSON.stringify({ records, persons, exportedAt: new Date().toISOString() }, null, 2);
       const url = URL.createObjectURL(new Blob([payload], { type: "application/json" }));
       const a = document.createElement("a");

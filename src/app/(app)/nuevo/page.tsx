@@ -2,13 +2,12 @@
 
 import { useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
-import { usePersons, useRecords, useMeetings, useRoles } from "@/lib/hooks";
+import { usePersons, useMeetings, useRoles, useSuggest } from "@/lib/hooks";
 import { useToast } from "@/components/Toast";
 import { PageHeader } from "@/components/PageHeader";
 import { PersonSelect } from "@/components/PersonSelect";
 import { HelperPicker } from "@/components/HelperPicker";
 import { createRecord, fmtDate, todayYMD, addDaysYMD, fmtShort } from "@/lib/client";
-import { rankHelpers } from "@/lib/suggest";
 
 const SALAS = ["Sala A", "Sala B", "Otro"];
 
@@ -23,7 +22,6 @@ const empty = (): FormState => ({ asignadoId: "", ayudanteId: "", fecha: "", sal
 
 export default function NuevoPage() {
   const { persons } = usePersons();
-  const { records } = useRecords();
   const { meetings } = useMeetings();
   const { roles } = useRoles();
   const { mutate } = useSWRConfig();
@@ -49,14 +47,8 @@ export default function NuevoPage() {
     return [...base, ...reuniones];
   }, [meetings, today, manana]);
 
-  // Candidatos a ayudante, rankeados (compatibles por género, con puntaje).
-  const candidates = useMemo(
-    () =>
-      form.asignadoId
-        ? rankHelpers({ asignadoId: form.asignadoId, persons: activePersons, records, fecha: form.fecha })
-        : [],
-    [form.asignadoId, form.fecha, activePersons, records],
-  );
+  // Candidatos a ayudante, rankeados en el servidor (compatibles por género).
+  const { candidates } = useSuggest(form.asignadoId, form.fecha);
 
   // Revelado progresivo
   const hasAsignado = !!form.asignadoId;

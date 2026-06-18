@@ -2,17 +2,19 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
-import { usePersons, useRecords } from "@/lib/hooks";
+import { usePersons, useRecordsList, useRecordsStats, usePersonRecords } from "@/lib/hooks";
 import { useToast } from "@/components/Toast";
 import { RecordCard } from "@/components/RecordCard";
 import { EditRecordModal } from "@/components/EditRecordModal";
 import { Spotlight } from "@/components/Spotlight";
 import { PersonSelect } from "@/components/PersonSelect";
 import { PageHeader } from "@/components/PageHeader";
-import { deleteRecord, todayYMD, addDaysYMD, weekdayOf } from "@/lib/client";
+import { deleteRecord, todayYMD } from "@/lib/client";
 import type { Person, RecordItem } from "@/lib/types";
 
-// Agrupa registros (ya ordenados) por mes/año de la FECHA de la asignación.
+const SALAS = ["Sala A", "Sala B", "Otro"];
+
+// Agrupa registros (ya ordenados por el servidor) por mes/año de la FECHA.
 function groupByFechaMonth(items: RecordItem[]) {
   const groups: { key: string; items: RecordItem[] }[] = [];
   for (const r of items) {
@@ -27,23 +29,28 @@ function groupByFechaMonth(items: RecordItem[]) {
 }
 
 type DateFilter = "prox" | "pas" | "todas";
-const PAGE_SIZE = 25;
 
 export default function RegistrosPage() {
   const [view, setView] = useState<"list" | "spotlight">("list");
   const [dateFilter, setDateFilter] = useState<DateFilter>("prox");
   const [salaFilter, setSalaFilter] = useState("");
   const [query, setQuery] = useState("");
-  const [limit, setLimit] = useState(PAGE_SIZE);
   const [spotlightId, setSpotlightId] = useState("");
   const [editing, setEditing] = useState<RecordItem | null>(null);
 
   const { persons } = usePersons();
-  const { records, isLoading } = useRecords();
-  const { mutate } = useSWRConfig();
+  const { stats } = useRecordsStats();
+  const { items, hasMore, loadMore, isLoading, mutate } = useRecordsList({
+    scope: dateFilter,
+    sala: salaFilter || undefined,
+    q: query || undefined,
+  });
+  const personsById = useMemo(() => new Map(persons.map((p) => [p.id, p])), [persons]);
+  const { mutate: globalMutate } = useSWRConfig();
   const toast = useToast();
 
-  const personsById = useMemo(() => new Map(persons.map((p) => [p.id, p])), [persons]);
+  // "Por persona": solo los registros de esa persona (consulta indexada).
+  const { items: personRecords } = usePersonRecords(view === "spotlight" ? spotlightId : null);
 
   // Llegada desde la paleta de comandos (⌘K → ver análisis de una persona).
   useEffect(() => {
@@ -55,58 +62,24 @@ export default function RegistrosPage() {
     }
   }, []);
 
-  const today = todayYMD();
-
-  // Resumen
-  const monday = addDaysYMD(today, -((weekdayOf(today) + 6) % 7));
-  const sunday = addDaysYMD(monday, 6);
-  const proximasCount = records.filter((r) => (r.fecha || "") >= today).length;
-  const estaSemanaCount = records.filter((r) => r.fecha >= monday && r.fecha <= sunday).length;
-
-  // Salas presentes (para el filtro)
-  const salas = useMemo(
-    () => Array.from(new Set(records.map((r) => r.sala).filter(Boolean))) as string[],
-    [records],
-  );
-
-  const filtered = useMemo(() => {
-    const q = query.toLowerCase().trim();
-    let list = records.filter((r) => {
-      if (dateFilter === "prox" && (r.fecha || "") < today) return false;
-      if (dateFilter === "pas" && (r.fecha || "") >= today) return false;
-      if (salaFilter && r.sala !== salaFilter) return false;
-      if (q && ![r.asignado, r.ayudante, r.sala, r.asignacion, r.fecha].some((v) => String(v || "").toLowerCase().includes(q)))
-        return false;
-      return true;
-    });
-    // Orden por fecha de asignación: próximas → la más cercana primero; resto → más reciente primero.
-    list = [...list].sort((a, b) =>
-      dateFilter === "prox" ? (a.fecha || "").localeCompare(b.fecha || "") : (b.fecha || "").localeCompare(a.fecha || ""),
-    );
-    return list;
-  }, [records, dateFilter, salaFilter, query, today]);
-
-  const visible = filtered.slice(0, limit);
-  const groups = groupByFechaMonth(visible);
+  const groups = groupByFechaMonth(items);
 
   const onDelete = async (rec: RecordItem) => {
     if (!confirm("¿Eliminar este registro?")) return;
     try {
       await deleteRecord(rec.id);
-      await mutate((k) => typeof k === "string" && k.startsWith("/api/records"));
+      await Promise.all([mutate(), globalMutate("/api/records/stats")]);
       toast("🗑️ Registro eliminado");
     } catch (e) {
       toast("❌ " + (e as Error).message, "error");
     }
   };
 
-  const resetLimit = () => setLimit(PAGE_SIZE);
-
   return (
     <div className="page-inner fade-up">
       <PageHeader
         title="Registros"
-        subtitle={`${proximasCount} próximas · ${estaSemanaCount} esta semana · ${records.length} en total`}
+        subtitle={`${stats.proximas} próximas · ${stats.estaSemana} esta semana · ${stats.total} en total`}
       />
 
       <div className="view-toggle">
@@ -120,7 +93,6 @@ export default function RegistrosPage() {
 
       {view === "list" ? (
         <>
-          {/* Filtro temporal */}
           <div className="seg">
             {([
               { k: "prox", label: "Próximas" },
@@ -130,52 +102,39 @@ export default function RegistrosPage() {
               <button
                 key={o.k}
                 className={`seg-btn${dateFilter === o.k ? " active" : ""}`}
-                onClick={() => {
-                  setDateFilter(o.k);
-                  resetLimit();
-                }}
+                onClick={() => setDateFilter(o.k)}
               >
                 {o.label}
               </button>
             ))}
           </div>
 
-          {/* Buscador + filtro de sala */}
           <input
             className="list-search-input"
             style={{ width: "100%", marginBottom: 10 }}
             type="text"
             placeholder="🔍 Buscar por persona, tarea…"
             value={query}
-            onChange={(e) => {
-              setQuery(e.target.value);
-              resetLimit();
-            }}
+            onChange={(e) => setQuery(e.target.value)}
           />
-          {salas.length > 1 && (
-            <div className="role-filter-bar">
+          <div className="role-filter-bar">
+            <button
+              className="role-chip"
+              onClick={() => setSalaFilter("")}
+              style={!salaFilter ? { color: "var(--accent)", borderColor: "var(--accent)", background: "var(--accent-dim)" } : undefined}
+            >
+              Todas las salas
+            </button>
+            {SALAS.map((s) => (
               <button
+                key={s}
                 className="role-chip"
-                onClick={() => setSalaFilter("")}
-                style={!salaFilter ? { color: "var(--accent)", borderColor: "var(--accent)", background: "var(--accent-dim)" } : undefined}
+                onClick={() => setSalaFilter(salaFilter === s ? "" : s)}
+                style={salaFilter === s ? { color: "var(--accent)", borderColor: "var(--accent)", background: "var(--accent-dim)" } : undefined}
               >
-                Todas las salas
+                {s}
               </button>
-              {salas.map((s) => (
-                <button
-                  key={s}
-                  className="role-chip"
-                  onClick={() => setSalaFilter(salaFilter === s ? "" : s)}
-                  style={salaFilter === s ? { color: "var(--accent)", borderColor: "var(--accent)", background: "var(--accent-dim)" } : undefined}
-                >
-                  {s}
-                </button>
-              ))}
-            </div>
-          )}
-
-          <div className="list-count">
-            {filtered.length} registro{filtered.length !== 1 ? "s" : ""}
+            ))}
           </div>
 
           {isLoading ? (
@@ -183,7 +142,7 @@ export default function RegistrosPage() {
               <div className="empty-icon">⏳</div>
               <h3>Cargando…</h3>
             </div>
-          ) : filtered.length === 0 ? (
+          ) : items.length === 0 ? (
             <div className="empty-state">
               <div className="empty-icon">📭</div>
               <h3>Sin registros</h3>
@@ -205,14 +164,11 @@ export default function RegistrosPage() {
                   ))}
                 </div>
               ))}
-              {limit < filtered.length && (
+              {hasMore && (
                 <div style={{ textAlign: "center", padding: "12px 0 4px" }}>
-                  <button className="btn btn-ghost" style={{ width: "auto", padding: "10px 28px" }} onClick={() => setLimit((l) => l + PAGE_SIZE)}>
+                  <button className="btn btn-ghost" style={{ width: "auto", padding: "10px 28px" }} onClick={loadMore}>
                     Cargar más ↓
                   </button>
-                  <div style={{ fontSize: ".65rem", color: "var(--text3)", marginTop: 6 }}>
-                    Mostrando {visible.length} de {filtered.length}
-                  </div>
                 </div>
               )}
             </>
@@ -226,7 +182,7 @@ export default function RegistrosPage() {
             </div>
             <PersonSelect persons={persons} value={spotlightId} onChange={setSpotlightId} placeholder="Buscar persona…" allowClear={false} />
           </div>
-          {spotlightId && <Spotlight personId={spotlightId} persons={persons} records={records} />}
+          {spotlightId && <Spotlight personId={spotlightId} persons={persons} records={personRecords} />}
         </>
       )}
 

@@ -4,24 +4,63 @@ import { serializeRecord, recordInclude } from "@/lib/serialize";
 import { ok, fail, requireSession, rateLimit, clientKey } from "@/lib/server";
 import type { Prisma } from "@prisma/client";
 
-// GET /api/records?sort=createdAt|updatedAt|fecha&dir=asc|desc
-// Devuelve todos los registros con las personas relacionadas resueltas.
+const insensitive = (q: string): Prisma.StringFilter => ({ contains: q, mode: "insensitive" });
+
+// GET /api/records — paginado y filtrado en el servidor (consultas indexadas).
+// Params: scope=prox|pas|todas, sala, q, personId, sort=fecha|createdAt, take, cursor, all=1
 export async function GET(req: Request) {
   const { response } = await requireSession();
   if (response) return response;
 
-  const url = new URL(req.url);
-  const sort = url.searchParams.get("sort") ?? "createdAt";
-  const dir = url.searchParams.get("dir") === "asc" ? "asc" : "desc";
-  const sortField = ["createdAt", "updatedAt", "fecha"].includes(sort)
-    ? sort
-    : "createdAt";
+  const sp = new URL(req.url).searchParams;
+  const scope = sp.get("scope");
+  const sala = sp.get("sala");
+  const q = sp.get("q")?.trim();
+  const personId = sp.get("personId");
+  const sort = sp.get("sort") === "createdAt" ? "createdAt" : "fecha";
+  const all = sp.get("all") === "1";
+  const take = Math.min(Math.max(Number(sp.get("take")) || 25, 1), 100);
+  const cursor = sp.get("cursor");
 
-  const records = await prisma.record.findMany({
+  const today = new Date(new Date().toISOString().slice(0, 10)); // hoy a medianoche UTC
+  const and: Prisma.RecordWhereInput[] = [];
+  if (scope === "prox") and.push({ fecha: { gte: today } });
+  else if (scope === "pas") and.push({ fecha: { lt: today } });
+  if (sala) and.push({ sala });
+  if (personId) and.push({ OR: [{ asignadoId: personId }, { ayudanteId: personId }] });
+  if (q)
+    and.push({
+      OR: [
+        { asignacion: insensitive(q) },
+        { sala: insensitive(q) },
+        { asignado: { OR: [{ nombre: insensitive(q) }, { apellido: insensitive(q) }] } },
+        { ayudante: { OR: [{ nombre: insensitive(q) }, { apellido: insensitive(q) }] } },
+      ],
+    });
+  const where: Prisma.RecordWhereInput = and.length ? { AND: and } : {};
+
+  const dir: Prisma.SortOrder = scope === "prox" ? "asc" : "desc";
+  const orderBy: Prisma.RecordOrderByWithRelationInput[] =
+    sort === "createdAt" ? [{ createdAt: dir }, { id: dir }] : [{ fecha: dir }, { id: dir }];
+
+  if (all) {
+    const items = await prisma.record.findMany({ where, include: recordInclude, orderBy });
+    return ok({ items: items.map(serializeRecord), nextCursor: null });
+  }
+
+  const rows = await prisma.record.findMany({
+    where,
     include: recordInclude,
-    orderBy: { [sortField]: dir } as Prisma.RecordOrderByWithRelationInput,
+    orderBy,
+    take: take + 1, // uno extra para saber si hay más
+    ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
   });
-  return ok(records.map(serializeRecord));
+  const hasMore = rows.length > take;
+  const page = hasMore ? rows.slice(0, take) : rows;
+  return ok({
+    items: page.map(serializeRecord),
+    nextCursor: hasMore ? page[page.length - 1].id : null,
+  });
 }
 
 // POST /api/records — crea un registro validando las personas referidas.
@@ -40,7 +79,6 @@ export async function POST(req: Request) {
   if (ayudanteId && ayudanteId === asignadoId)
     return fail("El ayudante no puede ser la misma persona que el asignado", 422);
 
-  // Verificar que las personas existan (evita FK rota).
   const ids = [asignadoId, ...(ayudanteId ? [ayudanteId] : [])];
   const count = await prisma.person.count({ where: { id: { in: ids } } });
   if (count !== ids.length) return fail("Persona referida inexistente", 422);

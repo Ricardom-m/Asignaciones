@@ -73,6 +73,7 @@ model Record {
   updatedAt DateTime @updatedAt
 
   @@index([fecha])
+  @@index([fecha, id]) // orden + cursor pagination estable
   @@index([asignadoId])
   @@index([ayudanteId])
   @@index([createdAt])
