@@ -198,6 +198,9 @@ function PersonModal({
   const [active, setActive] = useState(person?.active ?? true);
   const [saving, setSaving] = useState(false);
 
+  // Revelado gradual al crear: género/roles/acciones aparecen al completar el nombre.
+  const revealRest = isEdit || (!!nombre.trim() && !!apellido.trim());
+
   const save = async () => {
     if (!nombre.trim()) return toast("⚠️ El nombre es obligatorio", "error");
     if (!apellido.trim()) return toast("⚠️ El apellido es obligatorio", "error");
@@ -242,32 +245,36 @@ function PersonModal({
             />
           </div>
         </div>
-        <div className="field-group">
-          <label className="field-label">Género</label>
-          <GeneroToggle value={genero} onChange={setGenero} />
-        </div>
-        <div className="field-group">
-          <label className="field-label">Roles</label>
-          <RoleMultiSelect roles={roles} selected={roleIds} onChange={setRoleIds} />
-        </div>
-        {isEdit && (
-          <div className="field-group">
-            <label className="switch" style={{ fontSize: ".8rem" }}>
-              <input type="checkbox" checked={active} onChange={(e) => setActive(e.target.checked)} />
-              <span className="track" />
-              {active ? "Activa (visible y asignable)" : "Inactiva (oculta, sin borrar)"}
-            </label>
-          </div>
+        {revealRest && (
+          <>
+            <div className="field-group field-reveal">
+              <label className="field-label">Género</label>
+              <GeneroToggle value={genero} onChange={setGenero} />
+            </div>
+            <div className="field-group field-reveal">
+              <label className="field-label">Roles</label>
+              <RoleMultiSelect roles={roles} selected={roleIds} onChange={setRoleIds} />
+            </div>
+            {isEdit && (
+              <div className="field-group field-reveal">
+                <label className="switch" style={{ fontSize: ".8rem" }}>
+                  <input type="checkbox" checked={active} onChange={(e) => setActive(e.target.checked)} />
+                  <span className="track" />
+                  {active ? "Activa (visible y asignable)" : "Inactiva (oculta, sin borrar)"}
+                </label>
+              </div>
+            )}
+            <div className="divider" />
+            <div className="form-actions field-reveal">
+              <button className="btn btn-primary" onClick={save} disabled={saving}>
+                {saving ? "Guardando…" : isEdit ? "Guardar cambios" : "Agregar persona"}
+              </button>
+              <button className="btn btn-ghost" onClick={onClose}>
+                Cancelar
+              </button>
+            </div>
+          </>
         )}
-        <div className="divider" />
-        <div className="form-actions">
-          <button className="btn btn-primary" onClick={save} disabled={saving}>
-            {saving ? "Guardando…" : isEdit ? "Guardar cambios" : "Agregar persona"}
-          </button>
-          <button className="btn btn-ghost" onClick={onClose}>
-            Cancelar
-          </button>
-        </div>
       </div>
     </Modal>
   );
