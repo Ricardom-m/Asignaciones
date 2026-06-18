@@ -7,7 +7,8 @@ import { useToast } from "@/components/Toast";
 import { PageHeader } from "@/components/PageHeader";
 import { PersonSelect } from "@/components/PersonSelect";
 import { HelperPicker } from "@/components/HelperPicker";
-import { createRecord, fmtDate, todayYMD, addDaysYMD, fmtShort } from "@/lib/client";
+import { DateChips } from "@/components/DateChips";
+import { createRecord } from "@/lib/client";
 
 const SALAS = ["Sala A", "Sala B", "Otro"];
 
@@ -31,21 +32,6 @@ export default function NuevoPage() {
 
   const activePersons = useMemo(() => persons.filter((p) => p.active), [persons]);
   const patch = (p: Partial<FormState>) => setForm((f) => ({ ...f, ...p }));
-
-  // Chips rápidos de fecha: Hoy, Mañana y las próximas reuniones.
-  const today = todayYMD();
-  const manana = addDaysYMD(today, 1);
-  const dateChips = useMemo(() => {
-    const base = [
-      { label: "Hoy", ymd: today },
-      { label: "Mañana", ymd: manana },
-    ];
-    const reuniones = meetings
-      .filter((m) => m.fecha >= today && m.fecha !== today && m.fecha !== manana)
-      .slice(0, 4)
-      .map((m) => ({ label: fmtShort(m.fecha), ymd: m.fecha }));
-    return [...base, ...reuniones];
-  }, [meetings, today, manana]);
 
   // Candidatos a ayudante, rankeados en el servidor (compatibles por género).
   const { candidates } = useSuggest(form.asignadoId, form.fecha);
@@ -129,20 +115,7 @@ export default function NuevoPage() {
                 <label className="field-label">
                   ¿Para cuándo? <span className="req">*</span>
                 </label>
-                <div className="date-chips">
-                  {dateChips.map((c) => (
-                    <button
-                      key={c.label}
-                      type="button"
-                      className={`date-chip${form.fecha === c.ymd ? " on" : ""}`}
-                      onClick={() => patch({ fecha: c.ymd })}
-                    >
-                      {c.label}
-                    </button>
-                  ))}
-                  <input type="date" value={form.fecha} onChange={(e) => patch({ fecha: e.target.value })} style={{ flex: 1, minWidth: 130 }} />
-                </div>
-                {form.fecha && <div className="field-hint">📅 {fmtDate(form.fecha)}</div>}
+                <DateChips value={form.fecha} onChange={(ymd) => patch({ fecha: ymd })} meetings={meetings} />
               </div>
             </>
           )}
