@@ -333,6 +333,8 @@ input[type=date]::-webkit-calendar-picker-indicator { filter:invert(.55); }
 .account-divider { height:1px; background:var(--border); }
 .account-item.danger { color:var(--red); }
 .account-item.danger:hover { background:var(--red-dim); }
+/* En el sidebar (escritorio) el avatar está abajo: el menú abre hacia ARRIBA. */
+.sidebar-foot .account-menu { top:auto; bottom:calc(100% + 8px); right:auto; left:0; }
 
 /* MONTH GROUP (registros) */
 .month-group-title { font-size:.62rem; font-weight:600; letter-spacing:.05em; text-transform:uppercase; color:var(--text3); margin:14px 2px 9px; }
