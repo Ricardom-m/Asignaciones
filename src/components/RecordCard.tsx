@@ -1,56 +1,55 @@
 "use client";
 
-import { fmtDate, fmtDT } from "@/lib/client";
-import type { RecordItem } from "@/lib/types";
+import { fmtShort, dateStatus, relativeLabel } from "@/lib/client";
+import { RoleBadge } from "@/components/RoleBadge";
+import { GenderIcon } from "@/components/GenderIcon";
+import type { Person, RecordItem } from "@/lib/types";
 
 interface Props {
   rec: RecordItem;
+  personsById: Map<string, Person>;
   onEdit: (rec: RecordItem) => void;
   onDelete: (rec: RecordItem) => void;
 }
 
-export function RecordCard({ rec, onEdit, onDelete }: Props) {
-  const tc = rec.tipo === "Asignado" ? "var(--green)" : "var(--text3)";
-  const tb = rec.tipo === "Asignado" ? "var(--green-dim)" : "var(--surface2)";
+export function RecordCard({ rec, personsById, onEdit, onDelete }: Props) {
+  const status = dateStatus(rec.fecha);
+  const asignadoP = personsById.get(rec.asignadoId);
+  const ayudanteP = rec.ayudanteId ? personsById.get(rec.ayudanteId) : undefined;
 
   return (
-    <div className="record-card anim-pop">
-      <div className="rc-head">
-        <div>
-          <div className="rc-name">{rec.asignado}</div>
-          {rec.ayudante && <div className="rc-helper">👤 {rec.ayudante}</div>}
-        </div>
-        {rec.tipo && (
-          <span
-            className="rc-badge"
-            style={{ background: tb, borderColor: tc, color: tc }}
-          >
-            {rec.tipo}
+    <div className="record-card">
+      <div className="rc-top">
+        <div className="rc-when">
+          <span className={`rc-status ${status.level}`}>{status.label}</span>
+          <span className="rc-date">
+            {fmtShort(rec.fecha)} · {relativeLabel(rec.fecha)}
           </span>
-        )}
-      </div>
-      <div className="rc-body">
-        {rec.fecha && (
-          <div className="rc-pill">
-            📅 <strong>{fmtDate(rec.fecha)}</strong>
-          </div>
-        )}
-        {rec.sala && (
-          <div className="rc-pill">
-            🏛️ <strong>{rec.sala}</strong>
-          </div>
-        )}
-        {rec.asignacion && (
-          <div className="rc-pill">
-            📌 <strong>{rec.asignacion}</strong>
-          </div>
-        )}
-      </div>
-      <div className="rc-foot">
-        <div className="rc-dates">
-          🕓 {fmtDT(rec.createdAt)}
-          <br />✏️ {fmtDT(rec.updatedAt)}
         </div>
+        {rec.sala && <span className="rc-sala">{rec.sala}</span>}
+      </div>
+
+      <div className="rc-people">
+        <span className="rc-person">
+          {asignadoP && <GenderIcon genero={asignadoP.genero} />}
+          <span className="rc-pname">{rec.asignado}</span>
+          {asignadoP?.roles[0] && <RoleBadge role={asignadoP.roles[0]} />}
+        </span>
+        {rec.ayudante && (
+          <>
+            <span className="rc-con">con</span>
+            <span className="rc-person">
+              {ayudanteP && <GenderIcon genero={ayudanteP.genero} />}
+              <span className="rc-pname">{rec.ayudante}</span>
+              {ayudanteP?.roles[0] && <RoleBadge role={ayudanteP.roles[0]} />}
+            </span>
+          </>
+        )}
+      </div>
+
+      {rec.asignacion && <div className="rc-task">{rec.asignacion}</div>}
+
+      <div className="rc-foot">
         <div className="rc-actions">
           <button className="btn btn-edit btn-sm" onClick={() => onEdit(rec)}>
             Editar

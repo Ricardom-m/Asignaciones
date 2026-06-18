@@ -114,3 +114,24 @@ export function nextWeekdayDates(weekdays: number[], weeks: number, from = today
   }
   return out;
 }
+
+export type DateLevel = "prox" | "hoy" | "pasada";
+// Estado de una fecha respecto a hoy.
+export function dateStatus(ymd: string): { label: string; level: DateLevel } {
+  const today = todayYMD();
+  if (ymd === today) return { label: "Hoy", level: "hoy" };
+  if (ymd > today) return { label: "Próxima", level: "prox" };
+  return { label: "Pasada", level: "pasada" };
+}
+
+// Diferencia en días vs hoy, en texto ("en 3 días", "hace 2 días", "hoy"…).
+export function relativeLabel(ymd: string): string {
+  const day = 24 * 3600 * 1000;
+  const diff = Math.round(
+    (new Date(ymd + "T00:00:00Z").getTime() - new Date(todayYMD() + "T00:00:00Z").getTime()) / day,
+  );
+  if (diff === 0) return "hoy";
+  if (diff === 1) return "mañana";
+  if (diff === -1) return "ayer";
+  return diff > 0 ? `en ${diff} días` : `hace ${Math.abs(diff)} días`;
+}
