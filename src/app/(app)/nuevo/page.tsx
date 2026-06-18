@@ -6,6 +6,7 @@ import { usePersons, useRecords } from "@/lib/hooks";
 import { useToast } from "@/components/Toast";
 import { PageHeader } from "@/components/PageHeader";
 import { PersonSelect } from "@/components/PersonSelect";
+import { RoleBadge } from "@/components/RoleBadge";
 import { createRecord, fmtDate, todayYMD } from "@/lib/client";
 import { suggestHelpers } from "@/lib/suggest";
 
@@ -50,8 +51,11 @@ export default function NuevoPage() {
 
   // Sugerencias de ayudante (personas con quienes casi no ha trabajado)
   const suggestions = useMemo(
-    () => (form.asignadoId ? suggestHelpers(form.asignadoId, activePersons, records, 3) : []),
-    [form.asignadoId, activePersons, records],
+    () =>
+      form.asignadoId
+        ? suggestHelpers({ asignadoId: form.asignadoId, persons: activePersons, records, fecha: form.fecha, max: 3 })
+        : [],
+    [form.asignadoId, form.fecha, activePersons, records],
   );
 
   // Revelado progresivo
@@ -121,20 +125,27 @@ export default function NuevoPage() {
                   onChange={(id) => patch({ ayudanteId: id })}
                 />
                 {suggestions.length > 0 && (
-                  <div className="suggest-row">
-                    <span className="suggest-tip">💡 Sugerencias:</span>
-                    {suggestions.map((s) => (
-                      <button
-                        key={s.person.id}
-                        type="button"
-                        className={`suggest-chip${form.ayudanteId === s.person.id ? " on" : ""}`}
-                        onClick={() => patch({ ayudanteId: s.person.id })}
-                        title={s.pairCount === 0 ? "Nunca han trabajado juntos" : `Han trabajado ${s.pairCount} ${s.pairCount === 1 ? "vez" : "veces"}`}
-                      >
-                        {s.person.nombre} {s.person.apellido}
-                        <span className="suggest-meta">{s.pairCount === 0 ? "nuevo" : "×" + s.pairCount}</span>
-                      </button>
-                    ))}
+                  <div className="suggest-block">
+                    <div className="suggest-tip">💡 Sugerencias de ayudante</div>
+                    <div className="suggest-list">
+                      {suggestions.map((s) => (
+                        <button
+                          key={s.person.id}
+                          type="button"
+                          className={`suggest-item${form.ayudanteId === s.person.id ? " on" : ""}`}
+                          onClick={() => patch({ ayudanteId: s.person.id })}
+                        >
+                          <div className="suggest-item-main">
+                            <div className="suggest-item-name">
+                              {s.person.nombre} {s.person.apellido}
+                              {s.person.roles[0] && <RoleBadge role={s.person.roles[0]} />}
+                            </div>
+                            <div className="suggest-item-reason">{s.reason}</div>
+                          </div>
+                          {form.ayudanteId === s.person.id && <span className="suggest-check">✓</span>}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 )}
               </div>
