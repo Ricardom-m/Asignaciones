@@ -9,6 +9,7 @@ import { EditRecordModal } from "@/components/EditRecordModal";
 import { Spotlight } from "@/components/Spotlight";
 import { PersonSelect } from "@/components/PersonSelect";
 import { PageHeader } from "@/components/PageHeader";
+import { useConfirm } from "@/components/Confirm";
 import { deleteRecord, todayYMD } from "@/lib/client";
 import type { Person, RecordItem } from "@/lib/types";
 
@@ -48,6 +49,7 @@ export default function RegistrosPage() {
   const personsById = useMemo(() => new Map(persons.map((p) => [p.id, p])), [persons]);
   const { mutate: globalMutate } = useSWRConfig();
   const toast = useToast();
+  const confirm = useConfirm();
 
   // "Por persona": solo los registros de esa persona (consulta indexada).
   const { items: personRecords } = usePersonRecords(view === "spotlight" ? spotlightId : null);
@@ -65,7 +67,13 @@ export default function RegistrosPage() {
   const groups = groupByFechaMonth(items);
 
   const onDelete = async (rec: RecordItem) => {
-    if (!confirm("¿Eliminar este registro?")) return;
+    const ok = await confirm({
+      title: "Eliminar registro",
+      message: `¿Eliminar la asignación de ${rec.asignado}${rec.ayudante ? " y " + rec.ayudante : ""}?`,
+      confirmText: "Eliminar",
+      danger: true,
+    });
+    if (!ok) return;
     try {
       await deleteRecord(rec.id);
       await Promise.all([mutate(), globalMutate("/api/records/stats")]);

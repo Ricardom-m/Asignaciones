@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRoles } from "@/lib/hooks";
 import { useToast } from "@/components/Toast";
 import { Modal } from "@/components/Modal";
+import { useConfirm } from "@/components/Confirm";
 import { createRole, updateRole, deleteRole } from "@/lib/client";
 import type { Role } from "@/lib/types";
 
@@ -68,6 +69,7 @@ export function RolesManager({ onClose }: { onClose: () => void }) {
 
 function RoleRow({ role, onChanged }: { role: Role; onChanged: () => void }) {
   const toast = useToast();
+  const confirm = useConfirm();
   const [nombre, setNombre] = useState(role.nombre);
   const [color, setColor] = useState(role.color);
   const dirty = nombre !== role.nombre || color !== role.color;
@@ -92,8 +94,13 @@ function RoleRow({ role, onChanged }: { role: Role; onChanged: () => void }) {
   };
 
   const remove = async () => {
-    if (!confirm(`¿Borrar el rol "${role.nombre}"? Las personas no se borran, solo pierden este rol.`))
-      return;
+    const ok = await confirm({
+      title: "Borrar rol",
+      message: `¿Borrar el rol "${role.nombre}"? Las personas no se borran, solo pierden este rol.`,
+      confirmText: "Borrar",
+      danger: true,
+    });
+    if (!ok) return;
     try {
       await deleteRole(role.id);
       await onChanged();

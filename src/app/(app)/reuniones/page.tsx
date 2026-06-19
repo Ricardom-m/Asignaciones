@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { useMeetings } from "@/lib/hooks";
 import { useToast } from "@/components/Toast";
 import { PageHeader } from "@/components/PageHeader";
+import { useConfirm } from "@/components/Confirm";
 import {
   createMeetings,
   updateMeeting,
@@ -28,6 +29,7 @@ const WEEKDAYS = [
 export default function ReunionesPage() {
   const { meetings, mutate } = useMeetings();
   const toast = useToast();
+  const confirm = useConfirm();
   const [days, setDays] = useState<Set<number>>(new Set([4, 6])); // Jue + Sáb
   const [weeks, setWeeks] = useState(4);
   const [newDate, setNewDate] = useState("");
@@ -91,6 +93,13 @@ export default function ReunionesPage() {
   };
 
   const remove = async (id: string) => {
+    const ok = await confirm({
+      title: "Eliminar reunión",
+      message: "¿Eliminar esta fecha de reunión?",
+      confirmText: "Eliminar",
+      danger: true,
+    });
+    if (!ok) return;
     try {
       await deleteMeeting(id);
       await mutate();

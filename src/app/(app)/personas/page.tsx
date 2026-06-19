@@ -8,6 +8,7 @@ import { RoleBadge, RoleMultiSelect } from "@/components/RoleBadge";
 import { RolesManager } from "@/components/RolesManager";
 import { PageHeader } from "@/components/PageHeader";
 import { Modal } from "@/components/Modal";
+import { useConfirm } from "@/components/Confirm";
 import type { Person } from "@/lib/types";
 
 const PAGE = 30;
@@ -16,6 +17,7 @@ export default function PersonasPage() {
   const { persons, mutate } = usePersons();
   const { roles } = useRoles();
   const toast = useToast();
+  const confirm = useConfirm();
 
   const [query, setQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState("");
@@ -45,7 +47,13 @@ export default function PersonasPage() {
   const activeCount = persons.filter((p) => p.active).length;
 
   const remove = async (p: Person) => {
-    if (!confirm(`¿Eliminar a ${p.nombre} ${p.apellido}? (Si solo quieres ocultarla, mejor desactívala.)`)) return;
+    const ok = await confirm({
+      title: "Eliminar persona",
+      message: `¿Eliminar a ${p.nombre} ${p.apellido}? Si solo quieres ocultarla, mejor desactívala.`,
+      confirmText: "Eliminar",
+      danger: true,
+    });
+    if (!ok) return;
     try {
       await deletePerson(p.id);
       await mutate();
