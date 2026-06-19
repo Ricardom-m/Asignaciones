@@ -194,7 +194,18 @@ export default function RegistrosPage() {
         </>
       )}
 
-      {editing && <EditRecordModal rec={editing} persons={persons} onClose={() => setEditing(null)} />}
+      {editing && (
+        <EditRecordModal
+          rec={editing}
+          persons={persons}
+          onClose={() => setEditing(null)}
+          onSaved={() => {
+            mutate();
+            globalMutate("/api/records/stats");
+            setEditing(null);
+          }}
+        />
+      )}
     </div>
   );
 }

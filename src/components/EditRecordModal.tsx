@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useSWRConfig } from "swr";
 import { useMeetings, useRoles, useSuggest } from "@/lib/hooks";
 import { useToast } from "@/components/Toast";
 import { Modal } from "@/components/Modal";
@@ -17,6 +16,7 @@ interface Props {
   rec: RecordItem;
   persons: Person[];
   onClose: () => void;
+  onSaved: () => void; // refresca la lista (mutate propio del infinite) y cierra
 }
 
 interface FormState {
@@ -27,8 +27,7 @@ interface FormState {
   asignacion: string;
 }
 
-export function EditRecordModal({ rec, persons, onClose }: Props) {
-  const { mutate } = useSWRConfig();
+export function EditRecordModal({ rec, persons, onClose, onSaved }: Props) {
   const { meetings } = useMeetings();
   const { roles } = useRoles();
   const toast = useToast();
@@ -63,9 +62,8 @@ export function EditRecordModal({ rec, persons, onClose }: Props) {
         sala: form.sala || null,
         asignacion: form.asignacion.trim(),
       });
-      await mutate((k) => typeof k === "string" && k.includes("/api/records"));
       toast("✏️ Registro actualizado", "success");
-      onClose();
+      onSaved();
     } catch (e) {
       toast("❌ " + (e as Error).message, "error");
     } finally {

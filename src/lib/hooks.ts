@@ -45,7 +45,7 @@ export function useRecordsList(params: { scope?: string; sala?: string; q?: stri
   const { data, size, setSize, isLoading, isValidating, mutate } = useSWRInfinite<RecordsPage>(
     getKey,
     fetcher,
-    { revalidateFirstPage: false },
+    { revalidateFirstPage: true, revalidateOnMount: true },
   );
 
   const items = data ? data.flatMap((d) => d.items) : [];
