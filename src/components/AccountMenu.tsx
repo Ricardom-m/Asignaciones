@@ -84,7 +84,7 @@ export function AccountMenu({ user, showName = false }: Props) {
           { method: "POST", body: JSON.stringify({ persons: d.persons ?? [], records: d.records ?? [] }) },
         );
         await Promise.all([
-          mutate((k) => typeof k === "string" && k.startsWith("/api/records")),
+          mutate((k) => typeof k === "string" && k.includes("/api/records")),
           mutate("/api/persons"),
         ]);
         toast(`📤 ${res.personsCreated} personas, ${res.recordsImported} registros`, "success");

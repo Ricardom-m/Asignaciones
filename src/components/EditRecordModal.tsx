@@ -63,7 +63,7 @@ export function EditRecordModal({ rec, persons, onClose }: Props) {
         sala: form.sala || null,
         asignacion: form.asignacion.trim(),
       });
-      await mutate((k) => typeof k === "string" && k.startsWith("/api/records"));
+      await mutate((k) => typeof k === "string" && k.includes("/api/records"));
       toast("✏️ Registro actualizado", "success");
       onClose();
     } catch (e) {

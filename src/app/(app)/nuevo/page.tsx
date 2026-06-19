@@ -54,7 +54,7 @@ export default function NuevoPage() {
         sala: form.sala || null,
         asignacion: form.asignacion.trim(),
       });
-      await mutate((k) => typeof k === "string" && k.startsWith("/api/records"));
+      await mutate((k) => typeof k === "string" && k.includes("/api/records"));
       setForm(empty());
       toast("✅ Registro guardado", "success");
     } catch (e) {
