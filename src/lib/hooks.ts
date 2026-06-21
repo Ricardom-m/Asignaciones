@@ -3,7 +3,7 @@
 import useSWR from "swr";
 import useSWRInfinite from "swr/infinite";
 import { fetcher } from "@/lib/client";
-import type { Person, RecordItem, Role, Meeting } from "@/lib/types";
+import type { Person, RecordItem, Role, Meeting, AllowedUser } from "@/lib/types";
 import type { ScoredCandidate } from "@/lib/suggest";
 
 export function usePersons() {
@@ -19,6 +19,11 @@ export function useRoles() {
 export function useMeetings() {
   const { data, error, isLoading, mutate } = useSWR<Meeting[]>("/api/meetings", fetcher);
   return { meetings: data ?? [], error, isLoading, mutate };
+}
+
+export function useUsers() {
+  const { data, mutate } = useSWR<{ users: AllowedUser[]; bootstrap: string[] }>("/api/users", fetcher);
+  return { users: data?.users ?? [], bootstrap: data?.bootstrap ?? [], mutate };
 }
 
 // ── Records ───────────────────────────────────────────────

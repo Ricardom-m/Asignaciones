@@ -1,10 +1,11 @@
-// Protege toda la app con la sesión de Auth.js. El callback `authorized`
-// (src/lib/auth.ts) decide qué rutas son públicas y verifica la allowlist.
-// Al usar sesiones JWT, esto corre en el edge sin tocar la base de datos.
-export { auth as middleware } from "@/lib/auth";
+// Middleware en el Edge: usa SOLO la config base (sin Prisma). El callback
+// `authorized` (lib/auth.config.ts) exige sesión válida; el control de quién
+// puede iniciar sesión vive en el callback signIn (Node) de lib/auth.ts.
+import NextAuth from "next-auth";
+import { authConfig } from "@/lib/auth.config";
+
+export const { auth: middleware } = NextAuth(authConfig);
 
 export const config = {
-  // Aplica a todo excepto archivos estáticos. Las excepciones públicas
-  // (/login, /api/auth) se manejan dentro del callback authorized.
   matcher: ["/((?!_next/static|_next/image|favicon.ico|.*\\.svg).*)"],
 };

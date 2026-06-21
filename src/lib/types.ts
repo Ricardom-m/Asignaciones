@@ -13,6 +13,13 @@ export interface Meeting {
   nota: string | null;
 }
 
+export interface AllowedUser {
+  id: string;
+  email: string;
+  nombre: string | null;
+  createdAt: string;
+}
+
 export type Genero = "H" | "M";
 
 export interface Person {

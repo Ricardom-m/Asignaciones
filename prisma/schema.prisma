@@ -48,6 +48,15 @@ model Person {
   @@index([nombre, apellido])
 }
 
+// Correos autorizados a iniciar sesión (allowlist gestionable desde la app).
+// AUTHORIZED_EMAILS (env) sigue funcionando como respaldo "permanente".
+model AllowedUser {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  nombre    String?
+  createdAt DateTime @default(now())
+}
+
 model Meeting {
   id        String   @id @default(cuid())
   fecha     DateTime @unique @db.Date // una reunión por fecha

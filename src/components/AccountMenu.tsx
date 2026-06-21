@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useSWRConfig } from "swr";
 import { signOut } from "next-auth/react";
 import { apiFetch } from "@/lib/client";
@@ -20,6 +21,7 @@ export function AccountMenu({ user, showName = false }: Props) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const fileInput = useRef<HTMLInputElement>(null);
   const toast = useToast();
+  const router = useRouter();
   const { mutate } = useSWRConfig();
 
   const initials =
@@ -138,6 +140,17 @@ export function AccountMenu({ user, showName = false }: Props) {
           </button>
           <button className="account-item" onClick={() => fileInput.current?.click()} disabled={busy}>
             <span className="ico">📤</span> {busy ? "Importando…" : "Importar datos"}
+          </button>
+
+          <div className="account-divider" />
+          <button
+            className="account-item"
+            onClick={() => {
+              setOpen(false);
+              router.push("/usuarios");
+            }}
+          >
+            <span className="ico">👥</span> Usuarios
           </button>
 
           <div className="account-divider" />

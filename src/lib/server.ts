@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import type { Session } from "next-auth";
-import { auth, isEmailAllowed } from "@/lib/auth";
+import { auth, isEmailAuthorized } from "@/lib/auth";
 
 // ── Respuestas JSON ───────────────────────────────────────
 export function ok<T>(data: T, init?: ResponseInit) {
@@ -20,7 +20,7 @@ type SessionResult =
  */
 export async function requireSession(): Promise<SessionResult> {
   const session = await auth();
-  if (!session?.user || !isEmailAllowed(session.user.email)) {
+  if (!session?.user || !(await isEmailAuthorized(session.user.email))) {
     return { session: null, response: fail("No autorizado", 401) };
   }
   return { session, response: null };

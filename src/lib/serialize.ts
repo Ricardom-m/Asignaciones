@@ -3,8 +3,9 @@ import type {
   Record as PrismaRecord,
   Role as PrismaRole,
   Meeting as PrismaMeeting,
+  AllowedUser as PrismaAllowedUser,
 } from "@prisma/client";
-import type { Person, RecordItem, Role, Meeting } from "@/lib/types";
+import type { Person, RecordItem, Role, Meeting, AllowedUser } from "@/lib/types";
 
 type RecordWithPeople = PrismaRecord & {
   asignado: PrismaPerson;
@@ -22,6 +23,10 @@ export function serializeRole(r: PrismaRole): Role {
 
 export function serializeMeeting(m: PrismaMeeting): Meeting {
   return { id: m.id, fecha: toYMD(m.fecha), nota: m.nota };
+}
+
+export function serializeAllowedUser(u: PrismaAllowedUser): AllowedUser {
+  return { id: u.id, email: u.email, nombre: u.nombre, createdAt: u.createdAt.toISOString() };
 }
 
 export function serializePerson(p: PrismaPerson & { roles?: PrismaRole[] }): Person {

@@ -1,4 +1,4 @@
-import type { Person, RecordItem, Role, Meeting, Genero } from "@/lib/types";
+import type { Person, RecordItem, Role, Meeting, Genero, AllowedUser } from "@/lib/types";
 
 // Wrapper de fetch que lanza con el mensaje de error de la API.
 export async function apiFetch<T>(url: string, init?: RequestInit): Promise<T> {
@@ -51,6 +51,13 @@ export const updateMeeting = (id: string, data: { fecha?: string; nota?: string 
 
 export const deleteMeeting = (id: string) =>
   apiFetch<{ deleted: boolean }>(`/api/meetings/${id}`, { method: "DELETE" });
+
+// ── Usuarios autorizados ──────────────────────────────────
+export const createUser = (data: { email: string; nombre?: string }) =>
+  apiFetch<AllowedUser>("/api/users", { method: "POST", body: JSON.stringify(data) });
+
+export const deleteUser = (id: string) =>
+  apiFetch<{ deleted: boolean }>(`/api/users/${id}`, { method: "DELETE" });
 
 // ── Registros ─────────────────────────────────────────────
 export interface RecordPayload {

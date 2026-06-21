@@ -1,61 +1,29 @@
 import NextAuth from "next-auth";
-import Google from "next-auth/providers/google";
+import { authConfig, isEmailAllowed, getAllowedEmails } from "@/lib/auth.config";
+import { prisma } from "@/lib/prisma";
+
+export { isEmailAllowed, getAllowedEmails };
 
 /**
- * Lista blanca de correos autorizados (env AUTHORIZED_EMAILS, separada por comas).
- * Es el control central contra intrusos: solo estos correos obtienen sesión.
- * Comparación en minúsculas y sin espacios.
+ * ¿El correo puede iniciar sesión? Autorizado si está en el respaldo por env
+ * (AUTHORIZED_EMAILS) O en la tabla AllowedUser (gestionable desde la app).
+ * Solo se usa en Node (signIn callback + requireSession), nunca en el Edge.
  */
-function getAllowedEmails(): string[] {
-  return (process.env.AUTHORIZED_EMAILS ?? "")
-    .split(",")
-    .map((e) => e.trim().toLowerCase())
-    .filter(Boolean);
-}
-
-export function isEmailAllowed(email?: string | null): boolean {
+export async function isEmailAuthorized(email?: string | null): Promise<boolean> {
   if (!email) return false;
-  const allowed = getAllowedEmails();
-  // Si la lista está vacía, se niega el acceso por seguridad (fail-closed).
-  if (allowed.length === 0) return false;
-  return allowed.includes(email.toLowerCase());
+  const e = email.toLowerCase();
+  if (isEmailAllowed(e)) return true;
+  const u = await prisma.allowedUser.findUnique({ where: { email: e } });
+  return !!u;
 }
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
-  providers: [Google],
-  session: { strategy: "jwt" },
-  // Railway sirve detrás de un proxy; sin esto Auth.js rechaza el host ("UntrustedHost").
-  trustHost: true,
-  pages: {
-    signIn: "/login",
-    error: "/login",
-  },
+  ...authConfig,
   callbacks: {
-    // Rechaza el inicio de sesión de cualquier correo fuera de la allowlist.
-    signIn({ profile, user }) {
-      const email = profile?.email ?? user?.email;
-      return isEmailAllowed(email);
-    },
-    // Usado por el middleware (edge): protege todo salvo /login y /api/auth.
-    authorized({ auth, request }) {
-      const { pathname } = request.nextUrl;
-      const isPublic =
-        pathname === "/login" ||
-        pathname.startsWith("/api/auth") ||
-        pathname.startsWith("/_next") ||
-        pathname === "/favicon.ico";
-      if (isPublic) return true;
-      return Boolean(auth?.user && isEmailAllowed(auth.user.email));
-    },
-    jwt({ token, profile }) {
-      if (profile?.picture) token.picture = profile.picture as string;
-      return token;
-    },
-    session({ session, token }) {
-      if (token.picture && session.user) {
-        session.user.image = token.picture as string;
-      }
-      return session;
+    ...authConfig.callbacks,
+    // Rechaza el inicio de sesión de cualquier correo no autorizado (env o DB).
+    async signIn({ profile, user }) {
+      return await isEmailAuthorized(profile?.email ?? user?.email);
     },
   },
 });

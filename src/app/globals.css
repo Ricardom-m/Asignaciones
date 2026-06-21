@@ -316,6 +316,9 @@ input[type=date]::-webkit-calendar-picker-indicator { filter:invert(.55); }
 .person-row .person-main { flex:1; min-width:140px; }
 .person-badge-inactive { font-size:.55rem; font-family:var(--mono); color:var(--amber); border:1px solid var(--border); background:var(--surface2); border-radius:20px; padding:1px 7px; margin-left:7px; }
 
+/* USUARIOS */
+.user-email { font-size:.66rem; color:var(--text3); margin-top:2px; }
+
 /* GESTOR DE ROLES */
 .role-manage-row { display:flex; align-items:center; gap:9px; padding:9px 10px; border:1px solid var(--border); border-radius:var(--r2); background:transparent; margin-bottom:8px; }
 .role-manage-row input[type=color] { width:30px; height:30px; padding:0; border:1px solid var(--border); border-radius:8px; background:none; cursor:pointer; flex-shrink:0; }

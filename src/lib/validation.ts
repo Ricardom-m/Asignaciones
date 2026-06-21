@@ -14,6 +14,13 @@ export const roleInput = z.object({
 });
 export type RoleInput = z.infer<typeof roleInput>;
 
+// ── Usuarios autorizados ──────────────────────────────────
+export const userInput = z.object({
+  email: z.string().trim().toLowerCase().email("Correo inválido").max(120),
+  nombre: z.string().trim().max(80).nullish(),
+});
+export type UserInput = z.infer<typeof userInput>;
+
 // ── Reuniones ─────────────────────────────────────────────
 export const meetingInput = z.object({
   fecha: fechaSchema,
