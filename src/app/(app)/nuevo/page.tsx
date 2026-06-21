@@ -67,6 +67,7 @@ export default function NuevoPage() {
         fecha: form.fecha,
         sala: form.sala || null,
         asignacion: form.asignacion.trim(),
+        tipo: isNombrado ? "NOMBRADO" : "ASIGNACION",
       });
       await mutate((k) => typeof k === "string" && k.includes("/api/records"));
       setForm(empty());

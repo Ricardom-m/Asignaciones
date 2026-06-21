@@ -33,6 +33,8 @@ export interface Person {
   updatedAt: string;
 }
 
+export type RecordTipo = "ASIGNACION" | "NOMBRADO";
+
 export interface RecordItem {
   id: string;
   asignadoId: string;
@@ -41,7 +43,7 @@ export interface RecordItem {
   ayudante: string | null; // nombre completo (derivado) o null
   fecha: string; // YYYY-MM-DD
   sala: string | null;
-  tipo: string; // "Asignado" cuando hay ayudante, "" si no (derivado)
+  tipo: RecordTipo; // categoría: Asignación o Nombrado
   asignacion: string;
   createdAt: string; // ISO
   updatedAt: string; // ISO

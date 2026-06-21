@@ -107,8 +107,8 @@ export function Spotlight({ personId, persons, records }: Props) {
                 <div className="spotlight-recent-asig">📌 {r.asignacion}</div>
                 <div className="spotlight-recent-meta">
                   {r.sala ? `🏛️ ${r.sala}` : ""}
-                  {r.sala && r.tipo ? " · " : ""}
-                  {r.tipo}
+                  {r.sala && r.tipo === "NOMBRADO" ? " · " : ""}
+                  {r.tipo === "NOMBRADO" ? "Nombrado" : ""}
                 </div>
               </div>
               <div className="spotlight-recent-date">{fmtDate(r.fecha)}</div>

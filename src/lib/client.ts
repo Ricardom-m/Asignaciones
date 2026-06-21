@@ -1,4 +1,4 @@
-import type { Person, RecordItem, Role, Meeting, Genero, AllowedUser } from "@/lib/types";
+import type { Person, RecordItem, Role, Meeting, Genero, AllowedUser, RecordTipo } from "@/lib/types";
 
 // Wrapper de fetch que lanza con el mensaje de error de la API.
 export async function apiFetch<T>(url: string, init?: RequestInit): Promise<T> {
@@ -66,6 +66,7 @@ export interface RecordPayload {
   fecha: string;
   sala: string | null;
   asignacion: string;
+  tipo?: RecordTipo;
 }
 export const createRecord = (data: RecordPayload) =>
   apiFetch<RecordItem>("/api/records", { method: "POST", body: JSON.stringify(data) });

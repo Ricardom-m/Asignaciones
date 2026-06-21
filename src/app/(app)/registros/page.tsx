@@ -31,8 +31,10 @@ function groupByFechaMonth(items: RecordItem[]) {
 
 type DateFilter = "prox" | "pas" | "todas";
 
+type View = "asig" | "nombrado" | "spotlight";
+
 export default function RegistrosPage() {
-  const [view, setView] = useState<"list" | "spotlight">("list");
+  const [view, setView] = useState<View>("asig");
   const [dateFilter, setDateFilter] = useState<DateFilter>("prox");
   const [salaFilter, setSalaFilter] = useState("");
   const [query, setQuery] = useState("");
@@ -45,6 +47,7 @@ export default function RegistrosPage() {
     scope: dateFilter,
     sala: salaFilter || undefined,
     q: query || undefined,
+    tipo: view === "nombrado" ? "NOMBRADO" : "ASIGNACION",
   });
   const personsById = useMemo(() => new Map(persons.map((p) => [p.id, p])), [persons]);
   const { mutate: globalMutate } = useSWRConfig();
@@ -91,15 +94,18 @@ export default function RegistrosPage() {
       />
 
       <div className="view-toggle">
-        <button className={`vt-btn${view === "list" ? " active" : ""}`} onClick={() => setView("list")}>
-          Lista
+        <button className={`vt-btn${view === "asig" ? " active" : ""}`} onClick={() => setView("asig")}>
+          Asignaciones
+        </button>
+        <button className={`vt-btn${view === "nombrado" ? " active" : ""}`} onClick={() => setView("nombrado")}>
+          Nombrados
         </button>
         <button className={`vt-btn${view === "spotlight" ? " active" : ""}`} onClick={() => setView("spotlight")}>
           Por persona
         </button>
       </div>
 
-      {view === "list" ? (
+      {view !== "spotlight" ? (
         <>
           <div className="seg">
             {([

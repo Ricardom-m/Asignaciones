@@ -17,6 +17,7 @@ export async function GET(req: Request) {
   const sala = sp.get("sala");
   const q = sp.get("q")?.trim();
   const personId = sp.get("personId");
+  const tipo = sp.get("tipo");
   const sort = sp.get("sort") === "createdAt" ? "createdAt" : "fecha";
   const all = sp.get("all") === "1";
   const take = Math.min(Math.max(Number(sp.get("take")) || 25, 1), 100);
@@ -27,6 +28,7 @@ export async function GET(req: Request) {
   if (scope === "prox") and.push({ fecha: { gte: today } });
   else if (scope === "pas") and.push({ fecha: { lt: today } });
   if (sala) and.push({ sala });
+  if (tipo === "ASIGNACION" || tipo === "NOMBRADO") and.push({ tipo });
   if (personId) and.push({ OR: [{ asignadoId: personId }, { ayudanteId: personId }] });
   if (q)
     and.push({
@@ -75,7 +77,7 @@ export async function POST(req: Request) {
   if (!parsed.success)
     return fail("Datos inválidos", 422, parsed.error.flatten().fieldErrors);
 
-  const { asignadoId, ayudanteId, fecha, sala, asignacion } = parsed.data;
+  const { asignadoId, ayudanteId, fecha, sala, asignacion, tipo } = parsed.data;
   if (ayudanteId && ayudanteId === asignadoId)
     return fail("El ayudante no puede ser la misma persona que el asignado", 422);
 
@@ -90,6 +92,7 @@ export async function POST(req: Request) {
       fecha: new Date(fecha),
       sala: sala ?? null,
       asignacion,
+      tipo: tipo ?? "ASIGNACION",
     },
     include: recordInclude,
   });

@@ -29,6 +29,11 @@ enum Genero {
   M // Mujer
 }
 
+enum RecordTipo {
+  ASIGNACION // asignación normal (con/sin ayudante)
+  NOMBRADO // asignación de un nombrado (sin ayudante)
+}
+
 model Person {
   id        String   @id @default(cuid())
   nombre    String
@@ -74,15 +79,17 @@ model Record {
   ayudanteId String?
   ayudante   Person? @relation("Ayudante", fields: [ayudanteId], references: [id], onDelete: SetNull)
 
-  fecha      DateTime @db.Date // fecha de la asignación (solo día)
+  fecha      DateTime   @db.Date // fecha de la asignación (solo día)
   sala       String?
   asignacion String
+  tipo       RecordTipo @default(ASIGNACION)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([fecha])
   @@index([fecha, id]) // orden + cursor pagination estable
+  @@index([tipo, fecha]) // filtrar por tipo + orden por fecha
   @@index([asignadoId])
   @@index([ayudanteId])
   @@index([createdAt])

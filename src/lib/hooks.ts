@@ -32,12 +32,13 @@ interface RecordsPage {
   nextCursor: string | null;
 }
 
-// Lista paginada por cursor (Registros). Filtros (scope/sala/q) se aplican en el servidor.
-export function useRecordsList(params: { scope?: string; sala?: string; q?: string }) {
+// Lista paginada por cursor (Registros). Filtros (scope/sala/q/tipo) en el servidor.
+export function useRecordsList(params: { scope?: string; sala?: string; q?: string; tipo?: string }) {
   const base = new URLSearchParams();
   if (params.scope) base.set("scope", params.scope);
   if (params.sala) base.set("sala", params.sala);
   if (params.q) base.set("q", params.q);
+  if (params.tipo) base.set("tipo", params.tipo);
 
   const getKey = (index: number, prev: RecordsPage | null) => {
     if (prev && !prev.nextCursor) return null;

@@ -51,7 +51,7 @@ export function serializeRecord(r: RecordWithPeople): RecordItem {
     ayudante: r.ayudante ? fullName(r.ayudante) : null,
     fecha: toYMD(r.fecha),
     sala: r.sala,
-    tipo: r.ayudanteId ? "Asignado" : "",
+    tipo: r.tipo,
     asignacion: r.asignacion,
     createdAt: r.createdAt.toISOString(),
     updatedAt: r.updatedAt.toISOString(),

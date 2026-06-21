@@ -18,7 +18,7 @@ export async function PATCH(req: Request, { params }: Params) {
   if (!parsed.success)
     return fail("Datos inválidos", 422, parsed.error.flatten().fieldErrors);
 
-  const { asignadoId, ayudanteId, fecha, sala, asignacion } = parsed.data;
+  const { asignadoId, ayudanteId, fecha, sala, asignacion, tipo } = parsed.data;
   if (ayudanteId && ayudanteId === asignadoId)
     return fail("El ayudante no puede ser la misma persona que el asignado", 422);
 
@@ -37,6 +37,7 @@ export async function PATCH(req: Request, { params }: Params) {
       fecha: new Date(fecha),
       sala: sala ?? null,
       asignacion,
+      ...(tipo ? { tipo } : {}),
     },
     include: recordInclude,
   });

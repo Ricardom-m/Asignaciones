@@ -40,12 +40,22 @@ export function EditRecordModal({ rec, persons, onClose, onSaved }: Props) {
   });
   const [saving, setSaving] = useState(false);
 
+  const isNombrado = rec.tipo === "NOMBRADO";
+
   // Solo personas activas, conservando las ya referidas en este registro.
   const formPersons = useMemo(
     () => persons.filter((p) => p.active || p.id === rec.asignadoId || p.id === rec.ayudanteId),
     [persons, rec.asignadoId, rec.ayudanteId],
   );
-  const { candidates } = useSuggest(form.asignadoId, form.fecha);
+  // En registros de tipo NOMBRADO el asignado debe ser un Nombrado.
+  const asignadoPersons = useMemo(
+    () =>
+      isNombrado
+        ? formPersons.filter((p) => p.roles.some((r) => r.nombre === "Nombrados") || p.id === rec.asignadoId)
+        : formPersons,
+    [isNombrado, formPersons, rec.asignadoId],
+  );
+  const { candidates } = useSuggest(isNombrado ? "" : form.asignadoId, form.fecha);
   const patch = (p: Partial<FormState>) => setForm((f) => ({ ...f, ...p }));
 
   const save = async () => {
@@ -57,10 +67,11 @@ export function EditRecordModal({ rec, persons, onClose, onSaved }: Props) {
     try {
       await updateRecord(rec.id, {
         asignadoId: form.asignadoId,
-        ayudanteId: form.ayudanteId || null,
+        ayudanteId: isNombrado ? null : form.ayudanteId || null,
         fecha: form.fecha,
         sala: form.sala || null,
         asignacion: form.asignacion.trim(),
+        tipo: rec.tipo,
       });
       toast("✏️ Registro actualizado", "success");
       onSaved();
@@ -72,35 +83,37 @@ export function EditRecordModal({ rec, persons, onClose, onSaved }: Props) {
   };
 
   return (
-    <Modal title="Editar registro" onClose={onClose}>
+    <Modal title={isNombrado ? "Editar nombrado" : "Editar registro"} onClose={onClose}>
       <div className="form-grid">
         <div className="field-group">
           <label className="field-label">
-            Nombre del asignado <span className="req">*</span>
+            {isNombrado ? "Nombre del nombrado" : "Nombre del asignado"} <span className="req">*</span>
           </label>
           <PersonSelect
-            persons={formPersons}
+            persons={asignadoPersons}
             value={form.asignadoId}
-            excludeId={form.ayudanteId}
+            excludeId={isNombrado ? undefined : form.ayudanteId}
             onChange={(id) => patch({ asignadoId: id })}
           />
         </div>
 
-        <div className="field-group">
-          <label className="field-label">Ayudante del asignado</label>
-          <PersonSelect
-            persons={formPersons}
-            value={form.ayudanteId}
-            excludeId={form.asignadoId}
-            onChange={(id) => patch({ ayudanteId: id })}
-          />
-          <HelperPicker
-            candidates={candidates}
-            roles={roles}
-            value={form.ayudanteId}
-            onChange={(id) => patch({ ayudanteId: id })}
-          />
-        </div>
+        {!isNombrado && (
+          <div className="field-group">
+            <label className="field-label">Ayudante del asignado</label>
+            <PersonSelect
+              persons={formPersons}
+              value={form.ayudanteId}
+              excludeId={form.asignadoId}
+              onChange={(id) => patch({ ayudanteId: id })}
+            />
+            <HelperPicker
+              candidates={candidates}
+              roles={roles}
+              value={form.ayudanteId}
+              onChange={(id) => patch({ ayudanteId: id })}
+            />
+          </div>
+        )}
 
         <div className="field-group">
           <label className="field-label">

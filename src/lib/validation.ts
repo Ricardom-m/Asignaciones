@@ -51,6 +51,7 @@ export const recordInput = z.object({
   fecha: fechaSchema,
   sala: z.string().trim().max(80).nullish(),
   asignacion: z.string().trim().min(1, "La asignación es obligatoria").max(500),
+  tipo: z.enum(["ASIGNACION", "NOMBRADO"]).optional(),
 });
 export type RecordInput = z.infer<typeof recordInput>;
 
