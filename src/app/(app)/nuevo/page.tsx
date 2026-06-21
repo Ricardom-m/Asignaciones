@@ -11,6 +11,7 @@ import { DateChips } from "@/components/DateChips";
 import { createRecord } from "@/lib/client";
 
 const SALAS = ["Sala A", "Sala B", "Otro"];
+type Mode = "asig" | "nombrado";
 
 interface FormState {
   asignadoId: string;
@@ -27,14 +28,27 @@ export default function NuevoPage() {
   const { roles } = useRoles();
   const { mutate } = useSWRConfig();
   const toast = useToast();
+  const [mode, setMode] = useState<Mode>("asig");
   const [form, setForm] = useState<FormState>(empty);
   const [saving, setSaving] = useState(false);
 
   const activePersons = useMemo(() => persons.filter((p) => p.active), [persons]);
-  const patch = (p: Partial<FormState>) => setForm((f) => ({ ...f, ...p }));
+  // En la sub-sección "Nombrados" solo se eligen personas con ese rol.
+  const nombradosPersons = useMemo(
+    () => activePersons.filter((p) => p.roles.some((r) => r.nombre === "Nombrados")),
+    [activePersons],
+  );
+  const isNombrado = mode === "nombrado";
+  const asignadoPersons = isNombrado ? nombradosPersons : activePersons;
 
-  // Candidatos a ayudante, rankeados en el servidor (compatibles por género).
-  const { candidates } = useSuggest(form.asignadoId, form.fecha);
+  const patch = (p: Partial<FormState>) => setForm((f) => ({ ...f, ...p }));
+  const switchMode = (m: Mode) => {
+    setMode(m);
+    setForm(empty());
+  };
+
+  // Sugerencias de ayudante solo en modo "Asignación".
+  const { candidates } = useSuggest(isNombrado ? "" : form.asignadoId, form.fecha);
 
   // Revelado progresivo
   const hasAsignado = !!form.asignadoId;
@@ -49,7 +63,7 @@ export default function NuevoPage() {
     try {
       await createRecord({
         asignadoId: form.asignadoId,
-        ayudanteId: form.ayudanteId || null,
+        ayudanteId: isNombrado ? null : form.ayudanteId || null,
         fecha: form.fecha,
         sala: form.sala || null,
         asignacion: form.asignacion.trim(),
@@ -68,6 +82,16 @@ export default function NuevoPage() {
     <div className="page-inner fade-up">
       <PageHeader title="Nuevo registro" subtitle="Completa los campos paso a paso" />
 
+      {/* Sub-secciones */}
+      <div className="view-toggle">
+        <button className={`vt-btn${!isNombrado ? " active" : ""}`} onClick={() => switchMode("asig")}>
+          Asignación
+        </button>
+        <button className={`vt-btn${isNombrado ? " active" : ""}`} onClick={() => switchMode("nombrado")}>
+          Nombrados
+        </button>
+      </div>
+
       {/* Barra de progreso */}
       <div className="progress-wrap">
         <div className="progress-track">
@@ -78,37 +102,40 @@ export default function NuevoPage() {
 
       <div className="content-card">
         <div className="form-grid">
-          {/* 1 · Asignado */}
-          <div className="field-group field-reveal">
+          {/* 1 · Asignado / Nombrado */}
+          <div className="field-group field-reveal" key={mode}>
             <label className="field-label">
-              ¿Quién es el asignado? <span className="req">*</span>
+              {isNombrado ? "¿Quién es el nombrado?" : "¿Quién es el asignado?"} <span className="req">*</span>
             </label>
             <PersonSelect
-              persons={activePersons}
+              persons={asignadoPersons}
               value={form.asignadoId}
-              excludeId={form.ayudanteId}
+              excludeId={isNombrado ? undefined : form.ayudanteId}
               onChange={(id) => patch({ asignadoId: id })}
+              placeholder={isNombrado ? "Seleccionar nombrado…" : "Seleccionar…"}
             />
           </div>
 
           {hasAsignado && (
             <>
-              {/* 2 · Ayudante + sugerencias */}
-              <div className="field-group field-reveal">
-                <label className="field-label">Ayudante (opcional)</label>
-                <PersonSelect
-                  persons={activePersons}
-                  value={form.ayudanteId}
-                  excludeId={form.asignadoId}
-                  onChange={(id) => patch({ ayudanteId: id })}
-                />
-                <HelperPicker
-                  candidates={candidates}
-                  roles={roles}
-                  value={form.ayudanteId}
-                  onChange={(id) => patch({ ayudanteId: id })}
-                />
-              </div>
+              {/* 2 · Ayudante + sugerencias (solo en "Asignación") */}
+              {!isNombrado && (
+                <div className="field-group field-reveal">
+                  <label className="field-label">Ayudante (opcional)</label>
+                  <PersonSelect
+                    persons={activePersons}
+                    value={form.ayudanteId}
+                    excludeId={form.asignadoId}
+                    onChange={(id) => patch({ ayudanteId: id })}
+                  />
+                  <HelperPicker
+                    candidates={candidates}
+                    roles={roles}
+                    value={form.ayudanteId}
+                    onChange={(id) => patch({ ayudanteId: id })}
+                  />
+                </div>
+              )}
 
               {/* 3 · Fecha + chips */}
               <div className="field-group field-reveal">
