@@ -2,6 +2,7 @@
 
 import { signIn } from "next-auth/react";
 import { useState } from "react";
+import { ClipboardText, UsersThree, CalendarBlank, ChartBar, ShieldCheck } from "@phosphor-icons/react";
 
 export function LoginForm({ error }: { error?: string }) {
   const [loading, setLoading] = useState(false);
@@ -13,8 +14,18 @@ export function LoginForm({ error }: { error?: string }) {
 
   return (
     <div className="login-wrap">
+      {/* Aurora de fondo (decorativa) */}
+      <div className="login-aurora" aria-hidden="true">
+        <span className="a1" />
+        <span className="a2" />
+        <span className="a3" />
+      </div>
+
       <div className="login-card">
-        <div className="login-icon">📋</div>
+        <div className="login-logo">
+          <ClipboardText size={30} weight="fill" color="#fff" />
+        </div>
+
         <div className="login-title">Asignaciones</div>
         <div className="login-sub">
           Registro de actividades del equipo.
@@ -22,8 +33,18 @@ export function LoginForm({ error }: { error?: string }) {
           Inicia sesión para continuar.
         </div>
 
+        <div className="login-features">
+          <span className="login-feature"><UsersThree size={14} weight="bold" /> Equipo</span>
+          <span className="login-feature"><CalendarBlank size={14} weight="bold" /> Reuniones</span>
+          <span className="login-feature"><ChartBar size={14} weight="bold" /> Estadísticas</span>
+        </div>
+
         <button className="btn-google" onClick={handleSignIn} disabled={loading}>
-          <GoogleIcon />
+          {loading ? (
+            <span className="login-spinner" />
+          ) : (
+            <GoogleIcon />
+          )}
           {loading ? "Conectando…" : "Entrar con Google"}
         </button>
 
@@ -35,7 +56,9 @@ export function LoginForm({ error }: { error?: string }) {
           </div>
         )}
 
-        <div className="login-foot">Acceso restringido · solo correos autorizados</div>
+        <div className="login-foot">
+          <ShieldCheck size={13} weight="fill" /> Acceso restringido · solo correos autorizados
+        </div>
       </div>
     </div>
   );

@@ -332,16 +332,47 @@ input[type=date]::-webkit-calendar-picker-indicator { filter:invert(.55); }
 .btn-danger-solid:active { transform:scale(.98); }
 
 /* LOGIN */
-.login-wrap { min-height:100dvh; display:flex; align-items:center; justify-content:center; padding:24px; }
-.login-card { background:var(--surface); border:1px solid var(--border); border-radius:18px; padding:36px 28px; max-width:360px; width:100%; text-align:center; animation:popIn .22s ease both; }
-.login-icon { width:54px; height:54px; border-radius:16px; background:var(--grad); border:none; box-shadow:0 8px 24px color-mix(in srgb, var(--accent) 35%, transparent); display:flex; align-items:center; justify-content:center; font-size:1.5rem; margin:0 auto 18px; }
-.login-title { font-size:1.3rem; font-weight:600; letter-spacing:-.02em; margin-bottom:7px; }
-.login-sub { font-size:.83rem; color:var(--text2); margin-bottom:26px; line-height:1.55; }
-.btn-google { display:inline-flex; align-items:center; justify-content:center; gap:10px; width:100%; padding:12px 16px; border-radius:var(--r2); border:1px solid var(--border2); background:var(--surface2); color:var(--text); font-family:var(--head); font-size:.9rem; font-weight:500; cursor:pointer; transition:all .15s; }
-.btn-google:hover { border-color:var(--accent); }
+.login-wrap { position:relative; min-height:100dvh; display:flex; align-items:center; justify-content:center; padding:24px; overflow:hidden; }
+
+/* Aurora de fondo animada */
+.login-aurora { position:absolute; inset:0; z-index:0; pointer-events:none; }
+.login-aurora span { position:absolute; border-radius:50%; filter:blur(72px); opacity:.5; }
+.login-aurora .a1 { width:440px; height:440px; left:-130px; top:-110px; background:radial-gradient(circle, var(--accent), transparent 64%); animation:auroraA 15s ease-in-out infinite; }
+.login-aurora .a2 { width:380px; height:380px; right:-110px; bottom:-90px; background:radial-gradient(circle, var(--accent2), transparent 64%); animation:auroraB 19s ease-in-out infinite; }
+.login-aurora .a3 { width:320px; height:320px; left:52%; top:58%; background:radial-gradient(circle, color-mix(in srgb, var(--accent) 55%, var(--accent2)), transparent 64%); animation:auroraA 23s ease-in-out infinite reverse; }
+@keyframes auroraA { 0%,100%{transform:translate(0,0) scale(1)} 50%{transform:translate(34px,42px) scale(1.1)} }
+@keyframes auroraB { 0%,100%{transform:translate(0,0) scale(1)} 50%{transform:translate(-42px,-32px) scale(1.14)} }
+:root.light .login-aurora span { opacity:.34; }
+
+/* Tarjeta de cristal con borde degradado */
+.login-card { position:relative; z-index:1; background:color-mix(in srgb, var(--surface) 76%, transparent); backdrop-filter:blur(22px) saturate(1.3); -webkit-backdrop-filter:blur(22px) saturate(1.3); border:1px solid var(--border2); border-radius:22px; padding:40px 30px 26px; max-width:384px; width:100%; text-align:center; box-shadow:0 30px 70px rgba(0,0,0,.4); animation:popIn .3s ease both; }
+.login-card::before { content:""; position:absolute; inset:0; border-radius:22px; padding:1px; background:linear-gradient(135deg, color-mix(in srgb, var(--accent) 65%, transparent), transparent 42%, color-mix(in srgb, var(--accent2) 55%, transparent)); -webkit-mask:linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite:xor; mask-composite:exclude; pointer-events:none; }
+
+.login-logo { position:relative; width:66px; height:66px; border-radius:20px; background:var(--grad); display:flex; align-items:center; justify-content:center; margin:0 auto 20px; box-shadow:0 14px 32px color-mix(in srgb, var(--accent) 45%, transparent); animation:logoFloat 4.5s ease-in-out infinite; }
+.login-logo::after { content:""; position:absolute; inset:-6px; border-radius:25px; border:1px solid color-mix(in srgb, var(--accent) 38%, transparent); opacity:.55; }
+@keyframes logoFloat { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)} }
+
+.login-title { font-size:1.55rem; font-weight:700; letter-spacing:-.02em; margin-bottom:8px; background:var(--grad); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; }
+.login-sub { font-size:.84rem; color:var(--text2); margin-bottom:22px; line-height:1.55; }
+
+.login-features { display:flex; gap:7px; justify-content:center; margin-bottom:24px; flex-wrap:wrap; }
+.login-feature { display:inline-flex; align-items:center; gap:6px; font-size:.66rem; color:var(--text2); background:var(--surface2); border:1px solid var(--border); border-radius:20px; padding:6px 11px; }
+.login-feature svg { color:var(--accent); flex-shrink:0; }
+
+.btn-google { position:relative; display:inline-flex; align-items:center; justify-content:center; gap:10px; width:100%; padding:13px 16px; border-radius:var(--r2); border:1px solid var(--border2); background:var(--surface2); color:var(--text); font-family:var(--head); font-size:.9rem; font-weight:500; cursor:pointer; transition:border-color .15s, box-shadow .2s, transform .1s; }
+.btn-google:hover { border-color:var(--accent); box-shadow:0 6px 22px color-mix(in srgb, var(--accent) 22%, transparent); }
 .btn-google:active { transform:scale(.98); }
-.login-error { margin-top:16px; font-size:.76rem; color:var(--red); background:var(--red-dim); border:1px solid var(--border); border-radius:var(--r2); padding:9px 12px; }
-.login-foot { margin-top:22px; font-size:.66rem; color:var(--text3); }
+.btn-google:disabled { opacity:.85; cursor:default; }
+.login-spinner { width:16px; height:16px; border-radius:50%; border:2px solid color-mix(in srgb, var(--accent) 35%, transparent); border-top-color:var(--accent); animation:spin .7s linear infinite; }
+@keyframes spin { to { transform:rotate(360deg); } }
+
+.login-error { margin-top:16px; font-size:.76rem; color:var(--red); background:var(--red-dim); border:1px solid color-mix(in srgb, var(--red) 30%, var(--border)); border-radius:var(--r2); padding:9px 12px; animation:popIn .2s ease both; }
+.login-foot { display:flex; align-items:center; justify-content:center; gap:5px; margin-top:22px; font-size:.66rem; color:var(--text3); }
+.login-foot svg { color:var(--green); }
+
+@media (prefers-reduced-motion: reduce) {
+  .login-aurora span, .login-logo { animation:none; }
+}
 
 /* ROLES */
 .role-badge { display:inline-flex; align-items:center; gap:4px; font-size:.58rem; font-weight:600; font-family:var(--mono); padding:2px 8px; border-radius:20px; border:1px solid; white-space:nowrap; line-height:1.6; }
