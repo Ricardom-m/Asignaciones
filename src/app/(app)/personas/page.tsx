@@ -54,6 +54,20 @@ export default function PersonasPage() {
   }, [persons]);
   const activeCount = persons.filter((p) => p.active).length;
 
+  // Activar/desactivar al instante (optimista) desde la tarjeta.
+  const toggleActive = async (p: Person) => {
+    const next = !p.active;
+    mutate(persons.map((x) => (x.id === p.id ? { ...x, active: next } : x)), false);
+    try {
+      await updatePerson(p.id, { nombre: p.nombre, apellido: p.apellido, active: next });
+      await mutate();
+      toast(next ? "✅ Persona activada" : "🚫 Persona desactivada");
+    } catch (e) {
+      await mutate();
+      toast("❌ " + (e as Error).message, "error");
+    }
+  };
+
   const remove = async (p: Person) => {
     const ok = await confirm({
       title: "Eliminar persona",
@@ -161,6 +175,15 @@ export default function PersonasPage() {
                 )}
               </div>
               <div className="person-actions">
+                <button
+                  className={`btn btn-sm btn-toggle ${p.active ? "is-on" : "is-off"}`}
+                  onClick={() => toggleActive(p)}
+                  title={p.active ? "Desactivar" : "Activar"}
+                  aria-label={p.active ? "Desactivar persona" : "Activar persona"}
+                  aria-pressed={p.active}
+                >
+                  <PowerIcon />
+                </button>
                 <button className="btn btn-edit btn-sm" onClick={() => setEditing(p)}>
                   Editar
                 </button>
@@ -295,6 +318,15 @@ function PersonModal({
         )}
       </div>
     </Modal>
+  );
+}
+
+function PowerIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="12" y1="3" x2="12" y2="12" />
+      <path d="M6.5 7.5a8 8 0 1011 0" />
+    </svg>
   );
 }
 

@@ -128,6 +128,14 @@ input[type=date]::-webkit-calendar-picker-indicator { filter:invert(.55); }
 .btn-edit { background:transparent; color:var(--text2); border-color:var(--border); }
 .btn-edit:hover { color:var(--text); border-color:var(--border2); }
 .btn-sm { padding:6px 12px; font-size:.72rem; border-radius:8px; width:auto; }
+/* Toggle rápido activar/desactivar (icono) */
+.btn-toggle { padding:6px 8px; background:transparent; border-color:var(--border); }
+.btn-toggle svg { display:block; }
+.btn-toggle.is-on { color:var(--green,#34d399); border-color:color-mix(in srgb, var(--green,#34d399) 45%, var(--border)); background:color-mix(in srgb, var(--green,#34d399) 12%, transparent); }
+.btn-toggle.is-off { color:var(--text3); }
+.btn-toggle.is-on:hover { filter:brightness(1.1); }
+.btn-toggle.is-off:hover { color:var(--text); border-color:var(--border2); }
+.btn-toggle:active { transform:scale(.94); }
 
 /* SEARCHABLE SELECT */
 /* Eleva el campo activo (el del select abierto) por encima de los campos
