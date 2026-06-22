@@ -69,6 +69,11 @@ export default function RegistrosPage() {
 
   const groups = groupByFechaMonth(items);
 
+  const openPerson = (id: string) => {
+    setSpotlightId(id);
+    setView("spotlight");
+  };
+
   const onDelete = async (rec: RecordItem) => {
     const ok = await confirm({
       title: "Eliminar registro",
@@ -174,7 +179,7 @@ export default function RegistrosPage() {
                 <div key={g.key}>
                   <div className="month-group-title">{g.key}</div>
                   {g.items.map((rec) => (
-                    <RecordCard key={rec.id} rec={rec} personsById={personsById} onEdit={setEditing} onDelete={onDelete} />
+                    <RecordCard key={rec.id} rec={rec} personsById={personsById} onEdit={setEditing} onDelete={onDelete} onPerson={openPerson} />
                   ))}
                 </div>
               ))}
@@ -196,7 +201,7 @@ export default function RegistrosPage() {
             </div>
             <PersonSelect persons={persons} value={spotlightId} onChange={setSpotlightId} placeholder="Buscar persona…" allowClear={false} />
           </div>
-          {spotlightId && <Spotlight personId={spotlightId} persons={persons} records={personRecords} />}
+          {spotlightId && <Spotlight personId={spotlightId} persons={persons} records={personRecords} onPerson={openPerson} />}
         </>
       )}
 

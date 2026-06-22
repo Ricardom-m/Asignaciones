@@ -11,9 +11,10 @@ interface Props {
   personsById: Map<string, Person>;
   onEdit: (rec: RecordItem) => void;
   onDelete: (rec: RecordItem) => void;
+  onPerson?: (id: string) => void;
 }
 
-export function RecordCard({ rec, personsById, onEdit, onDelete }: Props) {
+export function RecordCard({ rec, personsById, onEdit, onDelete, onPerson }: Props) {
   const [open, setOpen] = useState(false);
   const status = dateStatus(rec.fecha);
   const asignadoP = personsById.get(rec.asignadoId);
@@ -55,15 +56,27 @@ export function RecordCard({ rec, personsById, onEdit, onDelete }: Props) {
             <span className="rc-people">
               <span className="rc-person">
                 {asignadoP && <GenderIcon genero={asignadoP.genero} />}
-                <span className="rc-pname">{rec.asignado}</span>
+                {onPerson ? (
+                  <button className="person-link rc-pname" onClick={() => onPerson(rec.asignadoId)}>
+                    {rec.asignado}
+                  </button>
+                ) : (
+                  <span className="rc-pname">{rec.asignado}</span>
+                )}
                 {asignadoP?.roles[0] && <RoleBadge role={asignadoP.roles[0]} />}
               </span>
-              {rec.ayudante && (
+              {rec.ayudante && rec.ayudanteId && (
                 <>
                   <span className="rc-con">con</span>
                   <span className="rc-person">
                     {ayudanteP && <GenderIcon genero={ayudanteP.genero} />}
-                    <span className="rc-pname">{rec.ayudante}</span>
+                    {onPerson ? (
+                      <button className="person-link rc-pname" onClick={() => onPerson(rec.ayudanteId!)}>
+                        {rec.ayudante}
+                      </button>
+                    ) : (
+                      <span className="rc-pname">{rec.ayudante}</span>
+                    )}
                     {ayudanteP?.roles[0] && <RoleBadge role={ayudanteP.roles[0]} />}
                   </span>
                 </>

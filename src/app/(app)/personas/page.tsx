@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { usePersons, useRoles } from "@/lib/hooks";
 import { useToast } from "@/components/Toast";
 import { createPerson, updatePerson, deletePerson } from "@/lib/client";
@@ -18,6 +19,13 @@ export default function PersonasPage() {
   const { roles } = useRoles();
   const toast = useToast();
   const confirm = useConfirm();
+  const router = useRouter();
+
+  // Abrir el detalle "Por persona" de alguien (en Registros).
+  const openDetail = (id: string) => {
+    sessionStorage.setItem("asgn_spotlight", id);
+    router.push("/registros");
+  };
 
   const [query, setQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState("");
@@ -139,7 +147,9 @@ export default function PersonasPage() {
             <div className={`person-row anim-slide${p.active ? "" : " inactive"}`} key={p.id}>
               <div className="person-main">
                 <span className="person-name">
-                  {p.nombre} {p.apellido}
+                  <button className="person-link" onClick={() => openDetail(p.id)}>
+                    {p.nombre} {p.apellido}
+                  </button>
                   {!p.active && <span className="person-badge-inactive">inactivo</span>}
                 </span>
                 {p.roles.length > 0 && (
