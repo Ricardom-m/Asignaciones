@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import type { UserOptions } from "jspdf-autotable";
 import { fmtDate, fmtShort, relativeLabel, todayYMD, addDaysYMD } from "@/lib/client";
 import { RoleBadge } from "@/components/RoleBadge";
 import { GenderIcon } from "@/components/GenderIcon";
@@ -109,19 +110,74 @@ export function Spotlight({ personId, persons, records, onPerson }: Props) {
       <span>{p.nombre} {p.apellido}</span>
     );
 
-  const exportCsv = () => {
-    const rows: string[][] = [["Fecha", "Asignacion", "Con", "Sala", "Tipo"]];
-    for (const r of timeline) {
-      const pt = partnerOf(r);
-      rows.push([r.fecha, r.asignacion, pt ? `${pt.nombre} ${pt.apellido}` : "", r.sala ?? "", r.tipo]);
+  // PDF minimalista (jsPDF cargado solo al exportar).
+  const exportPdf = async () => {
+    const { jsPDF } = await import("jspdf");
+    const autoTable = (await import("jspdf-autotable")).default;
+    const doc = new jsPDF({ unit: "pt", format: "a4" });
+    const M = 40;
+    let y = M;
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(15);
+    doc.setTextColor(25);
+    doc.text("Historial de asignaciones", M, y);
+    y += 22;
+    doc.setFontSize(13);
+    doc.text(fullName, M, y);
+    y += 15;
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    doc.setTextColor(120);
+    const generoTxt = person.genero === "H" ? "Hombre" : person.genero === "M" ? "Mujer" : "—";
+    const rolesTxt = person.roles.map((r) => r.nombre).join(", ") || "—";
+    doc.text(`${generoTxt}  ·  ${rolesTxt}`, M, y);
+    y += 12;
+    const periodTxt = period === "all" ? "Todo" : period === "year" ? "Este año" : "Últimos 3 meses";
+    const roleTxt = roleFilter ? filterRoles.find((r) => r.id === roleFilter)?.nombre ?? "—" : "Toda pareja";
+    doc.text(`Generado: ${new Date().toLocaleDateString("es-MX")}   ·   Periodo: ${periodTxt}   ·   Pareja: ${roleTxt}`, M, y);
+    y += 18;
+
+    doc.setTextColor(25);
+    doc.setFontSize(10);
+    doc.text(
+      `Total: ${total}      Este mes: ${esteMes}      Parejas distintas: ${distinct}      Última: ${lastRec ? fmtDate(lastRec.fecha) : "—"}`,
+      M,
+      y,
+    );
+    y += 16;
+
+    const style = {
+      theme: "grid" as const,
+      styles: { font: "helvetica", fontSize: 9, cellPadding: 5, textColor: 45, lineColor: 225, lineWidth: 0.5 },
+      headStyles: { fillColor: [245, 246, 248], textColor: 90, fontStyle: "bold" as const, lineColor: 225, lineWidth: 0.5 },
+      margin: { left: M, right: M },
+    };
+
+    if (partners.length) {
+      autoTable(doc, {
+        startY: y,
+        head: [["Con quién ha trabajado", "Veces", "Última"]],
+        body: partners.map((p) => [`${p.person.nombre} ${p.person.apellido}`, String(p.count), fmtDate(p.lastFecha)]),
+        columnStyles: { 1: { halign: "center", cellWidth: 50 }, 2: { cellWidth: 90 } },
+        ...style,
+      } as unknown as UserOptions);
+      y = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 18;
     }
-    const csv = rows.map((row) => row.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(",")).join("\r\n");
-    const url = URL.createObjectURL(new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8" }));
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `historial_${fullName.replace(/\s+/g, "_")}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
+
+    autoTable(doc, {
+      startY: y,
+      head: [["Fecha", "Asignación", "Con", "Sala", "Tipo"]],
+      body: timeline.map((r) => {
+        const pt = partnerOf(r);
+        return [fmtDate(r.fecha), r.asignacion, pt ? `${pt.nombre} ${pt.apellido}` : "—", r.sala ?? "", r.tipo === "NOMBRADO" ? "Nombrado" : "Asignación"];
+      }),
+      columnStyles: { 0: { cellWidth: 72 }, 3: { cellWidth: 55 }, 4: { cellWidth: 74 } },
+      ...style,
+    } as unknown as UserOptions);
+
+    doc.save(`historial_${fullName.replace(/\s+/g, "_")}.pdf`);
   };
 
   return (
@@ -139,8 +195,8 @@ export function Spotlight({ personId, persons, records, onPerson }: Props) {
             ))}
           </div>
         </div>
-        <button className="btn btn-ghost btn-sm" onClick={exportCsv} title="Exportar historial (CSV)">
-          ⤓ CSV
+        <button className="btn btn-ghost btn-sm" onClick={exportPdf} title="Exportar historial (PDF)">
+          ⤓ PDF
         </button>
       </div>
 
