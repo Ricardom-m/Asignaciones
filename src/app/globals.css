@@ -510,6 +510,18 @@ input:focus, select:focus, .list-search-input:focus, .sel-search:focus, .cmd-inp
 /* Barra inferior con 5 pestañas: etiquetas un poco más chicas en móvil. */
 @media (max-width:520px) { .nav-btn { font-size:.55rem; } .nav-btn svg { width:18px; height:18px; } }
 
+/* FILTROS DE REGISTROS (compactos) */
+.reg-search { display:flex; align-items:center; background:var(--surface2); border:1px solid var(--border); border-radius:var(--r2); margin-bottom:10px; overflow:hidden; transition:border-color .15s, box-shadow .15s; }
+.reg-search:focus-within { border-color:var(--accent); box-shadow:0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent); }
+.reg-search-ico { padding:0 4px 0 12px; color:var(--text3); font-size:.82rem; pointer-events:none; }
+.reg-search input { flex:1; min-width:0; background:transparent; border:none; color:var(--text); padding:10px 12px 10px 8px; font-family:var(--head); font-size:.82rem; outline:none; }
+.reg-filters { display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap; margin-bottom:14px; }
+.reg-scope { display:flex; gap:4px; background:var(--surface2); border:1px solid var(--border); border-radius:var(--r2); padding:3px; }
+.reg-pill { padding:6px 13px; border-radius:7px; border:none; background:transparent; color:var(--text2); font-family:var(--head); font-size:.74rem; font-weight:500; cursor:pointer; transition:all .15s; }
+.reg-pill:hover { color:var(--text); }
+.reg-pill.active { background:var(--surface); color:var(--text); }
+.reg-sala { width:auto; min-width:0; padding:8px 30px 8px 12px; font-size:.76rem; }
+
 /* SCROLLBAR */
 ::-webkit-scrollbar { width:5px; height:5px; }
 ::-webkit-scrollbar-track { background:transparent; }

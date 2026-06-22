@@ -10,7 +10,7 @@ import { useToast } from "@/components/Toast";
 import type { Person, RecordItem } from "@/lib/types";
 
 interface Props {
-  user: { name: string; email: string; image: string };
+  user: { name: string; email: string; image: string; isAdmin?: boolean };
   showName?: boolean; // muestra nombre+apellidos junto al avatar (sidebar)
 }
 
@@ -142,16 +142,20 @@ export function AccountMenu({ user, showName = false }: Props) {
             <span className="ico">📤</span> {busy ? "Importando…" : "Importar datos"}
           </button>
 
-          <div className="account-divider" />
-          <button
-            className="account-item"
-            onClick={() => {
-              setOpen(false);
-              router.push("/usuarios");
-            }}
-          >
-            <span className="ico">👥</span> Usuarios
-          </button>
+          {user.isAdmin && (
+            <>
+              <div className="account-divider" />
+              <button
+                className="account-item"
+                onClick={() => {
+                  setOpen(false);
+                  router.push("/usuarios");
+                }}
+              >
+                <span className="ico">👥</span> Usuarios
+              </button>
+            </>
+          )}
 
           <div className="account-divider" />
           <button className="account-item danger" onClick={() => signOut({ callbackUrl: "/login" })}>

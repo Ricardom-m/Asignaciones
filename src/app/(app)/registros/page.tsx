@@ -112,48 +112,38 @@ export default function RegistrosPage() {
 
       {view !== "spotlight" ? (
         <>
-          <div className="seg">
-            {([
-              { k: "prox", label: "Próximas" },
-              { k: "pas", label: "Pasadas" },
-              { k: "todas", label: "Todas" },
-            ] as const).map((o) => (
-              <button
-                key={o.k}
-                className={`seg-btn${dateFilter === o.k ? " active" : ""}`}
-                onClick={() => setDateFilter(o.k)}
-              >
-                {o.label}
-              </button>
-            ))}
+          <div className="reg-search">
+            <span className="reg-search-ico">🔍</span>
+            <input
+              type="text"
+              placeholder="Buscar por persona, tarea…"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+            />
           </div>
 
-          <input
-            className="list-search-input"
-            style={{ width: "100%", marginBottom: 10 }}
-            type="text"
-            placeholder="🔍 Buscar por persona, tarea…"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-          />
-          <div className="role-filter-bar">
-            <button
-              className="role-chip"
-              onClick={() => setSalaFilter("")}
-              style={!salaFilter ? { color: "var(--accent)", borderColor: "var(--accent)", background: "var(--accent-dim)" } : undefined}
-            >
-              Todas las salas
-            </button>
-            {SALAS.map((s) => (
-              <button
-                key={s}
-                className="role-chip"
-                onClick={() => setSalaFilter(salaFilter === s ? "" : s)}
-                style={salaFilter === s ? { color: "var(--accent)", borderColor: "var(--accent)", background: "var(--accent-dim)" } : undefined}
-              >
-                {s}
-              </button>
-            ))}
+          <div className="reg-filters">
+            <div className="reg-scope">
+              {([
+                { k: "prox", label: "Próximas" },
+                { k: "pas", label: "Pasadas" },
+                { k: "todas", label: "Todas" },
+              ] as const).map((o) => (
+                <button
+                  key={o.k}
+                  className={`reg-pill${dateFilter === o.k ? " active" : ""}`}
+                  onClick={() => setDateFilter(o.k)}
+                >
+                  {o.label}
+                </button>
+              ))}
+            </div>
+            <select className="reg-sala" value={salaFilter} onChange={(e) => setSalaFilter(e.target.value)}>
+              <option value="">Todas las salas</option>
+              {SALAS.map((s) => (
+                <option key={s} value={s}>{s}</option>
+              ))}
+            </select>
           </div>
 
           {isLoading ? (

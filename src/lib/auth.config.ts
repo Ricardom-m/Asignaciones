@@ -38,7 +38,12 @@ export const authConfig: NextAuthConfig = {
       return token;
     },
     session({ session, token }) {
-      if (token.picture && session.user) session.user.image = token.picture as string;
+      if (session.user) {
+        if (token.picture) session.user.image = token.picture as string;
+        // Admin = correo en AUTHORIZED_EMAILS (respaldo permanente). Se calcula en
+        // cada lectura desde el correo, así no depende de re-iniciar sesión.
+        session.user.isAdmin = isEmailAllowed(session.user.email);
+      }
       return session;
     },
   },

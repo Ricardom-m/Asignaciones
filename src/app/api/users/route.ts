@@ -2,11 +2,11 @@ import { prisma } from "@/lib/prisma";
 import { userInput } from "@/lib/validation";
 import { serializeAllowedUser } from "@/lib/serialize";
 import { getAllowedEmails } from "@/lib/auth";
-import { ok, fail, requireSession, rateLimit, clientKey } from "@/lib/server";
+import { ok, fail, requireAdmin, rateLimit, clientKey } from "@/lib/server";
 
 // GET /api/users — usuarios autorizados (DB) + los del respaldo por env (bootstrap).
 export async function GET() {
-  const { response } = await requireSession();
+  const { response } = await requireAdmin();
   if (response) return response;
   const users = await prisma.allowedUser.findMany({ orderBy: { email: "asc" } });
   return ok({ users: users.map(serializeAllowedUser), bootstrap: getAllowedEmails() });
@@ -14,7 +14,7 @@ export async function GET() {
 
 // POST /api/users — autoriza un correo nuevo.
 export async function POST(req: Request) {
-  const { session, response } = await requireSession();
+  const { session, response } = await requireAdmin();
   if (response) return response;
   if (!rateLimit(clientKey(req, session.user?.email)))
     return fail("Demasiadas solicitudes, espera un momento", 429);

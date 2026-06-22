@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import type { Session } from "next-auth";
-import { auth, isEmailAuthorized } from "@/lib/auth";
+import { auth, isEmailAuthorized, isEmailAllowed } from "@/lib/auth";
 
 // ── Respuestas JSON ───────────────────────────────────────
 export function ok<T>(data: T, init?: ResponseInit) {
@@ -24,6 +24,16 @@ export async function requireSession(): Promise<SessionResult> {
     return { session: null, response: fail("No autorizado", 401) };
   }
   return { session, response: null };
+}
+
+// Exige sesión válida Y que sea administrador (correo en AUTHORIZED_EMAILS).
+export async function requireAdmin(): Promise<SessionResult> {
+  const result = await requireSession();
+  if (result.response) return result;
+  if (!isEmailAllowed(result.session.user.email)) {
+    return { session: null, response: fail("Solo administradores", 403) };
+  }
+  return result;
 }
 
 // ── Rate limiting simple en memoria ───────────────────────

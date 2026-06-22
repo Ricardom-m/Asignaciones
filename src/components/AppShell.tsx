@@ -7,7 +7,7 @@ import { CommandPalette } from "@/components/CommandPalette";
 import { ThemeToggleButton } from "@/components/ThemeToggleButton";
 
 interface Props {
-  user: { name: string; email: string; image: string };
+  user: { name: string; email: string; image: string; isAdmin?: boolean };
   children: React.ReactNode;
 }
 
