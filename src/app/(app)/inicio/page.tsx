@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePersons, useRoles, useRecordsStats, useRecordsPage } from "@/lib/hooks";
 import { PageHeader } from "@/components/PageHeader";
 import { StatCard, BarRow } from "@/components/Stat";
+import { Reveal } from "@/components/Reveal";
 import { fmtDate } from "@/lib/client";
 
 export default function InicioPage() {
@@ -37,17 +38,17 @@ export default function InicioPage() {
       </div>
 
       {porRol.list.length > 0 && (
-        <div className="dash-section">
+        <Reveal className="dash-section">
           <div className="dash-section-title">Personas por rol</div>
           <div className="bar-list">
             {porRol.list.map(({ rol, count }) => (
               <BarRow key={rol.id} label={rol.nombre} value={count} max={porRol.max} color={rol.color} />
             ))}
           </div>
-        </div>
+        </Reveal>
       )}
 
-      <div className="dash-section">
+      <Reveal className="dash-section">
         <div className="dash-section-title">Próximas asignaciones</div>
         {proximas.length === 0 ? (
           <div className="spotlight-empty">No hay asignaciones futuras.</div>
@@ -65,9 +66,9 @@ export default function InicioPage() {
             </div>
           ))
         )}
-      </div>
+      </Reveal>
 
-      <div className="dash-section">
+      <Reveal className="dash-section">
         <div className="dash-section-title">Actividad reciente</div>
         {recientes.length === 0 ? (
           <div className="spotlight-empty">
@@ -87,7 +88,7 @@ export default function InicioPage() {
             </div>
           ))
         )}
-      </div>
+      </Reveal>
     </div>
   );
 }

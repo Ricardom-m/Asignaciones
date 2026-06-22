@@ -8,6 +8,7 @@ import { createPerson, updatePerson, deletePerson } from "@/lib/client";
 import { RoleBadge, RoleMultiSelect } from "@/components/RoleBadge";
 import { RolesManager } from "@/components/RolesManager";
 import { PageHeader } from "@/components/PageHeader";
+import { Reveal } from "@/components/Reveal";
 import { Modal } from "@/components/Modal";
 import { useConfirm } from "@/components/Confirm";
 import type { Person } from "@/lib/types";
@@ -157,8 +158,9 @@ export default function PersonasPage() {
         </div>
       ) : (
         <div className="persons-list">
-          {visible.map((p) => (
-            <div className={`person-row anim-slide${p.active ? "" : " inactive"}`} key={p.id}>
+          {visible.map((p, i) => (
+            <Reveal key={p.id} delay={Math.min(i, 8) * 45}>
+            <div className={`person-row${p.active ? "" : " inactive"}`}>
               <div className="person-main">
                 <span className="person-name">
                   <button className="person-link" onClick={() => openDetail(p.id)}>
@@ -192,6 +194,7 @@ export default function PersonasPage() {
                 </button>
               </div>
             </div>
+            </Reveal>
           ))}
         </div>
       )}
