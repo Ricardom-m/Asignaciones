@@ -58,6 +58,10 @@ export const updateMeetingConfig = (data: MeetingConfig) =>
 export const purgeMeetings = (body: { past?: boolean; ids?: string[] }) =>
   apiFetch<{ deleted: number }>("/api/meetings/purge", { method: "POST", body: JSON.stringify(body) });
 
+// Genera (sin duplicar) las reuniones que falten en la ventana de la regla.
+export const ensureMeetings = () =>
+  apiFetch<{ created: number }>("/api/meetings/ensure", { method: "POST" });
+
 // ── Usuarios autorizados ──────────────────────────────────
 export const createUser = (data: { email: string; nombre?: string }) =>
   apiFetch<AllowedUser>("/api/users", { method: "POST", body: JSON.stringify(data) });

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useMeetings, usePastMeetings, useMeetingConfig } from "@/lib/hooks";
 import { useToast } from "@/components/Toast";
 import { useConfirm } from "@/components/Confirm";
@@ -11,7 +11,7 @@ import {
   deleteMeeting,
   updateMeetingConfig,
   purgeMeetings,
-  nextWeekdayDates,
+  ensureMeetings,
   weekdayOf,
   weekdayLabel,
   fmtShort,
@@ -66,23 +66,27 @@ export default function ReunionesPage() {
       }
     }
     await saveConfig(weekdays, config.weeks);
+    if (!has) autoGen(true); // agregó un día → llenar la ventana
   };
 
-  const generate = async () => {
-    if (config.weekdays.length === 0) return toast("⚠️ Elige al menos un día en la regla", "error");
-    const fechas = nextWeekdayDates(config.weekdays, config.weeks);
-    if (fechas.length === 0) return toast("Sin fechas para generar", "error");
-    setBusy(true);
+  // Mantiene llenas las próximas semanas según la regla (idempotente, en el servidor).
+  const autoGen = async (notify = false) => {
     try {
-      await createMeetings(fechas);
-      await mutate();
-      toast(`📅 Generadas ${fechas.length} fechas`, "success");
-    } catch (e) {
-      toast("❌ " + (e as Error).message, "error");
-    } finally {
-      setBusy(false);
+      const { created } = await ensureMeetings();
+      if (created > 0) {
+        await mutate();
+        if (notify) toast(`📅 ${created} fecha${created !== 1 ? "s" : ""} agregada${created !== 1 ? "s" : ""}`, "success");
+      }
+    } catch {
+      /* silencioso */
     }
   };
+
+  // Al entrar a la sección, asegura la ventana actual de la regla.
+  useEffect(() => {
+    autoGen();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const addOne = async () => {
     if (!newDate) return toast("⚠️ Elige una fecha", "error");
@@ -145,11 +149,11 @@ export default function ReunionesPage() {
 
       {/* Regla + generador */}
       <div className="content-card">
-        <div className="section-label">Regla para generar</div>
+        <div className="section-label">Regla automática</div>
         <div className="field-hint" style={{ marginTop: 0, marginBottom: 12 }}>
-          Hoy la regla es: <strong style={{ color: "var(--text)" }}>{ruleDays}</strong>, próximas{" "}
-          <strong style={{ color: "var(--text)" }}>{config.weeks}</strong> semana{config.weeks !== 1 ? "s" : ""}. Se guarda
-          automáticamente.
+          Se mantienen llenas las reuniones de <strong style={{ color: "var(--text)" }}>{ruleDays}</strong> para las próximas{" "}
+          <strong style={{ color: "var(--text)" }}>{config.weeks}</strong> semana{config.weeks !== 1 ? "s" : ""}. Se generan
+          solas al entrar aquí y al cambiar la regla (se guarda automáticamente).
         </div>
         <div className="form-grid">
           <div className="field-group">
@@ -168,20 +172,19 @@ export default function ReunionesPage() {
               ))}
             </div>
           </div>
-          <div className="row-2">
-            <div className="field-group">
-              <label className="field-label">Semanas a generar</label>
-              <select value={config.weeks} onChange={(e) => saveConfig(config.weekdays, Number(e.target.value))}>
-                {WEEKS_OPTS.map((w) => (
-                  <option key={w} value={w}>{w} semana{w !== 1 ? "s" : ""}</option>
-                ))}
-              </select>
-            </div>
-            <div className="field-group" style={{ justifyContent: "flex-end" }}>
-              <button className="btn btn-primary" onClick={generate} disabled={busy}>
-                {busy ? "Generando…" : "Generar próximas"}
-              </button>
-            </div>
+          <div className="field-group">
+            <label className="field-label">Semanas a mantener por adelantado</label>
+            <select
+              value={config.weeks}
+              onChange={async (e) => {
+                await saveConfig(config.weekdays, Number(e.target.value));
+                autoGen(true);
+              }}
+            >
+              {WEEKS_OPTS.map((w) => (
+                <option key={w} value={w}>{w} semana{w !== 1 ? "s" : ""}</option>
+              ))}
+            </select>
           </div>
         </div>
 
