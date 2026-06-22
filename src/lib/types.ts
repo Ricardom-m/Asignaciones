@@ -20,6 +20,11 @@ export interface AllowedUser {
   createdAt: string;
 }
 
+export interface MeetingConfig {
+  weekdays: number[]; // 0=Dom … 6=Sáb
+  weeks: number;
+}
+
 export type Genero = "H" | "M";
 
 export interface Person {

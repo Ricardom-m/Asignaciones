@@ -1,19 +1,20 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { useMeetings } from "@/lib/hooks";
+import { useState } from "react";
+import { useMeetings, usePastMeetings, useMeetingConfig } from "@/lib/hooks";
 import { useToast } from "@/components/Toast";
-import { PageHeader } from "@/components/PageHeader";
 import { useConfirm } from "@/components/Confirm";
+import { PageHeader } from "@/components/PageHeader";
 import {
   createMeetings,
   updateMeeting,
   deleteMeeting,
+  updateMeetingConfig,
+  purgeMeetings,
   nextWeekdayDates,
   weekdayOf,
   weekdayLabel,
   fmtShort,
-  todayYMD,
 } from "@/lib/client";
 
 const WEEKDAYS = [
@@ -25,34 +26,51 @@ const WEEKDAYS = [
   { n: 6, label: "Sáb" },
   { n: 0, label: "Dom" },
 ];
+const WEEKS_OPTS = [1, 2, 4, 6, 8, 12];
 
 export default function ReunionesPage() {
-  const { meetings, mutate } = useMeetings();
+  const { meetings, mutate } = useMeetings(); // solo próximas
+  const { config, mutate: mutateConfig } = useMeetingConfig();
   const toast = useToast();
   const confirm = useConfirm();
-  const [days, setDays] = useState<Set<number>>(new Set([4, 6])); // Jue + Sáb
-  const [weeks, setWeeks] = useState(4);
-  const [newDate, setNewDate] = useState("");
   const [busy, setBusy] = useState(false);
+  const [newDate, setNewDate] = useState("");
   const [showPast, setShowPast] = useState(false);
+  const { past, mutate: mutatePast } = usePastMeetings(showPast);
 
-  const today = todayYMD();
-  const upcoming = useMemo(() => meetings.filter((m) => m.fecha >= today), [meetings, today]);
-  const past = useMemo(
-    () => meetings.filter((m) => m.fecha < today).sort((a, b) => b.fecha.localeCompare(a.fecha)),
-    [meetings, today],
-  );
+  const ruleDays = config.weekdays.length
+    ? [...config.weekdays].sort().map(weekdayLabel).join(", ")
+    : "ningún día";
 
-  const toggleDay = (n: number) =>
-    setDays((s) => {
-      const next = new Set(s);
-      next.has(n) ? next.delete(n) : next.add(n);
-      return next;
-    });
+  const saveConfig = (weekdays: number[], weeks: number) =>
+    mutateConfig(updateMeetingConfig({ weekdays, weeks }), { optimisticData: { weekdays, weeks }, revalidate: false });
+
+  const toggleDay = async (n: number) => {
+    const has = config.weekdays.includes(n);
+    const weekdays = has ? config.weekdays.filter((d) => d !== n) : [...config.weekdays, n].sort();
+    if (has) {
+      const futureIds = meetings.filter((m) => weekdayOf(m.fecha) === n).map((m) => m.id);
+      if (futureIds.length) {
+        const ok = await confirm({
+          title: `Quitar ${weekdayLabel(n)}`,
+          message: `Hay ${futureIds.length} reunión(es) futura(s) de los ${weekdayLabel(n)}. ¿Borrarlas también?`,
+          confirmText: "Borrar futuras",
+          cancelText: "Solo quitar de la regla",
+          danger: true,
+        });
+        if (ok) {
+          await purgeMeetings({ ids: futureIds });
+          await mutate();
+          toast(`🗑️ ${futureIds.length} eliminadas`);
+        }
+      }
+    }
+    await saveConfig(weekdays, config.weeks);
+  };
 
   const generate = async () => {
-    if (days.size === 0) return toast("⚠️ Elige al menos un día", "error");
-    const fechas = nextWeekdayDates([...days], weeks);
+    if (config.weekdays.length === 0) return toast("⚠️ Elige al menos un día en la regla", "error");
+    const fechas = nextWeekdayDates(config.weekdays, config.weeks);
     if (fechas.length === 0) return toast("Sin fechas para generar", "error");
     setBusy(true);
     try {
@@ -92,18 +110,30 @@ export default function ReunionesPage() {
     }
   };
 
-  const remove = async (id: string) => {
+  const remove = async (id: string, fromPast = false) => {
+    const ok = await confirm({ title: "Eliminar reunión", message: "¿Eliminar esta fecha de reunión?", confirmText: "Eliminar", danger: true });
+    if (!ok) return;
+    try {
+      await deleteMeeting(id);
+      await (fromPast ? mutatePast() : mutate());
+      toast("🗑️ Reunión eliminada");
+    } catch (e) {
+      toast("❌ " + (e as Error).message, "error");
+    }
+  };
+
+  const purgePast = async () => {
     const ok = await confirm({
-      title: "Eliminar reunión",
-      message: "¿Eliminar esta fecha de reunión?",
-      confirmText: "Eliminar",
+      title: "Borrar reuniones pasadas",
+      message: "¿Borrar TODAS las reuniones cuya fecha ya pasó? No afecta a las próximas.",
+      confirmText: "Borrar pasadas",
       danger: true,
     });
     if (!ok) return;
     try {
-      await deleteMeeting(id);
-      await mutate();
-      toast("🗑️ Reunión eliminada");
+      const { deleted } = await purgeMeetings({ past: true });
+      await mutatePast();
+      toast(`🗑️ ${deleted} pasadas eliminadas`);
     } catch (e) {
       toast("❌ " + (e as Error).message, "error");
     }
@@ -111,14 +141,16 @@ export default function ReunionesPage() {
 
   return (
     <div className="page-inner fade-up">
-      <PageHeader
-        title="Reuniones"
-        subtitle={`${upcoming.length} próxima${upcoming.length !== 1 ? "s" : ""}`}
-      />
+      <PageHeader title="Reuniones" subtitle={`${meetings.length} próxima${meetings.length !== 1 ? "s" : ""}`} />
 
-      {/* Generador */}
+      {/* Regla + generador */}
       <div className="content-card">
-        <div className="section-label">Generar próximas reuniones</div>
+        <div className="section-label">Regla para generar</div>
+        <div className="field-hint" style={{ marginTop: 0, marginBottom: 12 }}>
+          Hoy la regla es: <strong style={{ color: "var(--text)" }}>{ruleDays}</strong>, próximas{" "}
+          <strong style={{ color: "var(--text)" }}>{config.weeks}</strong> semana{config.weeks !== 1 ? "s" : ""}. Se guarda
+          automáticamente.
+        </div>
         <div className="form-grid">
           <div className="field-group">
             <label className="field-label">Días de reunión</label>
@@ -129,7 +161,7 @@ export default function ReunionesPage() {
                   type="button"
                   className="role-chip"
                   onClick={() => toggleDay(d.n)}
-                  style={days.has(d.n) ? { color: "var(--accent)", borderColor: "var(--accent)", background: "var(--accent-dim)" } : undefined}
+                  style={config.weekdays.includes(d.n) ? { color: "var(--accent)", borderColor: "var(--accent)", background: "var(--accent-dim)" } : undefined}
                 >
                   {d.label}
                 </button>
@@ -139,8 +171,8 @@ export default function ReunionesPage() {
           <div className="row-2">
             <div className="field-group">
               <label className="field-label">Semanas a generar</label>
-              <select value={weeks} onChange={(e) => setWeeks(Number(e.target.value))}>
-                {[1, 2, 4, 6, 8, 12].map((w) => (
+              <select value={config.weeks} onChange={(e) => saveConfig(config.weekdays, Number(e.target.value))}>
+                {WEEKS_OPTS.map((w) => (
                   <option key={w} value={w}>{w} semana{w !== 1 ? "s" : ""}</option>
                 ))}
               </select>
@@ -155,6 +187,7 @@ export default function ReunionesPage() {
 
         <div className="divider" />
         <div className="section-label">Agregar una fecha</div>
+        <div className="field-hint" style={{ marginTop: 0, marginBottom: 8 }}>Para reuniones especiales fuera de la regla.</div>
         <div className="row-2">
           <input type="date" value={newDate} onChange={(e) => setNewDate(e.target.value)} />
           <button className="btn btn-ghost" onClick={addOne} disabled={busy}>
@@ -166,23 +199,18 @@ export default function ReunionesPage() {
       {/* Próximas */}
       <div className="content-card">
         <div className="section-label">Próximas reuniones</div>
-        {upcoming.length === 0 ? (
+        {meetings.length === 0 ? (
           <div className="empty-state">
             <div className="empty-icon">📅</div>
             <h3>Sin reuniones próximas</h3>
-            <p>Usa "Generar próximas" para crear los jueves y sábados.</p>
+            <p>Usa "Generar próximas" para crear las fechas según la regla.</p>
           </div>
         ) : (
           <div className="persons-list">
-            {upcoming.map((m) => (
+            {meetings.map((m) => (
               <div className="meeting-row" key={m.id}>
                 <span className="meeting-day">{weekdayLabel(weekdayOf(m.fecha))}</span>
-                <input
-                  type="date"
-                  className="meeting-date"
-                  value={m.fecha}
-                  onChange={(e) => editDate(m.id, e.target.value)}
-                />
+                <input type="date" className="meeting-date" value={m.fecha} onChange={(e) => editDate(m.id, e.target.value)} />
                 <button className="btn btn-danger btn-sm" onClick={() => remove(m.id)}>
                   Borrar
                 </button>
@@ -191,25 +219,32 @@ export default function ReunionesPage() {
           </div>
         )}
 
-        {past.length > 0 && (
-          <>
-            <div className="divider" />
-            <button className="btn btn-ghost btn-sm" onClick={() => setShowPast((s) => !s)}>
-              {showPast ? "Ocultar" : "Ver"} anteriores ({past.length})
+        <div className="divider" />
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+          <button className="btn btn-ghost btn-sm" onClick={() => setShowPast((s) => !s)}>
+            {showPast ? "Ocultar anteriores" : "Ver anteriores"}
+          </button>
+          {showPast && past.length > 0 && (
+            <button className="btn btn-danger btn-sm" onClick={purgePast}>
+              Borrar pasadas
             </button>
-            {showPast && (
-              <div className="persons-list" style={{ marginTop: 10, opacity: 0.6 }}>
-                {past.map((m) => (
-                  <div className="meeting-row" key={m.id}>
-                    <span className="meeting-day">{fmtShort(m.fecha)}</span>
-                    <button className="btn btn-danger btn-sm" style={{ marginLeft: "auto" }} onClick={() => remove(m.id)}>
-                      Borrar
-                    </button>
-                  </div>
-                ))}
-              </div>
+          )}
+        </div>
+        {showPast && (
+          <div className="persons-list" style={{ marginTop: 10, opacity: 0.7 }}>
+            {past.length === 0 ? (
+              <div className="spotlight-empty">Sin reuniones pasadas.</div>
+            ) : (
+              past.map((m) => (
+                <div className="meeting-row" key={m.id}>
+                  <span className="meeting-day">{fmtShort(m.fecha)}</span>
+                  <button className="btn btn-danger btn-sm" style={{ marginLeft: "auto" }} onClick={() => remove(m.id, true)}>
+                    Borrar
+                  </button>
+                </div>
+              ))
             )}
-          </>
+          </div>
         )}
       </div>
     </div>

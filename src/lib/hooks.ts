@@ -3,7 +3,7 @@
 import useSWR from "swr";
 import useSWRInfinite from "swr/infinite";
 import { fetcher } from "@/lib/client";
-import type { Person, RecordItem, Role, Meeting, AllowedUser } from "@/lib/types";
+import type { Person, RecordItem, Role, Meeting, AllowedUser, MeetingConfig } from "@/lib/types";
 import type { ScoredCandidate } from "@/lib/suggest";
 
 export function usePersons() {
@@ -16,9 +16,20 @@ export function useRoles() {
   return { roles: data ?? [], error, isLoading, mutate };
 }
 
+// Solo reuniones próximas (la lista que crece sin límite son las pasadas).
 export function useMeetings() {
-  const { data, error, isLoading, mutate } = useSWR<Meeting[]>("/api/meetings", fetcher);
+  const { data, error, isLoading, mutate } = useSWR<Meeting[]>("/api/meetings?scope=upcoming", fetcher);
   return { meetings: data ?? [], error, isLoading, mutate };
+}
+
+export function usePastMeetings(enabled: boolean, take = 30) {
+  const { data, mutate } = useSWR<Meeting[]>(enabled ? `/api/meetings?scope=past&take=${take}` : null, fetcher);
+  return { past: data ?? [], mutate };
+}
+
+export function useMeetingConfig() {
+  const { data, mutate } = useSWR<MeetingConfig>("/api/meetings/config", fetcher);
+  return { config: data ?? { weekdays: [4, 6], weeks: 4 }, mutate };
 }
 
 export function useUsers() {

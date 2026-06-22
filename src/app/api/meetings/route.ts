@@ -3,10 +3,23 @@ import { meetingBulkInput } from "@/lib/validation";
 import { serializeMeeting } from "@/lib/serialize";
 import { ok, fail, requireSession, rateLimit, clientKey } from "@/lib/server";
 
-// GET /api/meetings — lista de reuniones (fecha ascendente).
-export async function GET() {
+// GET /api/meetings?scope=upcoming|past|all&take= — lista de reuniones.
+export async function GET(req: Request) {
   const { response } = await requireSession();
   if (response) return response;
+  const sp = new URL(req.url).searchParams;
+  const scope = sp.get("scope") ?? "all";
+  const take = Math.min(Math.max(Number(sp.get("take")) || 60, 1), 200);
+  const today = new Date(new Date().toISOString().slice(0, 10));
+
+  if (scope === "upcoming") {
+    const meetings = await prisma.meeting.findMany({ where: { fecha: { gte: today } }, orderBy: { fecha: "asc" } });
+    return ok(meetings.map(serializeMeeting));
+  }
+  if (scope === "past") {
+    const meetings = await prisma.meeting.findMany({ where: { fecha: { lt: today } }, orderBy: { fecha: "desc" }, take });
+    return ok(meetings.map(serializeMeeting));
+  }
   const meetings = await prisma.meeting.findMany({ orderBy: { fecha: "asc" } });
   return ok(meetings.map(serializeMeeting));
 }

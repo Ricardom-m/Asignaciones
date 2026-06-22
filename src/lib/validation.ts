@@ -34,6 +34,17 @@ export const meetingBulkInput = z.object({
 });
 export type MeetingBulkInput = z.infer<typeof meetingBulkInput>;
 
+export const meetingConfigInput = z.object({
+  weekdays: z.array(z.number().int().min(0).max(6)).max(7),
+  weeks: z.number().int().min(1).max(26),
+});
+export type MeetingConfigInput = z.infer<typeof meetingConfigInput>;
+
+export const purgeInput = z.object({
+  past: z.boolean().optional(),
+  ids: z.array(z.string()).max(500).optional(),
+});
+
 // ── Personas ──────────────────────────────────────────────
 export const personInput = z.object({
   nombre: z.string().trim().min(1, "El nombre es obligatorio").max(80),
