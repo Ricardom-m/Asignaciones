@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSWRConfig } from "swr";
 import { signOut } from "next-auth/react";
+import { Sun, Moon, FloppyDisk, UploadSimple, Users, SignOut } from "@phosphor-icons/react";
 import { apiFetch } from "@/lib/client";
 import { useToast } from "@/components/Toast";
 import type { Person, RecordItem } from "@/lib/types";
@@ -132,14 +133,14 @@ export function AccountMenu({ user, showName = false }: Props) {
           </div>
 
           <button className="account-item" onClick={toggleTheme}>
-            <span className="ico">{light ? "🌙" : "☀️"}</span>
+            <span className="ico">{light ? <Moon size={16} weight="bold" /> : <Sun size={16} weight="bold" />}</span>
             {light ? "Modo oscuro" : "Modo claro"}
           </button>
           <button className="account-item" onClick={handleExport}>
-            <span className="ico">💾</span> Exportar datos
+            <span className="ico"><FloppyDisk size={16} weight="bold" /></span> Exportar datos
           </button>
           <button className="account-item" onClick={() => fileInput.current?.click()} disabled={busy}>
-            <span className="ico">📤</span> {busy ? "Importando…" : "Importar datos"}
+            <span className="ico"><UploadSimple size={16} weight="bold" /></span> {busy ? "Importando…" : "Importar datos"}
           </button>
 
           {user.isAdmin && (
@@ -152,14 +153,14 @@ export function AccountMenu({ user, showName = false }: Props) {
                   router.push("/usuarios");
                 }}
               >
-                <span className="ico">👥</span> Usuarios
+                <span className="ico"><Users size={16} weight="bold" /></span> Usuarios
               </button>
             </>
           )}
 
           <div className="account-divider" />
           <button className="account-item danger" onClick={() => signOut({ callbackUrl: "/login" })}>
-            <span className="ico">⏻</span> Cerrar sesión
+            <span className="ico"><SignOut size={16} weight="bold" /></span> Cerrar sesión
           </button>
         </div>
       )}
