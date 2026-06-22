@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 import { AccountMenu } from "@/components/AccountMenu";
 import { CommandPalette } from "@/components/CommandPalette";
 import { ThemeToggleButton } from "@/components/ThemeToggleButton";
@@ -23,13 +24,26 @@ const openCmd = () => window.dispatchEvent(new Event("open-command-palette"));
 
 export function AppShell({ user, children }: Props) {
   const pathname = usePathname();
+  const [drawer, setDrawer] = useState(false);
+
+  // Cerrar el drawer al navegar o con Esc.
+  useEffect(() => setDrawer(false), [pathname]);
+  useEffect(() => {
+    if (!drawer) return;
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setDrawer(false);
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [drawer]);
 
   return (
     <div className="app-shell">
       <CommandPalette />
 
-      {/* Sidebar (escritorio) */}
-      <aside className="sidebar">
+      {/* Overlay del drawer (móvil/tablet) */}
+      <div className={`drawer-overlay${drawer ? " open" : ""}`} onClick={() => setDrawer(false)} />
+
+      {/* Menú lateral: drawer en móvil/tablet, fijo en escritorio */}
+      <aside className={`sidebar${drawer ? " open" : ""}`}>
         <div className="sidebar-brand">
           <div className="header-icon">📋</div>
           <div>
@@ -37,13 +51,19 @@ export function AppShell({ user, children }: Props) {
             <div className="header-sub">Registro de actividades</div>
           </div>
         </div>
-        <button className="sidebar-search" onClick={openCmd}>
+        <button
+          className="sidebar-search"
+          onClick={() => {
+            setDrawer(false);
+            openCmd();
+          }}
+        >
           <span>⌕ Buscar…</span>
           <kbd>⌘K</kbd>
         </button>
         <nav className="sidebar-nav">
           {NAV.map(({ href, label, icon: Icon }) => (
-            <Link key={href} href={href} className={`sidebar-link${pathname === href ? " active" : ""}`}>
+            <Link key={href} href={href} className={`sidebar-link${pathname === href ? " active" : ""}`} onClick={() => setDrawer(false)}>
               <Icon />
               {label}
             </Link>
@@ -58,30 +78,22 @@ export function AppShell({ user, children }: Props) {
       {/* Columna principal */}
       <div className="app-main">
         <header className="topbar">
-          <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
+          <button className="hbtn drawer-btn" onClick={() => setDrawer(true)} aria-label="Menú" title="Menú">
+            ☰
+          </button>
+          <div style={{ display: "flex", alignItems: "center", gap: 9, flexShrink: 0, minWidth: 0 }}>
             <div className="header-icon">📋</div>
-            <div>
+            <div style={{ minWidth: 0 }}>
               <div className="header-title">Asignaciones</div>
-              <div className="header-sub">Registro de actividades</div>
             </div>
           </div>
           <div className="header-right">
             <button className="hbtn" onClick={openCmd} title="Buscar (⌘K)" aria-label="Buscar">🔍</button>
-            <ThemeToggleButton />
             <AccountMenu user={user} />
           </div>
         </header>
 
         <div className="scroll-area">{children}</div>
-
-        <nav className="bottom">
-          {NAV.map(({ href, label, icon: Icon }) => (
-            <Link key={href} href={href} className={`nav-btn${pathname === href ? " active" : ""}`}>
-              <Icon />
-              {label}
-            </Link>
-          ))}
-        </nav>
       </div>
     </div>
   );
