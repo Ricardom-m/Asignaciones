@@ -74,10 +74,11 @@ model Meeting {
 
 // Configuración (regla) para generar reuniones. Fila única.
 model MeetingConfig {
-  id        String   @id @default("default")
-  weekdays  Int[]    @default([4, 6]) // 0=Dom … 6=Sáb
-  weeks     Int      @default(4)
-  updatedAt DateTime @updatedAt
+  id          String    @id @default("default")
+  weekdays    Int[]     @default([4, 6]) // 0=Dom … 6=Sáb
+  weeks       Int       @default(4)
+  lastEnsured DateTime? // última vez que se auto-rellenó la ventana
+  updatedAt   DateTime  @updatedAt
 }
 
 model Record {
