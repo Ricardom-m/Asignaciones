@@ -28,6 +28,7 @@ export const authConfig: NextAuthConfig = {
       const isPublic =
         pathname === "/login" ||
         pathname.startsWith("/api/auth") ||
+        pathname.startsWith("/api/cron") || // protegido por CRON_SECRET en la propia ruta
         pathname.startsWith("/_next") ||
         pathname === "/favicon.ico";
       if (isPublic) return true;
