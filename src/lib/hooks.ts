@@ -98,8 +98,8 @@ export function useRecordsPage(query: string) {
 
 // Registros de UNA persona (para "Por persona"); consulta indacada por asignadoId/ayudanteId.
 export function usePersonRecords(personId: string | null) {
-  const { data } = useSWR<RecordsPage>(personId ? `/api/records?personId=${personId}&all=1` : null, fetcher);
-  return { items: data?.items ?? [] };
+  const { data, mutate } = useSWR<RecordsPage>(personId ? `/api/records?personId=${personId}&all=1` : null, fetcher);
+  return { items: data?.items ?? [], mutate };
 }
 
 // Sugerencias de ayudante calculadas en el servidor.

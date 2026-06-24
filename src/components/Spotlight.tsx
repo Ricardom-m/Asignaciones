@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import type { UserOptions } from "jspdf-autotable";
 import { fmtDate, fmtShort, relativeLabel, todayYMD, addDaysYMD } from "@/lib/client";
+import { PencilSimple, Trash } from "@phosphor-icons/react";
 import { RoleBadge } from "@/components/RoleBadge";
 import { GenderIcon } from "@/components/GenderIcon";
 import { TimeChart } from "@/components/TimeChart";
@@ -14,6 +15,8 @@ interface Props {
   records: RecordItem[];
   sections?: Section[];
   onPerson?: (id: string) => void;
+  onEdit?: (rec: RecordItem) => void;
+  onDelete?: (rec: RecordItem) => void;
 }
 
 type Period = "all" | "year" | "3m";
@@ -34,7 +37,7 @@ function daysSince(ymd: string): number {
   return Math.round((Date.now() - new Date(ymd + "T00:00:00Z").getTime()) / 864e5);
 }
 
-export function Spotlight({ personId, persons, records, sections, onPerson }: Props) {
+export function Spotlight({ personId, persons, records, sections, onPerson, onEdit, onDelete }: Props) {
   const [period, setPeriod] = useState<Period>("all");
   const [roleFilter, setRoleFilter] = useState("");
 
@@ -362,42 +365,43 @@ export function Spotlight({ personId, persons, records, sections, onPerson }: Pr
       {/* Línea(s) de tiempo */}
       {isNombrado ? (
         <>
-          <TimelineList title="Asignaciones de nombrado" records={timelineNombrado} partnerOf={partnerOf} onPerson={onPerson} />
-          <TimelineList title="Asignaciones normales (con otras personas)" records={timelineNormal} partnerOf={partnerOf} onPerson={onPerson} />
+          <TimelineList title="Asignaciones de nombrado" records={timelineNombrado} partnerOf={partnerOf} onPerson={onPerson} onEdit={onEdit} onDelete={onDelete} />
+          <TimelineList title="Asignaciones normales (con otras personas)" records={timelineNormal} partnerOf={partnerOf} onPerson={onPerson} onEdit={onEdit} onDelete={onDelete} />
         </>
       ) : (
-        <TimelineList title="Línea de tiempo" records={timelineAll} partnerOf={partnerOf} onPerson={onPerson} />
+        <TimelineList title="Línea de tiempo" records={timelineAll} partnerOf={partnerOf} onPerson={onPerson} onEdit={onEdit} onDelete={onDelete} />
       )}
 
-      {/* Nombrados: recencia por sección · resto: nunca asignado con */}
-      {isNombrado ? (
-        sectionRecency.length > 0 && (
-          <div className="spotlight-section">
-            <div className="spotlight-section-title">Por sección · última vez / próxima</div>
-            {sectionRecency.map(({ section, lastPast, lastPastAsig, nextFuture, nextFutureAsig }) => {
-              const overdue = (!lastPast && !nextFuture) || (!!lastPast && !nextFuture && daysSince(lastPast) > 90);
-              const upcoming = !lastPast && !!nextFuture;
-              const asig = lastPast ? lastPastAsig : nextFuture ? nextFutureAsig : "";
-              return (
-                <div className="sec-rec-row" key={section.id}>
-                  <span className="sec-rec-name">
-                    {section.nombre}
-                    {asig && <span className="sec-rec-asig"> | {asig}</span>}
-                  </span>
-                  <span className={`sec-rec-when${overdue ? " over" : upcoming ? " up" : ""}`}>
-                    {overdue && <span className="sec-rec-dot" />}
-                    {lastPast
-                      ? `${fmtShort(lastPast)} · ${agoLabel(lastPast)}`
-                      : nextFuture
-                        ? `próxima · ${fmtShort(nextFuture)}`
-                        : "nunca"}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-        )
-      ) : (
+      {/* Recencia por sección (para todos) */}
+      {sectionRecency.length > 0 && (
+        <div className="spotlight-section">
+          <div className="spotlight-section-title">Por sección · última vez / próxima</div>
+          {sectionRecency.map(({ section, lastPast, lastPastAsig, nextFuture, nextFutureAsig }) => {
+            const overdue = (!lastPast && !nextFuture) || (!!lastPast && !nextFuture && daysSince(lastPast) > 90);
+            const upcoming = !lastPast && !!nextFuture;
+            const asig = lastPast ? lastPastAsig : nextFuture ? nextFutureAsig : "";
+            return (
+              <div className="sec-rec-row" key={section.id}>
+                <span className="sec-rec-name">
+                  {section.nombre}
+                  {asig && <span className="sec-rec-asig"> | {asig}</span>}
+                </span>
+                <span className={`sec-rec-when${overdue ? " over" : upcoming ? " up" : ""}`}>
+                  {overdue && <span className="sec-rec-dot" />}
+                  {lastPast
+                    ? `${fmtShort(lastPast)} · ${agoLabel(lastPast)}`
+                    : nextFuture
+                      ? `próxima · ${fmtShort(nextFuture)}`
+                      : "nunca"}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Nunca asignado con (solo no-nombrados) */}
+      {!isNombrado && (
         <div className="spotlight-section">
           <div className="spotlight-section-title">⚠️ Nunca asignado con</div>
           {neverPaired.length === 0 ? (
@@ -424,11 +428,15 @@ function TimelineList({
   records,
   partnerOf,
   onPerson,
+  onEdit,
+  onDelete,
 }: {
   title: string;
   records: RecordItem[];
   partnerOf: (r: RecordItem) => Person | null;
   onPerson?: (id: string) => void;
+  onEdit?: (rec: RecordItem) => void;
+  onDelete?: (rec: RecordItem) => void;
 }) {
   const [limit, setLimit] = useState(TL_PAGE);
   const shown = records.slice(0, limit);
@@ -470,6 +478,20 @@ function TimelineList({
                       {r.sala ? ` · ${r.sala}` : ""}
                     </div>
                   </div>
+                  {(onEdit || onDelete) && (
+                    <div className="tl-actions">
+                      {onEdit && (
+                        <button className="tl-act" onClick={() => onEdit(r)} title="Editar" aria-label="Editar registro">
+                          <PencilSimple size={14} weight="bold" />
+                        </button>
+                      )}
+                      {onDelete && (
+                        <button className="tl-act danger" onClick={() => onDelete(r)} title="Borrar" aria-label="Borrar registro">
+                          <Trash size={14} weight="bold" />
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </div>
               );
             })}

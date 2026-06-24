@@ -261,6 +261,11 @@ input[type=date]::-webkit-calendar-picker-indicator { filter:invert(.55); }
 .tl-row + .tl-row { border-top:1px solid var(--border); }
 .tl-date { font-size:.66rem; font-family:var(--mono); color:var(--text3); flex-shrink:0; width:66px; padding-top:1px; }
 .tl-main { min-width:0; flex:1; }
+.tl-actions { display:flex; gap:5px; flex-shrink:0; align-items:flex-start; }
+.tl-act { display:flex; align-items:center; justify-content:center; background:transparent; border:1px solid var(--border); border-radius:7px; color:var(--text3); padding:5px 6px; cursor:pointer; transition:all .15s; }
+.tl-act:hover { color:var(--text); border-color:var(--border2); background:var(--surface2); }
+.tl-act.danger:hover { color:var(--red); border-color:var(--red); background:var(--red-dim); }
+.tl-act:active { transform:scale(.94); }
 .tl-asig { font-size:.8rem; font-weight:500; display:flex; align-items:center; gap:7px; }
 .tl-tag { font-size:.52rem; font-family:var(--mono); color:var(--amber); border:1px solid var(--amber); background:var(--amber-dim); border-radius:20px; padding:1px 6px; text-transform:uppercase; flex-shrink:0; }
 .tl-sec { font-size:.52rem; font-family:var(--mono); color:var(--accent); border:1px solid color-mix(in srgb,var(--accent) 45%,var(--border)); background:var(--accent-dim); border-radius:20px; padding:1px 7px; flex-shrink:0; }

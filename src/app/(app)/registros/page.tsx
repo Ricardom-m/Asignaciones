@@ -56,7 +56,7 @@ export default function RegistrosPage() {
   const confirm = useConfirm();
 
   // "Por persona": solo los registros de esa persona (consulta indexada).
-  const { items: personRecords } = usePersonRecords(view === "spotlight" ? spotlightId : null);
+  const { items: personRecords, mutate: mutatePersonRecords } = usePersonRecords(view === "spotlight" ? spotlightId : null);
 
   // Llegada desde la paleta de comandos (⌘K → ver análisis de una persona).
   useEffect(() => {
@@ -104,7 +104,7 @@ export default function RegistrosPage() {
     if (!ok) return;
     try {
       await deleteRecord(rec.id);
-      await Promise.all([mutate(), globalMutate("/api/records/stats")]);
+      await Promise.all([mutate(), mutatePersonRecords(), globalMutate("/api/records/stats")]);
       toast("🗑️ Registro eliminado");
     } catch (e) {
       toast("❌ " + (e as Error).message, "error");
@@ -220,7 +220,17 @@ export default function RegistrosPage() {
             </div>
             <PersonSelect persons={persons} value={spotlightId} onChange={setSpotlightId} placeholder="Buscar persona…" allowClear={false} />
           </div>
-          {spotlightId && <Spotlight personId={spotlightId} persons={persons} records={personRecords} sections={sections} onPerson={openPerson} />}
+          {spotlightId && (
+            <Spotlight
+              personId={spotlightId}
+              persons={persons}
+              records={personRecords}
+              sections={sections}
+              onPerson={openPerson}
+              onEdit={setEditing}
+              onDelete={onDelete}
+            />
+          )}
         </>
       )}
 
@@ -231,6 +241,7 @@ export default function RegistrosPage() {
           onClose={() => setEditing(null)}
           onSaved={() => {
             mutate();
+            mutatePersonRecords();
             globalMutate("/api/records/stats");
             setEditing(null);
           }}
