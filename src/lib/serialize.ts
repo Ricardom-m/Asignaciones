@@ -4,12 +4,14 @@ import type {
   Role as PrismaRole,
   Meeting as PrismaMeeting,
   AllowedUser as PrismaAllowedUser,
+  Section as PrismaSection,
 } from "@prisma/client";
-import type { Person, RecordItem, Role, Meeting, AllowedUser } from "@/lib/types";
+import type { Person, RecordItem, Role, Meeting, AllowedUser, Section } from "@/lib/types";
 
 type RecordWithPeople = PrismaRecord & {
   asignado: PrismaPerson;
   ayudante: PrismaPerson | null;
+  section?: PrismaSection | null;
 };
 
 const fullName = (p: PrismaPerson) => `${p.nombre} ${p.apellido}`.trim();
@@ -19,6 +21,10 @@ const toYMD = (d: Date) => d.toISOString().slice(0, 10);
 
 export function serializeRole(r: PrismaRole): Role {
   return { id: r.id, nombre: r.nombre, color: r.color, active: r.active };
+}
+
+export function serializeSection(s: PrismaSection): Section {
+  return { id: s.id, nombre: s.nombre, orden: s.orden, active: s.active };
 }
 
 export function serializeMeeting(m: PrismaMeeting): Meeting {
@@ -53,10 +59,12 @@ export function serializeRecord(r: RecordWithPeople): RecordItem {
     sala: r.sala,
     tipo: r.tipo,
     asignacion: r.asignacion,
+    sectionId: r.sectionId ?? null,
+    section: r.section ? r.section.nombre : null,
     createdAt: r.createdAt.toISOString(),
     updatedAt: r.updatedAt.toISOString(),
   };
 }
 
-// Include estándar para traer las personas relacionadas en una consulta.
-export const recordInclude = { asignado: true, ayudante: true } as const;
+// Include estándar para traer las personas (y la sección) relacionadas.
+export const recordInclude = { asignado: true, ayudante: true, section: true } as const;

@@ -3,7 +3,7 @@
 import useSWR from "swr";
 import useSWRInfinite from "swr/infinite";
 import { fetcher } from "@/lib/client";
-import type { Person, RecordItem, Role, Meeting, AllowedUser, MeetingConfig } from "@/lib/types";
+import type { Person, RecordItem, Role, Section, Meeting, AllowedUser, MeetingConfig } from "@/lib/types";
 import type { ScoredCandidate } from "@/lib/suggest";
 
 export function usePersons() {
@@ -14,6 +14,11 @@ export function usePersons() {
 export function useRoles() {
   const { data, error, isLoading, mutate } = useSWR<Role[]>("/api/roles", fetcher);
   return { roles: data ?? [], error, isLoading, mutate };
+}
+
+export function useSections() {
+  const { data, error, isLoading, mutate } = useSWR<Section[]>("/api/sections", fetcher);
+  return { sections: data ?? [], error, isLoading, mutate };
 }
 
 // Solo reuniones próximas (la lista que crece sin límite son las pasadas).

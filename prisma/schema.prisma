@@ -24,6 +24,19 @@ model Role {
   persons Person[] @relation("PersonRoles")
 }
 
+// Sección de la reunión (Tesoros de la Biblia, Seamos mejores maestros, …).
+// Editable desde la app; un registro puede pertenecer a una sección.
+model Section {
+  id        String   @id @default(cuid())
+  nombre    String   @unique
+  orden     Int      @default(0) // orden de aparición en los selects
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  records Record[]
+}
+
 enum Genero {
   H // Hombre
   M // Mujer
@@ -93,6 +106,10 @@ model Record {
   asignacion String
   tipo       RecordTipo @default(ASIGNACION)
 
+  // Sección de la reunión (opcional). Si se borra la sección, queda en null.
+  sectionId String?
+  section   Section? @relation(fields: [sectionId], references: [id], onDelete: SetNull)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -101,5 +118,6 @@ model Record {
   @@index([tipo, fecha]) // filtrar por tipo + orden por fecha
   @@index([asignadoId])
   @@index([ayudanteId])
+  @@index([sectionId])
   @@index([createdAt])
 }

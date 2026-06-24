@@ -77,13 +77,16 @@ export async function POST(req: Request) {
   if (!parsed.success)
     return fail("Datos inválidos", 422, parsed.error.flatten().fieldErrors);
 
-  const { asignadoId, ayudanteId, fecha, sala, asignacion, tipo } = parsed.data;
+  const { asignadoId, ayudanteId, fecha, sala, asignacion, tipo, sectionId } = parsed.data;
   if (ayudanteId && ayudanteId === asignadoId)
     return fail("El ayudante no puede ser la misma persona que el asignado", 422);
 
   const ids = [asignadoId, ...(ayudanteId ? [ayudanteId] : [])];
   const count = await prisma.person.count({ where: { id: { in: ids } } });
   if (count !== ids.length) return fail("Persona referida inexistente", 422);
+
+  if (sectionId && !(await prisma.section.findUnique({ where: { id: sectionId } })))
+    return fail("Sección inexistente", 422);
 
   const record = await prisma.record.create({
     data: {
@@ -93,6 +96,7 @@ export async function POST(req: Request) {
       sala: sala ?? null,
       asignacion,
       tipo: tipo ?? "ASIGNACION",
+      sectionId: sectionId ?? null,
     },
     include: recordInclude,
   });

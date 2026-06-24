@@ -4,7 +4,8 @@ import { useState } from "react";
 import { fmtShort, fmtDT, dateStatus, relativeLabel } from "@/lib/client";
 import { RoleBadge } from "@/components/RoleBadge";
 import { GenderIcon } from "@/components/GenderIcon";
-import type { Person, RecordItem } from "@/lib/types";
+import { SectionSelect } from "@/components/SectionSelect";
+import type { Person, RecordItem, Section } from "@/lib/types";
 
 interface Props {
   rec: RecordItem;
@@ -12,9 +13,11 @@ interface Props {
   onEdit: (rec: RecordItem) => void;
   onDelete: (rec: RecordItem) => void;
   onPerson?: (id: string) => void;
+  sections?: Section[];
+  onChangeSection?: (rec: RecordItem, sectionId: string) => void;
 }
 
-export function RecordCard({ rec, personsById, onEdit, onDelete, onPerson }: Props) {
+export function RecordCard({ rec, personsById, onEdit, onDelete, onPerson, sections, onChangeSection }: Props) {
   const [open, setOpen] = useState(false);
   const status = dateStatus(rec.fecha);
   const asignadoP = personsById.get(rec.asignadoId);
@@ -90,6 +93,24 @@ export function RecordCard({ rec, personsById, onEdit, onDelete, onPerson }: Pro
               <span className="rc-task">{rec.asignacion}</span>
             </div>
           )}
+
+          {sections && onChangeSection ? (
+            <div className="rc-detail-row">
+              <span className="rc-detail-label">Sección</span>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <SectionSelect
+                  sections={sections}
+                  value={rec.sectionId ?? ""}
+                  onChange={(id) => onChangeSection(rec, id)}
+                />
+              </div>
+            </div>
+          ) : rec.section ? (
+            <div className="rc-detail-row">
+              <span className="rc-detail-label">Sección</span>
+              <span className="rc-task">{rec.section}</span>
+            </div>
+          ) : null}
 
           <div className="rc-dates">
             🕓 Creado {fmtDT(rec.createdAt)} · ✏️ {fmtDT(rec.updatedAt)}

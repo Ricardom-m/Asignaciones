@@ -2,10 +2,11 @@
 
 import { useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
-import { usePersons, useMeetings, useRoles, useSuggest } from "@/lib/hooks";
+import { usePersons, useMeetings, useRoles, useSuggest, useSections } from "@/lib/hooks";
 import { useToast } from "@/components/Toast";
 import { PageHeader } from "@/components/PageHeader";
 import { PersonSelect } from "@/components/PersonSelect";
+import { SectionSelect } from "@/components/SectionSelect";
 import { HelperPicker } from "@/components/HelperPicker";
 import { DateChips } from "@/components/DateChips";
 import { createRecord } from "@/lib/client";
@@ -19,13 +20,15 @@ interface FormState {
   fecha: string;
   sala: string;
   asignacion: string;
+  sectionId: string;
 }
-const empty = (): FormState => ({ asignadoId: "", ayudanteId: "", fecha: "", sala: "Sala A", asignacion: "" });
+const empty = (): FormState => ({ asignadoId: "", ayudanteId: "", fecha: "", sala: "Sala A", asignacion: "", sectionId: "" });
 
 export default function NuevoPage() {
   const { persons } = usePersons();
   const { meetings } = useMeetings();
   const { roles } = useRoles();
+  const { sections } = useSections();
   const { mutate } = useSWRConfig();
   const toast = useToast();
   const [mode, setMode] = useState<Mode>("asig");
@@ -68,6 +71,7 @@ export default function NuevoPage() {
         sala: form.sala || null,
         asignacion: form.asignacion.trim(),
         tipo: isNombrado ? "NOMBRADO" : "ASIGNACION",
+        sectionId: form.sectionId || null,
       });
       await mutate((k) => typeof k === "string" && k.includes("/api/records"));
       setForm(empty());
@@ -89,7 +93,7 @@ export default function NuevoPage() {
           Asignación
         </button>
         <button className={`vt-btn${isNombrado ? " active" : ""}`} onClick={() => switchMode("nombrado")}>
-          Nombrados
+          Asignaciones nombrados
         </button>
       </div>
 
@@ -160,7 +164,15 @@ export default function NuevoPage() {
                 </select>
               </div>
 
-              {/* 5 · Asignación */}
+              {/* 5 · Sección */}
+              {sections.length > 0 && (
+                <div className="field-group field-reveal">
+                  <label className="field-label">Sección</label>
+                  <SectionSelect sections={sections} value={form.sectionId} onChange={(id) => patch({ sectionId: id })} />
+                </div>
+              )}
+
+              {/* 6 · Asignación */}
               <div className="field-group field-reveal">
                 <label className="field-label">
                   ¿Qué asignación? <span className="req">*</span>

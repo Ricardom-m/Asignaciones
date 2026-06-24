@@ -14,6 +14,14 @@ export const roleInput = z.object({
 });
 export type RoleInput = z.infer<typeof roleInput>;
 
+// ── Secciones ─────────────────────────────────────────────
+export const sectionInput = z.object({
+  nombre: z.string().trim().min(1, "El nombre de la sección es obligatorio").max(60),
+  orden: z.number().int().optional(),
+  active: z.boolean().optional(),
+});
+export type SectionInput = z.infer<typeof sectionInput>;
+
 // ── Usuarios autorizados ──────────────────────────────────
 export const userInput = z.object({
   email: z.string().trim().toLowerCase().email("Correo inválido").max(120),
@@ -63,6 +71,7 @@ export const recordInput = z.object({
   sala: z.string().trim().max(80).nullish(),
   asignacion: z.string().trim().min(1, "La asignación es obligatoria").max(500),
   tipo: z.enum(["ASIGNACION", "NOMBRADO"]).optional(),
+  sectionId: z.string().min(1).nullish(),
 });
 export type RecordInput = z.infer<typeof recordInput>;
 

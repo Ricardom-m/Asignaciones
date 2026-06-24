@@ -7,6 +7,13 @@ export interface Role {
   active: boolean;
 }
 
+export interface Section {
+  id: string;
+  nombre: string;
+  orden: number;
+  active: boolean;
+}
+
 export interface Meeting {
   id: string;
   fecha: string; // YYYY-MM-DD
@@ -50,6 +57,8 @@ export interface RecordItem {
   sala: string | null;
   tipo: RecordTipo; // categoría: Asignación o Nombrado
   asignacion: string;
+  sectionId: string | null;
+  section: string | null; // nombre de la sección (derivado) o null
   createdAt: string; // ISO
   updatedAt: string; // ISO
 }

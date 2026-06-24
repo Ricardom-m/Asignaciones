@@ -5,6 +5,7 @@ import { useMeetings, usePastMeetings, useMeetingConfig } from "@/lib/hooks";
 import { useToast } from "@/components/Toast";
 import { useConfirm } from "@/components/Confirm";
 import { PageHeader } from "@/components/PageHeader";
+import { SectionsCard } from "@/components/SectionsCard";
 import {
   createMeetings,
   updateMeeting,
@@ -146,6 +147,9 @@ export default function ReunionesPage() {
   return (
     <div className="page-inner fade-up">
       <PageHeader title="Reuniones" subtitle={`${meetings.length} próxima${meetings.length !== 1 ? "s" : ""}`} />
+
+      {/* Secciones de la reunión */}
+      <SectionsCard />
 
       {/* Regla + generador */}
       <div className="content-card">

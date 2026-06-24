@@ -1,10 +1,11 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useMeetings, useRoles, useSuggest } from "@/lib/hooks";
+import { useMeetings, useRoles, useSuggest, useSections } from "@/lib/hooks";
 import { useToast } from "@/components/Toast";
 import { Modal } from "@/components/Modal";
 import { PersonSelect } from "@/components/PersonSelect";
+import { SectionSelect } from "@/components/SectionSelect";
 import { HelperPicker } from "@/components/HelperPicker";
 import { DateChips } from "@/components/DateChips";
 import { updateRecord } from "@/lib/client";
@@ -25,11 +26,13 @@ interface FormState {
   fecha: string;
   sala: string;
   asignacion: string;
+  sectionId: string;
 }
 
 export function EditRecordModal({ rec, persons, onClose, onSaved }: Props) {
   const { meetings } = useMeetings();
   const { roles } = useRoles();
+  const { sections } = useSections();
   const toast = useToast();
   const [form, setForm] = useState<FormState>({
     asignadoId: rec.asignadoId,
@@ -37,6 +40,7 @@ export function EditRecordModal({ rec, persons, onClose, onSaved }: Props) {
     fecha: rec.fecha,
     sala: rec.sala ?? "Sala A",
     asignacion: rec.asignacion,
+    sectionId: rec.sectionId ?? "",
   });
   const [saving, setSaving] = useState(false);
 
@@ -72,6 +76,7 @@ export function EditRecordModal({ rec, persons, onClose, onSaved }: Props) {
         sala: form.sala || null,
         asignacion: form.asignacion.trim(),
         tipo: rec.tipo,
+        sectionId: form.sectionId || null,
       });
       toast("✏️ Registro actualizado", "success");
       onSaved();
@@ -130,6 +135,13 @@ export function EditRecordModal({ rec, persons, onClose, onSaved }: Props) {
             ))}
           </select>
         </div>
+
+        {sections.length > 0 && (
+          <div className="field-group">
+            <label className="field-label">Sección</label>
+            <SectionSelect sections={sections} value={form.sectionId} onChange={(id) => patch({ sectionId: id })} />
+          </div>
+        )}
 
         <div className="field-group">
           <label className="field-label">

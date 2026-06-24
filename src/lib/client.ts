@@ -1,4 +1,4 @@
-import type { Person, RecordItem, Role, Meeting, Genero, AllowedUser, RecordTipo, MeetingConfig } from "@/lib/types";
+import type { Person, RecordItem, Role, Section, Meeting, Genero, AllowedUser, RecordTipo, MeetingConfig } from "@/lib/types";
 
 // Wrapper de fetch que lanza con el mensaje de error de la API.
 export async function apiFetch<T>(url: string, init?: RequestInit): Promise<T> {
@@ -42,6 +42,16 @@ export const updateRole = (id: string, data: { nombre?: string; color?: string; 
 export const deleteRole = (id: string) =>
   apiFetch<{ deleted: boolean }>(`/api/roles/${id}`, { method: "DELETE" });
 
+// ── Secciones ─────────────────────────────────────────────
+export const createSection = (data: { nombre: string }) =>
+  apiFetch<Section>("/api/sections", { method: "POST", body: JSON.stringify(data) });
+
+export const updateSection = (id: string, data: { nombre?: string; orden?: number; active?: boolean }) =>
+  apiFetch<Section>(`/api/sections/${id}`, { method: "PATCH", body: JSON.stringify(data) });
+
+export const deleteSection = (id: string) =>
+  apiFetch<{ deleted: boolean }>(`/api/sections/${id}`, { method: "DELETE" });
+
 // ── Reuniones ─────────────────────────────────────────────
 export const createMeetings = (fechas: string[], nota?: string) =>
   apiFetch<Meeting[]>("/api/meetings", { method: "POST", body: JSON.stringify({ fechas, nota }) });
@@ -77,6 +87,7 @@ export interface RecordPayload {
   sala: string | null;
   asignacion: string;
   tipo?: RecordTipo;
+  sectionId?: string | null;
 }
 export const createRecord = (data: RecordPayload) =>
   apiFetch<RecordItem>("/api/records", { method: "POST", body: JSON.stringify(data) });

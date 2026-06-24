@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
-import { usePersons, useRecordsList, useRecordsStats, usePersonRecords } from "@/lib/hooks";
+import { usePersons, useRecordsList, useRecordsStats, usePersonRecords, useSections } from "@/lib/hooks";
 import { useToast } from "@/components/Toast";
 import { RecordCard } from "@/components/RecordCard";
 import { EditRecordModal } from "@/components/EditRecordModal";
@@ -10,7 +10,7 @@ import { Spotlight } from "@/components/Spotlight";
 import { PersonSelect } from "@/components/PersonSelect";
 import { PageHeader } from "@/components/PageHeader";
 import { useConfirm } from "@/components/Confirm";
-import { deleteRecord, todayYMD } from "@/lib/client";
+import { deleteRecord, updateRecord, todayYMD } from "@/lib/client";
 import type { Person, RecordItem } from "@/lib/types";
 
 const SALAS = ["Sala A", "Sala B", "Otro"];
@@ -42,6 +42,7 @@ export default function RegistrosPage() {
   const [editing, setEditing] = useState<RecordItem | null>(null);
 
   const { persons } = usePersons();
+  const { sections } = useSections();
   const { stats } = useRecordsStats();
   const { items, hasMore, loadMore, isLoading, mutate } = useRecordsList({
     scope: dateFilter,
@@ -72,6 +73,25 @@ export default function RegistrosPage() {
   const openPerson = (id: string) => {
     setSpotlightId(id);
     setView("spotlight");
+  };
+
+  // Actualiza solo la sección desde la tarjeta (envía el registro completo).
+  const changeSection = async (rec: RecordItem, sectionId: string) => {
+    try {
+      await updateRecord(rec.id, {
+        asignadoId: rec.asignadoId,
+        ayudanteId: rec.ayudanteId,
+        fecha: rec.fecha,
+        sala: rec.sala,
+        asignacion: rec.asignacion,
+        tipo: rec.tipo,
+        sectionId: sectionId || null,
+      });
+      await mutate();
+      toast(sectionId ? "✏️ Sección actualizada" : "Sección quitada");
+    } catch (e) {
+      toast("❌ " + (e as Error).message, "error");
+    }
   };
 
   const onDelete = async (rec: RecordItem) => {
@@ -169,7 +189,16 @@ export default function RegistrosPage() {
                 <div key={g.key}>
                   <div className="month-group-title">{g.key}</div>
                   {g.items.map((rec) => (
-                    <RecordCard key={rec.id} rec={rec} personsById={personsById} onEdit={setEditing} onDelete={onDelete} onPerson={openPerson} />
+                    <RecordCard
+                      key={rec.id}
+                      rec={rec}
+                      personsById={personsById}
+                      onEdit={setEditing}
+                      onDelete={onDelete}
+                      onPerson={openPerson}
+                      sections={sections}
+                      onChangeSection={changeSection}
+                    />
                   ))}
                 </div>
               ))}
