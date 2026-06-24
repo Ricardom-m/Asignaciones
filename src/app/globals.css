@@ -40,9 +40,9 @@ html, body { height:100%; background:var(--bg); color:var(--text); font-family:v
 body::before {
   content:""; position:fixed; inset:-20%; z-index:-1; pointer-events:none;
   background:
-    radial-gradient(36% 30% at 20% 10%, var(--glow), transparent 70%),
-    radial-gradient(34% 28% at 82% 6%, color-mix(in srgb, var(--accent2) 11%, transparent), transparent 70%),
-    radial-gradient(42% 36% at 62% 102%, color-mix(in srgb, var(--accent) 8%, transparent), transparent 72%);
+    radial-gradient(42% 36% at 16% 6%, color-mix(in srgb, var(--accent) 28%, transparent), transparent 66%),
+    radial-gradient(40% 34% at 86% 2%, color-mix(in srgb, var(--accent2) 26%, transparent), transparent 66%),
+    radial-gradient(48% 42% at 64% 106%, color-mix(in srgb, var(--accent) 20%, transparent), transparent 70%);
   animation: bgDrift 28s ease-in-out infinite alternate;
 }
 @keyframes bgDrift { from { transform:translate3d(0,0,0) scale(1); } to { transform:translate3d(0,-2%,0) scale(1.06); } }
