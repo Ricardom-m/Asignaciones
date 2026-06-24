@@ -301,6 +301,7 @@ input[type=date]::-webkit-calendar-picker-indicator { filter:invert(.55); }
 .sec-rec-name { font-size:.82rem; font-weight:500; color:var(--text); min-width:0; }
 .sec-rec-when { font-size:.66rem; font-family:var(--mono); color:var(--text2); display:flex; align-items:center; gap:6px; flex-shrink:0; }
 .sec-rec-when.over { color:var(--amber); }
+.sec-rec-when.up { color:var(--accent); }
 .sec-rec-dot { width:6px; height:6px; border-radius:50%; background:var(--amber); flex-shrink:0; }
 .spotlight-recent-row { padding:9px 0; display:flex; justify-content:space-between; align-items:center; gap:9px; }
 .spotlight-recent-row + .spotlight-recent-row { border-top:1px solid var(--border); }

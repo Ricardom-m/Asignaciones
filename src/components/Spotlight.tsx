@@ -104,21 +104,30 @@ export function Spotlight({ personId, persons, records, sections, onPerson }: Pr
       )
       .sort((a, b) => a.nombre.localeCompare(b.nombre));
 
-    // Recencia por sección (nombrados)
+    // Recencia por sección (nombrados): última vez pasada o próxima programada.
     const today = todayYMD();
     const sectionRecency = (sections ?? [])
       .filter((s) => s.active)
       .map((s) => {
-        let last = "";
-        for (const r of myRecords)
-          if (r.sectionId === s.id && (r.fecha || "") <= today && (r.fecha || "") > last) last = r.fecha;
-        return { section: s, last };
+        let lastPast = "";
+        let nextFuture = "";
+        for (const r of myRecords) {
+          if (r.sectionId !== s.id) continue;
+          const f = r.fecha || "";
+          if (!f) continue;
+          if (f <= today) {
+            if (f > lastPast) lastPast = f;
+          } else if (!nextFuture || f < nextFuture) {
+            nextFuture = f;
+          }
+        }
+        return { section: s, lastPast, nextFuture };
       })
       .sort((a, b) => {
-        if (!a.last && !b.last) return a.section.orden - b.section.orden;
-        if (!a.last) return -1;
-        if (!b.last) return 1;
-        return a.last.localeCompare(b.last);
+        // nunca arriba, luego más atrasadas, y al final las que solo tienen próxima.
+        const rk = (x: { lastPast: string; nextFuture: string }) =>
+          !x.lastPast && !x.nextFuture ? -1e9 : x.lastPast ? -daysSince(x.lastPast) : 1e9;
+        return rk(a) - rk(b);
       });
 
     return {
@@ -361,15 +370,20 @@ export function Spotlight({ personId, persons, records, sections, onPerson }: Pr
       {isNombrado ? (
         sectionRecency.length > 0 && (
           <div className="spotlight-section">
-            <div className="spotlight-section-title">Por sección · cuándo pasó por última vez</div>
-            {sectionRecency.map(({ section, last }) => {
-              const overdue = !last || daysSince(last) > 90;
+            <div className="spotlight-section-title">Por sección · última vez / próxima</div>
+            {sectionRecency.map(({ section, lastPast, nextFuture }) => {
+              const overdue = (!lastPast && !nextFuture) || (!!lastPast && !nextFuture && daysSince(lastPast) > 90);
+              const upcoming = !lastPast && !!nextFuture;
               return (
                 <div className="sec-rec-row" key={section.id}>
                   <span className="sec-rec-name">{section.nombre}</span>
-                  <span className={`sec-rec-when${overdue ? " over" : ""}`}>
+                  <span className={`sec-rec-when${overdue ? " over" : upcoming ? " up" : ""}`}>
                     {overdue && <span className="sec-rec-dot" />}
-                    {last ? `${fmtShort(last)} · ${agoLabel(last)}` : "nunca"}
+                    {lastPast
+                      ? `${fmtShort(lastPast)} · ${agoLabel(lastPast)}`
+                      : nextFuture
+                        ? `próxima · ${fmtShort(nextFuture)}`
+                        : "nunca"}
                   </span>
                 </div>
               );
