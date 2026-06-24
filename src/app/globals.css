@@ -481,6 +481,8 @@ input[type=date]::-webkit-calendar-picker-indicator { filter:invert(.55); }
 /* Menú lateral: en móvil/tablet es un drawer deslizable; en escritorio, fijo. */
 .sidebar { position:fixed; top:0; left:0; bottom:0; width:264px; max-width:82vw; z-index:650; display:flex; flex-direction:column; background:color-mix(in srgb, var(--surface) 82%, transparent); backdrop-filter:blur(16px) saturate(1.2); -webkit-backdrop-filter:blur(16px) saturate(1.2); border:none; padding:18px 14px; transform:translateX(-100%); transition:transform .25s cubic-bezier(.2,.8,.3,1); }
 .sidebar.open { transform:translateX(0); box-shadow:0 0 50px rgba(0,0,0,.55); }
+/* Borde degradado suave (mismo tratamiento con máscara que la tarjeta del login) */
+.sidebar::before { content:""; position:absolute; inset:0; padding:1px; pointer-events:none; background:linear-gradient(160deg, color-mix(in srgb, var(--accent) 55%, transparent), transparent 46%, color-mix(in srgb, var(--accent2) 48%, transparent)); -webkit-mask:linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite:xor; mask-composite:exclude; }
 .drawer-overlay { position:fixed; inset:0; z-index:640; background:rgba(0,0,0,.5); backdrop-filter:blur(2px); opacity:0; pointer-events:none; transition:opacity .25s; }
 .drawer-overlay.open { opacity:1; pointer-events:auto; }
 .drawer-btn { font-size:1.05rem; flex-shrink:0; }
@@ -499,7 +501,7 @@ input[type=date]::-webkit-calendar-picker-indicator { filter:invert(.55); }
 
 @media (min-width:1024px) {
   .app-shell { flex-direction:row; }
-  .sidebar { position:static; transform:none; width:250px; max-width:none; flex-shrink:0; box-shadow:none; z-index:auto; }
+  .sidebar { position:relative; transform:none; width:250px; max-width:none; flex-shrink:0; box-shadow:none; z-index:auto; }
   .topbar, .drawer-btn { display:none !important; }
   .drawer-overlay { display:none; }
   nav.bottom { display:none !important; }
