@@ -123,7 +123,7 @@ export default function RegistrosPage() {
           Asignaciones
         </button>
         <button className={`vt-btn${view === "nombrado" ? " active" : ""}`} onClick={() => setView("nombrado")}>
-          Nombrados
+          Asignaciones nombrados
         </button>
         <button className={`vt-btn${view === "spotlight" ? " active" : ""}`} onClick={() => setView("spotlight")}>
           Por persona
@@ -220,7 +220,7 @@ export default function RegistrosPage() {
             </div>
             <PersonSelect persons={persons} value={spotlightId} onChange={setSpotlightId} placeholder="Buscar persona…" allowClear={false} />
           </div>
-          {spotlightId && <Spotlight personId={spotlightId} persons={persons} records={personRecords} onPerson={openPerson} />}
+          {spotlightId && <Spotlight personId={spotlightId} persons={persons} records={personRecords} sections={sections} onPerson={openPerson} />}
         </>
       )}
 
