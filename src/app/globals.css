@@ -36,13 +36,17 @@
 
 * { -webkit-tap-highlight-color: transparent; }
 html, body { height:100%; background:var(--bg); color:var(--text); font-family:var(--head); -webkit-font-smoothing:antialiased; }
-/* Resplandor ambiental (profundidad, muy sutil) */
+/* Aurora ambiental (mismo ADN que el login, muy sutil para no estorbar la lectura) */
 body::before {
-  content:""; position:fixed; inset:0; z-index:-1; pointer-events:none;
+  content:""; position:fixed; inset:-20%; z-index:-1; pointer-events:none;
   background:
-    radial-gradient(60% 40% at 50% -8%, var(--glow), transparent 70%),
-    radial-gradient(40% 30% at 100% 0%, color-mix(in srgb, var(--accent2) 9%, transparent), transparent 70%);
+    radial-gradient(36% 30% at 20% 10%, var(--glow), transparent 70%),
+    radial-gradient(34% 28% at 82% 6%, color-mix(in srgb, var(--accent2) 11%, transparent), transparent 70%),
+    radial-gradient(42% 36% at 62% 102%, color-mix(in srgb, var(--accent) 8%, transparent), transparent 72%);
+  animation: bgDrift 28s ease-in-out infinite alternate;
 }
+@keyframes bgDrift { from { transform:translate3d(0,0,0) scale(1); } to { transform:translate3d(0,-2%,0) scale(1.06); } }
+@media (prefers-reduced-motion: reduce) { body::before { animation:none; } }
 
 /* APP SHELL */
 .app-shell { display:flex; flex-direction:column; height:100dvh; width:100%; }
@@ -299,7 +303,8 @@ input[type=date]::-webkit-calendar-picker-indicator { filter:invert(.55); }
 
 /* EMPTY */
 .empty-state { text-align:center; padding:44px 20px; color:var(--text3); }
-.empty-icon { font-size:2rem; margin-bottom:10px; opacity:.7; }
+.empty-icon { display:inline-flex; align-items:center; justify-content:center; width:60px; height:60px; margin-bottom:14px; border-radius:18px; font-size:1.55rem; background:var(--accent-dim); border:1px solid color-mix(in srgb, var(--accent) 24%, var(--border)); box-shadow:0 12px 28px color-mix(in srgb, var(--accent) 16%, transparent); animation:logoFloat 4.5s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) { .empty-icon { animation:none; } }
 .empty-state h3 { font-size:.9rem; color:var(--text2); margin-bottom:5px; font-weight:500; }
 .empty-state p { font-size:.75rem; }
 
@@ -411,7 +416,7 @@ input[type=date]::-webkit-calendar-picker-indicator { filter:invert(.55); }
 
 /* PAGE HEADER */
 .page-header { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; margin-bottom:18px; flex-wrap:wrap; }
-.page-title { font-size:1.35rem; font-weight:600; letter-spacing:-.02em; }
+.page-title { font-size:1.35rem; font-weight:700; letter-spacing:-.02em; width:fit-content; max-width:100%; background:var(--grad); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; }
 .page-subtitle { font-size:.76rem; color:var(--text3); margin-top:3px; }
 .page-header-right { flex-shrink:0; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
 
@@ -467,7 +472,7 @@ input[type=date]::-webkit-calendar-picker-indicator { filter:invert(.55); }
 /* ════ LAYOUT DE ESCRITORIO (sidebar) ════ */
 .app-main { flex:1; min-width:0; min-height:0; display:flex; flex-direction:column; overflow:hidden; }
 /* Menú lateral: en móvil/tablet es un drawer deslizable; en escritorio, fijo. */
-.sidebar { position:fixed; top:0; left:0; bottom:0; width:264px; max-width:82vw; z-index:650; display:flex; flex-direction:column; background:var(--surface); border-right:1px solid var(--border); padding:18px 14px; transform:translateX(-100%); transition:transform .25s cubic-bezier(.2,.8,.3,1); }
+.sidebar { position:fixed; top:0; left:0; bottom:0; width:264px; max-width:82vw; z-index:650; display:flex; flex-direction:column; background:color-mix(in srgb, var(--surface) 82%, transparent); backdrop-filter:blur(16px) saturate(1.2); -webkit-backdrop-filter:blur(16px) saturate(1.2); border-right:1px solid var(--border); padding:18px 14px; transform:translateX(-100%); transition:transform .25s cubic-bezier(.2,.8,.3,1); }
 .sidebar.open { transform:translateX(0); box-shadow:0 0 50px rgba(0,0,0,.55); }
 .drawer-overlay { position:fixed; inset:0; z-index:640; background:rgba(0,0,0,.5); backdrop-filter:blur(2px); opacity:0; pointer-events:none; transition:opacity .25s; }
 .drawer-overlay.open { opacity:1; pointer-events:auto; }
