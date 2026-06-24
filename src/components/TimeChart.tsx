@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { todayYMD, addDaysYMD } from "@/lib/client";
 import type { RecordItem } from "@/lib/types";
 
@@ -59,9 +59,12 @@ export function TimeChart({ records }: { records: RecordItem[] }) {
 
   const [gran, setGran] = useState<Gran>("month");
   const [range, setRange] = useState<[string, string]>(() => defaultRange("month"));
+  const [hover, setHover] = useState<number | null>(null);
+  const svgRef = useRef<SVGSVGElement>(null);
   const changeGran = (g: Gran) => {
     setGran(g);
     setRange(defaultRange(g));
+    setHover(null);
   };
 
   const buckets = useMemo<Bucket[]>(() => {
@@ -123,6 +126,22 @@ export function TimeChart({ records }: { records: RecordItem[] }) {
   const gridVals = [0, niceMax / 2, niceMax];
   const labelEvery = Math.max(1, Math.ceil(n / 8));
 
+  // Interacción: cubo bajo el cursor + posición del tooltip.
+  const onMove = (clientX: number) => {
+    const el = svgRef.current;
+    if (!el || n === 0) return;
+    const rect = el.getBoundingClientRect();
+    const xVB = ((clientX - rect.left) / rect.width) * W;
+    const i = Math.max(0, Math.min(n - 1, Math.round((xVB - PL) / step - 0.5)));
+    setHover(i);
+  };
+  const hb = hover != null && hover < n ? buckets[hover] : null;
+  const hx = hb ? cx(hover!) : 0;
+  const hy = hb ? yFor(hb.count) : 0;
+  const tipLeft = Math.max(13, Math.min(87, (hx / W) * 100));
+  const tipTopPct = (hy / H) * 100;
+  const tipBelow = tipTopPct < 28;
+
   return (
     <div>
       {/* Controles */}
@@ -153,50 +172,101 @@ export function TimeChart({ records }: { records: RecordItem[] }) {
           {n === 0 ? "Rango de fechas inválido." : "Sin asignaciones en este rango."}
         </div>
       ) : (
-        <svg className="tc-svg" viewBox={`0 0 ${W} ${H}`} width="100%" role="img" aria-label="Actividad en el tiempo">
-          <defs>
-            <linearGradient id="tcBar" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" style={{ stopColor: "var(--accent)" }} />
-              <stop offset="100%" style={{ stopColor: "var(--accent2)" }} />
-            </linearGradient>
-          </defs>
+        <div className="tc-wrap">
+          <svg
+            ref={svgRef}
+            className="tc-svg"
+            viewBox={`0 0 ${W} ${H}`}
+            width="100%"
+            role="img"
+            aria-label="Actividad en el tiempo"
+            onMouseMove={(e) => onMove(e.clientX)}
+            onMouseLeave={() => setHover(null)}
+            onTouchStart={(e) => onMove(e.touches[0].clientX)}
+            onTouchMove={(e) => onMove(e.touches[0].clientX)}
+            onTouchEnd={() => setHover(null)}
+          >
+            <defs>
+              <linearGradient id="tcBar" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" style={{ stopColor: "var(--accent)" }} />
+                <stop offset="100%" style={{ stopColor: "var(--accent2)" }} />
+              </linearGradient>
+            </defs>
 
-          {/* Rejilla + etiquetas Y */}
-          {gridVals.map((v, i) => {
-            const y = yFor(v);
-            return (
-              <g key={i}>
-                <line x1={PL} y1={y} x2={W - PR} y2={y} style={{ stroke: "var(--border)" }} strokeWidth={1} strokeDasharray={i === 0 ? "0" : "3 3"} />
-                <text x={PL - 6} y={y + 3} textAnchor="end" style={{ fill: "var(--text3)", fontSize: "11px" }}>
-                  {Math.round(v)}
+            {/* Rejilla + etiquetas Y */}
+            {gridVals.map((v, i) => {
+              const y = yFor(v);
+              return (
+                <g key={i}>
+                  <line x1={PL} y1={y} x2={W - PR} y2={y} style={{ stroke: "var(--border)" }} strokeWidth={1} strokeDasharray={i === 0 ? "0" : "3 3"} />
+                  <text x={PL - 6} y={y + 3} textAnchor="end" style={{ fill: "var(--text3)", fontSize: "11px" }}>
+                    {Math.round(v)}
+                  </text>
+                </g>
+              );
+            })}
+
+            {/* Banda + guía vertical del cubo bajo el cursor */}
+            {hb && (
+              <>
+                <rect x={hx - step / 2} y={PT} width={step} height={plotH} style={{ fill: "var(--accent)", opacity: 0.07 }} />
+                <line x1={hx} y1={PT} x2={hx} y2={baseY} style={{ stroke: "var(--accent2)", opacity: 0.5 }} strokeWidth={1} strokeDasharray="3 3" />
+              </>
+            )}
+
+            {/* Barras */}
+            {buckets.map((b, i) => {
+              const y = yFor(b.count);
+              return (
+                <rect
+                  key={b.key}
+                  x={cx(i) - barW / 2}
+                  y={y}
+                  width={barW}
+                  height={Math.max(0, baseY - y)}
+                  rx={2}
+                  style={{ fill: "url(#tcBar)", opacity: hover == null || hover === i ? 1 : 0.5 }}
+                />
+              );
+            })}
+
+            {/* Área + línea de tendencia */}
+            <path d={areaPath} style={{ fill: "var(--accent)", opacity: 0.1 }} />
+            <path d={linePath} style={{ fill: "none", stroke: "var(--accent2)" }} strokeWidth={2} />
+
+            {/* Punto resaltado */}
+            {hb && (
+              <circle cx={hx} cy={hy} r={4} style={{ fill: "var(--accent2)", stroke: "var(--surface)" }} strokeWidth={2} />
+            )}
+
+            {/* Etiquetas X */}
+            {buckets.map((b, i) =>
+              i % labelEvery === 0 || i === n - 1 ? (
+                <text key={b.key} x={cx(i)} y={H - 8} textAnchor="middle" style={{ fill: "var(--text3)", fontSize: "10px" }}>
+                  {b.label}
                 </text>
-              </g>
-            );
-          })}
+              ) : null,
+            )}
+          </svg>
 
-          {/* Barras */}
-          {buckets.map((b, i) => {
-            const y = yFor(b.count);
-            return (
-              <rect key={b.key} x={cx(i) - barW / 2} y={y} width={barW} height={Math.max(0, baseY - y)} rx={2} style={{ fill: "url(#tcBar)" }}>
-                <title>{`${b.label}: ${b.count}`}</title>
-              </rect>
-            );
-          })}
-
-          {/* Área + línea de tendencia */}
-          <path d={areaPath} style={{ fill: "var(--accent)", opacity: 0.1 }} />
-          <path d={linePath} style={{ fill: "none", stroke: "var(--accent2)" }} strokeWidth={2} />
-
-          {/* Etiquetas X */}
-          {buckets.map((b, i) =>
-            i % labelEvery === 0 || i === n - 1 ? (
-              <text key={b.key} x={cx(i)} y={H - 8} textAnchor="middle" style={{ fill: "var(--text3)", fontSize: "10px" }}>
-                {b.label}
-              </text>
-            ) : null,
+          {/* Tooltip flotante */}
+          {hb && (
+            <div
+              className="tc-tip"
+              style={{
+                left: `${tipLeft}%`,
+                top: `${tipTopPct}%`,
+                transform: tipBelow ? "translate(-50%, 16px)" : "translate(-50%, calc(-100% - 14px))",
+              }}
+            >
+              <div className="tc-tip-title">{hb.label}</div>
+              <div className="tc-tip-row">
+                <span className="tc-tip-dot" />
+                <span className="tc-tip-val">{hb.count}</span> asignaci{hb.count === 1 ? "ón" : "ones"}
+              </div>
+            </div>
           )}
-        </svg>
+        </div>
       )}
     </div>
   );
