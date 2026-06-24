@@ -89,7 +89,7 @@ export function TimeChart({ records }: { records: RecordItem[] }) {
       let guard = 0;
       while ((y < ey || (y === ey && m <= em)) && guard < 600) {
         const key = `${y}-${String(m + 1).padStart(2, "0")}`;
-        out.push({ key, label: `${MES[m]} ${String(y).slice(2)}`, count: counts[key] ?? 0 });
+        out.push({ key, label: `${MES[m]} ${y}`, count: counts[key] ?? 0 });
         m++;
         if (m > 11) { m = 0; y++; }
         guard++;
