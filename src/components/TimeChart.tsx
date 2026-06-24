@@ -2,6 +2,7 @@
 
 import { useMemo, useRef, useState } from "react";
 import { todayYMD, addDaysYMD } from "@/lib/client";
+import { usePersistedState } from "@/lib/usePersistedState";
 import type { RecordItem } from "@/lib/types";
 
 type Gran = "day" | "month" | "year";
@@ -57,8 +58,8 @@ export function TimeChart({ records }: { records: RecordItem[] }) {
     return [addDaysYMD(hi, -29), hi]; // día: últimos 30
   };
 
-  const [gran, setGran] = useState<Gran>("month");
-  const [range, setRange] = useState<[string, string]>(() => defaultRange("month"));
+  const [gran, setGran] = usePersistedState<Gran>("asgn_tc_gran", "month");
+  const [range, setRange] = usePersistedState<[string, string]>("asgn_tc_range", defaultRange("month"));
   const [hover, setHover] = useState<number | null>(null);
   const svgRef = useRef<SVGSVGElement>(null);
   const changeGran = (g: Gran) => {

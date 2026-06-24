@@ -10,6 +10,7 @@ import { Spotlight } from "@/components/Spotlight";
 import { PersonSelect } from "@/components/PersonSelect";
 import { PageHeader } from "@/components/PageHeader";
 import { useConfirm } from "@/components/Confirm";
+import { usePersistedState } from "@/lib/usePersistedState";
 import { deleteRecord, updateRecord, todayYMD } from "@/lib/client";
 import type { Person, RecordItem } from "@/lib/types";
 
@@ -34,9 +35,9 @@ type DateFilter = "prox" | "pas" | "todas";
 type View = "asig" | "nombrado" | "spotlight";
 
 export default function RegistrosPage() {
-  const [view, setView] = useState<View>("asig");
-  const [dateFilter, setDateFilter] = useState<DateFilter>("prox");
-  const [salaFilter, setSalaFilter] = useState("");
+  const [view, setView] = usePersistedState<View>("asgn_reg_view", "asig");
+  const [dateFilter, setDateFilter] = usePersistedState<DateFilter>("asgn_reg_date", "prox");
+  const [salaFilter, setSalaFilter] = usePersistedState("asgn_reg_sala", "");
   const [query, setQuery] = useState("");
   const [spotlightId, setSpotlightId] = useState("");
   const [editing, setEditing] = useState<RecordItem | null>(null);

@@ -7,6 +7,7 @@ import { PencilSimple, Trash } from "@phosphor-icons/react";
 import { RoleBadge } from "@/components/RoleBadge";
 import { GenderIcon } from "@/components/GenderIcon";
 import { TimeChart } from "@/components/TimeChart";
+import { usePersistedState } from "@/lib/usePersistedState";
 import type { Person, RecordItem, Section } from "@/lib/types";
 
 interface Props {
@@ -38,8 +39,8 @@ function daysSince(ymd: string): number {
 }
 
 export function Spotlight({ personId, persons, records, sections, onPerson, onEdit, onDelete }: Props) {
-  const [period, setPeriod] = useState<Period>("all");
-  const [roleFilter, setRoleFilter] = useState("");
+  const [period, setPeriod] = usePersistedState<Period>("asgn_sl_period", "all");
+  const [roleFilter, setRoleFilter] = usePersistedState("asgn_sl_role", "");
 
   const person = persons.find((p) => p.id === personId);
   const partnerOf = (r: RecordItem): Person | null => {
