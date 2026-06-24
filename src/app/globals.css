@@ -298,7 +298,8 @@ input[type=date]::-webkit-calendar-picker-indicator { filter:invert(.55); }
 /* Recencia por sección (nombrados) */
 .sec-rec-row { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:8px 0; }
 .sec-rec-row + .sec-rec-row { border-top:1px solid var(--border); }
-.sec-rec-name { font-size:.82rem; font-weight:500; color:var(--text); min-width:0; }
+.sec-rec-name { font-size:.82rem; font-weight:500; color:var(--text); flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.sec-rec-asig { color:var(--text3); font-weight:400; }
 .sec-rec-when { font-size:.66rem; font-family:var(--mono); color:var(--text2); display:flex; align-items:center; gap:6px; flex-shrink:0; }
 .sec-rec-when.over { color:var(--amber); }
 .sec-rec-when.up { color:var(--accent); }

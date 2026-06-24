@@ -110,18 +110,21 @@ export function Spotlight({ personId, persons, records, sections, onPerson }: Pr
       .filter((s) => s.active)
       .map((s) => {
         let lastPast = "";
+        let lastPastAsig = "";
         let nextFuture = "";
+        let nextFutureAsig = "";
         for (const r of myRecords) {
           if (r.sectionId !== s.id) continue;
           const f = r.fecha || "";
           if (!f) continue;
           if (f <= today) {
-            if (f > lastPast) lastPast = f;
+            if (f > lastPast) { lastPast = f; lastPastAsig = r.asignacion; }
           } else if (!nextFuture || f < nextFuture) {
             nextFuture = f;
+            nextFutureAsig = r.asignacion;
           }
         }
-        return { section: s, lastPast, nextFuture };
+        return { section: s, lastPast, lastPastAsig, nextFuture, nextFutureAsig };
       })
       .sort((a, b) => {
         // nunca arriba, luego más atrasadas, y al final las que solo tienen próxima.
@@ -371,12 +374,16 @@ export function Spotlight({ personId, persons, records, sections, onPerson }: Pr
         sectionRecency.length > 0 && (
           <div className="spotlight-section">
             <div className="spotlight-section-title">Por sección · última vez / próxima</div>
-            {sectionRecency.map(({ section, lastPast, nextFuture }) => {
+            {sectionRecency.map(({ section, lastPast, lastPastAsig, nextFuture, nextFutureAsig }) => {
               const overdue = (!lastPast && !nextFuture) || (!!lastPast && !nextFuture && daysSince(lastPast) > 90);
               const upcoming = !lastPast && !!nextFuture;
+              const asig = lastPast ? lastPastAsig : nextFuture ? nextFutureAsig : "";
               return (
                 <div className="sec-rec-row" key={section.id}>
-                  <span className="sec-rec-name">{section.nombre}</span>
+                  <span className="sec-rec-name">
+                    {section.nombre}
+                    {asig && <span className="sec-rec-asig"> | {asig}</span>}
+                  </span>
                   <span className={`sec-rec-when${overdue ? " over" : upcoming ? " up" : ""}`}>
                     {overdue && <span className="sec-rec-dot" />}
                     {lastPast
