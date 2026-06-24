@@ -33,7 +33,7 @@ export default function InicioPage() {
       <div className="stat-grid">
         <StatCard value={activas} label="Personas activas" hint={`${persons.length} en total`} />
         <StatCard value={stats.total} label="Registros totales" />
-        <StatCard value={stats.esteMes} label="Registros este mes" accent="var(--accent)" />
+        <StatCard value={stats.esteMes} label="Registros este mes" gradient />
         <StatCard value={roles.length} label="Roles" />
       </div>
 

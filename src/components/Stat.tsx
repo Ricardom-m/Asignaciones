@@ -45,15 +45,17 @@ export function StatCard({
   label,
   hint,
   accent,
+  gradient,
 }: {
   value: React.ReactNode;
   label: string;
   hint?: string;
   accent?: string;
+  gradient?: boolean;
 }) {
   return (
     <div className="stat-card anim-zoom">
-      <div className="stat-value" style={accent ? { color: accent } : undefined}>
+      <div className={`stat-value${gradient ? " grad" : ""}`} style={accent && !gradient ? { color: accent } : undefined}>
         {typeof value === "number" ? <AnimatedNumber value={value} /> : value}
       </div>
       <div className="stat-label">{label}</div>

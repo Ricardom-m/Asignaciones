@@ -54,7 +54,7 @@ body::before {
 .page-inner { max-width:680px; margin:0 auto; padding:22px 16px 28px; }
 
 /* CARD */
-.content-card { background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:22px 18px; margin-bottom:16px; box-shadow:0 1px 2px rgba(0,0,0,.1), 0 10px 30px rgba(0,0,0,.12); }
+.content-card { border:1px solid transparent; background:linear-gradient(var(--surface),var(--surface)) padding-box, linear-gradient(135deg, color-mix(in srgb,var(--accent) 30%,var(--border)), color-mix(in srgb,var(--accent2) 30%,var(--border))) border-box; border-radius:16px; padding:22px 18px; margin-bottom:16px; box-shadow:0 1px 2px rgba(0,0,0,.1), 0 10px 30px rgba(0,0,0,.12); }
 .content-card.flush { background:transparent; border:none; padding:0; }
 
 /* HEADER */
@@ -422,12 +422,13 @@ input[type=date]::-webkit-calendar-picker-indicator { filter:invert(.55); }
 
 /* DASHBOARD */
 .stat-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin-bottom:16px; }
-.stat-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--r); padding:15px 16px; }
+.stat-card { border:1px solid transparent; background:linear-gradient(var(--surface),var(--surface)) padding-box, linear-gradient(135deg, color-mix(in srgb,var(--accent) 36%,var(--border)), color-mix(in srgb,var(--accent2) 36%,var(--border))) border-box; border-radius:var(--r); padding:15px 16px; }
 .stat-value { font-size:1.7rem; font-weight:600; font-family:var(--mono); letter-spacing:-.02em; line-height:1.1; }
+.stat-value.grad { background:var(--grad); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; width:fit-content; }
 .stat-label { font-size:.7rem; color:var(--text2); margin-top:5px; }
 .stat-hint { font-size:.6rem; color:var(--text3); margin-top:2px; }
 
-.dash-section { background:var(--surface); border:1px solid var(--border); border-radius:var(--r); padding:16px; margin-bottom:14px; }
+.dash-section { border:1px solid transparent; background:linear-gradient(var(--surface),var(--surface)) padding-box, linear-gradient(135deg, color-mix(in srgb,var(--accent) 30%,var(--border)), color-mix(in srgb,var(--accent2) 30%,var(--border))) border-box; border-radius:var(--r); padding:16px; margin-bottom:14px; }
 .dash-section-title { font-size:.64rem; font-weight:600; letter-spacing:.06em; text-transform:uppercase; color:var(--text3); margin-bottom:13px; }
 
 .bar-list { display:flex; flex-direction:column; gap:11px; }
@@ -468,6 +469,12 @@ input[type=date]::-webkit-calendar-picker-indicator { filter:invert(.55); }
 /* MONTH GROUP (registros) */
 .month-group-title { font-size:.62rem; font-weight:600; letter-spacing:.05em; text-transform:uppercase; color:var(--text3); margin:14px 2px 9px; }
 .month-group-title:first-child { margin-top:0; }
+
+/* Títulos de sección en degradado (mismo ADN que el login/títulos de página) */
+.section-label, .dash-section-title, .spotlight-section-title, .month-group-title {
+  width:fit-content; max-width:100%;
+  background:var(--grad); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;
+}
 
 /* ════ LAYOUT DE ESCRITORIO (sidebar) ════ */
 .app-main { flex:1; min-width:0; min-height:0; display:flex; flex-direction:column; overflow:hidden; }
@@ -573,7 +580,7 @@ input:focus, select:focus, .list-search-input:focus, .sel-search:focus, .cmd-inp
 .record-card, .person-row, .stat-card { transition:transform .18s cubic-bezier(.2,.8,.3,1), border-color .15s, box-shadow .18s; }
 .vt-btn.active, .seg-btn.active, .reg-pill.active { box-shadow:0 1px 3px rgba(0,0,0,.22); }
 .stat-card { transition:transform .18s cubic-bezier(.2,.8,.3,1), border-color .15s; }
-.stat-card:hover { border-color:var(--border2); }
+.stat-card:hover { background:linear-gradient(var(--surface),var(--surface)) padding-box, linear-gradient(135deg, color-mix(in srgb,var(--accent) 62%,var(--border)), color-mix(in srgb,var(--accent2) 62%,var(--border))) border-box; }
 /* botón primario listo: resplandor */
 .btn-primary.ready { box-shadow:0 6px 20px color-mix(in srgb, var(--accent) 35%, transparent); }
 /* pestaña activa con glow */
