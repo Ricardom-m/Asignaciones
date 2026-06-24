@@ -5,6 +5,7 @@ import type { UserOptions } from "jspdf-autotable";
 import { fmtDate, fmtShort, relativeLabel, todayYMD, addDaysYMD } from "@/lib/client";
 import { RoleBadge } from "@/components/RoleBadge";
 import { GenderIcon } from "@/components/GenderIcon";
+import { TimeChart } from "@/components/TimeChart";
 import type { Person, RecordItem, Section } from "@/lib/types";
 
 interface Props {
@@ -16,13 +17,9 @@ interface Props {
 }
 
 type Period = "all" | "year" | "3m";
-type TipoFilter = "all" | "nombrado" | "normal";
 
-const TL_PAGE = 60; // tope inicial de filas en la línea de tiempo
+const TL_PAGE = 60; // tope inicial de filas por lista de la línea de tiempo
 
-const MONTH_LETTERS = ["E", "F", "M", "A", "M", "J", "J", "A", "S", "O", "N", "D"];
-
-// "hace N días / meses / años" en grano grueso (para recencia por sección).
 function agoLabel(ymd: string): string {
   const day = 864e5;
   const diff = Math.round((Date.now() - new Date(ymd + "T00:00:00Z").getTime()) / day);
@@ -36,18 +33,10 @@ function agoLabel(ymd: string): string {
 function daysSince(ymd: string): number {
   return Math.round((Date.now() - new Date(ymd + "T00:00:00Z").getTime()) / 864e5);
 }
-// Color de la celda del heatmap según intensidad.
-function heatColor(count: number, max: number): string {
-  if (count === 0) return "var(--surface2)";
-  const pct = Math.round(30 + (count / max) * 60); // 30%–90%
-  return `color-mix(in srgb, var(--accent) ${pct}%, transparent)`;
-}
 
 export function Spotlight({ personId, persons, records, sections, onPerson }: Props) {
   const [period, setPeriod] = useState<Period>("all");
   const [roleFilter, setRoleFilter] = useState("");
-  const [tipoFilter, setTipoFilter] = useState<TipoFilter>("all");
-  const [tlLimit, setTlLimit] = useState(TL_PAGE);
 
   const person = persons.find((p) => p.id === personId);
   const partnerOf = (r: RecordItem): Person | null => {
@@ -58,12 +47,7 @@ export function Spotlight({ personId, persons, records, sections, onPerson }: Pr
   const data = useMemo(() => {
     if (!person) return null;
     const myRecords = records.filter((r) => r.asignadoId === personId || r.ayudanteId === personId);
-
     const isNombrado = person.roles.some((r) => r.nombre === "Nombrados");
-    const hasNombradoRecs = myRecords.some((r) => r.tipo === "NOMBRADO");
-    const hasNormalRecs = myRecords.some((r) => r.tipo === "ASIGNACION");
-    const showTipoChips = hasNombradoRecs && hasNormalRecs;
-    const effTipo: TipoFilter = showTipoChips ? tipoFilter : "all";
 
     // Filtro por periodo
     const from =
@@ -75,16 +59,16 @@ export function Spotlight({ personId, persons, records, sections, onPerson }: Pr
       const pt = partnerOf(r);
       return !!pt && pt.roles.some((rr) => rr.id === roleFilter);
     };
-    const matchesTipo = (r: RecordItem) =>
-      effTipo === "all" ? true : effTipo === "nombrado" ? r.tipo === "NOMBRADO" : r.tipo === "ASIGNACION";
-    const filtered = inPeriod.filter(matchesRole).filter(matchesTipo);
+
+    const byDateDesc = (a: RecordItem, b: RecordItem) => (b.fecha || "").localeCompare(a.fecha || "");
+    const filtered = inPeriod.filter(matchesRole);
 
     // Resumen
     const ym = new Date().toISOString().slice(0, 7);
     const esteMes = myRecords.filter((r) => (r.fecha || "").startsWith(ym)).length;
-    const lastRec = [...myRecords].sort((a, b) => (b.fecha || "").localeCompare(a.fecha || ""))[0];
+    const lastRec = [...myRecords].sort(byDateDesc)[0];
 
-    // Parejas (sobre filtered)
+    // Parejas
     const pairData: Record<string, { count: number; lastFecha: string }> = {};
     for (const r of filtered) {
       const pt = partnerOf(r);
@@ -102,28 +86,11 @@ export function Spotlight({ personId, persons, records, sections, onPerson }: Pr
     const partnerRoleIds = new Set<string>();
     for (const r of inPeriod) partnerOf(r)?.roles.forEach((rr) => partnerRoleIds.add(rr.id));
 
-    const timeline = [...filtered].sort((a, b) => (b.fecha || "").localeCompare(a.fecha || ""));
-
-    // Actividad por mes (barras recientes + heatmap)
-    const byMonth: Record<string, number> = {};
-    for (const r of filtered) {
-      const k = (r.fecha || "").slice(0, 7);
-      if (k) byMonth[k] = (byMonth[k] ?? 0) + 1;
-    }
-    const now = new Date();
-    const months6: { key: string; label: string; count: number }[] = [];
-    for (let i = 5; i >= 0; i--) {
-      const d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - i, 1));
-      const key = d.toISOString().slice(0, 7);
-      months6.push({
-        key,
-        label: d.toLocaleDateString("es-MX", { month: "short", timeZone: "UTC" }).replace(".", ""),
-        count: byMonth[key] ?? 0,
-      });
-    }
-    const months6Max = Math.max(1, ...months6.map((m) => m.count));
-    const heatYears = [...new Set(Object.keys(byMonth).map((k) => Number(k.slice(0, 4))))].sort();
-    const heatMax = Math.max(1, ...Object.values(byMonth));
+    // Líneas de tiempo
+    const timelineAll = [...filtered].sort(byDateDesc);
+    const timelineNombrado = [...inPeriod.filter((r) => r.tipo === "NOMBRADO")].sort(byDateDesc);
+    const timelineNormal = [...inPeriod.filter((r) => r.tipo === "ASIGNACION").filter(matchesRole)].sort(byDateDesc);
+    const pdfRows = [...inPeriod].sort(byDateDesc);
 
     // Nunca emparejado (no-nombrados)
     const allPartnerIds = new Set(myRecords.map((r) => partnerOf(r)?.id).filter(Boolean));
@@ -137,7 +104,7 @@ export function Spotlight({ personId, persons, records, sections, onPerson }: Pr
       )
       .sort((a, b) => a.nombre.localeCompare(b.nombre));
 
-    // Recencia por sección (nombrados): última vez pasada por cada sección.
+    // Recencia por sección (nombrados)
     const today = todayYMD();
     const sectionRecency = (sections ?? [])
       .filter((s) => s.active)
@@ -151,43 +118,39 @@ export function Spotlight({ personId, persons, records, sections, onPerson }: Pr
         if (!a.last && !b.last) return a.section.orden - b.section.orden;
         if (!a.last) return -1;
         if (!b.last) return 1;
-        return a.last.localeCompare(b.last); // más atrasado arriba
+        return a.last.localeCompare(b.last);
       });
 
     return {
-      total: filtered.length,
+      myRecords,
+      isNombrado,
+      total: inPeriod.length,
       esteMes,
       lastRec,
       partners,
       maxCount,
       distinct: new Set(filtered.map((r) => partnerOf(r)?.id).filter(Boolean)).size,
       top: partners[0],
-      timeline,
+      timelineAll,
+      timelineNombrado,
+      timelineNormal,
+      pdfRows,
       partnerRoleIds,
       neverPaired,
-      months6,
-      months6Max,
-      byMonth,
-      heatYears,
-      heatMax,
       sectionRecency,
-      isNombrado,
-      showTipoChips,
-      effTipo,
     };
-  }, [person, personId, persons, records, sections, period, roleFilter, tipoFilter]);
+  }, [person, personId, persons, records, sections, period, roleFilter]);
 
   if (!person || !data) return null;
   const {
-    total, esteMes, lastRec, partners, maxCount, distinct, top, timeline, partnerRoleIds, neverPaired,
-    months6, months6Max, byMonth, heatYears, heatMax, sectionRecency, isNombrado, showTipoChips, effTipo,
+    myRecords, isNombrado, total, esteMes, lastRec, partners, maxCount, distinct, top,
+    timelineAll, timelineNombrado, timelineNormal, pdfRows, partnerRoleIds, neverPaired, sectionRecency,
   } = data;
   const fullName = `${person.nombre} ${person.apellido}`;
   const initials = (person.nombre[0] + (person.apellido[0] || "")).toUpperCase();
   const filterRoles = persons
     .flatMap((p) => p.roles)
     .filter((r, i, arr) => partnerRoleIds.has(r.id) && arr.findIndex((x) => x.id === r.id) === i);
-  const tlShown = timeline.slice(0, tlLimit);
 
   const NameLink = ({ p }: { p: Person }) =>
     onPerson ? (
@@ -255,7 +218,7 @@ export function Spotlight({ personId, persons, records, sections, onPerson }: Pr
     autoTable(doc, {
       startY: y,
       head: [["Fecha", "Asignación", "Con", "Sala", "Tipo"]],
-      body: timeline.map((r) => {
+      body: pdfRows.map((r) => {
         const pt = partnerOf(r);
         return [fmtDate(r.fecha), r.asignacion, pt ? `${pt.nombre} ${pt.apellido}` : "—", r.sala ?? "", r.tipo === "NOMBRADO" ? "Nombrado" : "Asignación"];
       }),
@@ -308,7 +271,7 @@ export function Spotlight({ personId, persons, records, sections, onPerson }: Pr
 
       {/* Filtros */}
       <div className="spotlight-section" style={{ paddingTop: 12, paddingBottom: 12 }}>
-        <div className="hp-filters" style={{ marginBottom: showTipoChips || filterRoles.length ? 8 : 0 }}>
+        <div className="hp-filters" style={{ marginBottom: filterRoles.length ? 8 : 0 }}>
           {([
             { k: "all", label: "Todo" },
             { k: "year", label: "Este año" },
@@ -324,29 +287,7 @@ export function Spotlight({ personId, persons, records, sections, onPerson }: Pr
             </button>
           ))}
         </div>
-
-        {/* Tipo (solo si tiene de nombrado y normales) */}
-        {showTipoChips && (
-          <div className="hp-filters" style={{ marginBottom: filterRoles.length ? 8 : 0 }}>
-            {([
-              { k: "all", label: "Todas" },
-              { k: "nombrado", label: "De nombrado" },
-              { k: "normal", label: "Con otras personas" },
-            ] as const).map((o) => (
-              <button
-                key={o.k}
-                className="role-chip"
-                onClick={() => setTipoFilter(o.k)}
-                style={effTipo === o.k ? { color: "var(--accent)", borderColor: "var(--accent)", background: "var(--accent-dim)" } : undefined}
-              >
-                {o.label}
-              </button>
-            ))}
-          </div>
-        )}
-
-        {/* Rol de la pareja (no aplica cuando se ven solo las de nombrado) */}
-        {filterRoles.length > 0 && effTipo !== "nombrado" && (
+        {filterRoles.length > 0 && (
           <div className="hp-filters">
             <button
               className="role-chip"
@@ -369,7 +310,7 @@ export function Spotlight({ personId, persons, records, sections, onPerson }: Pr
         )}
       </div>
 
-      {top && effTipo !== "nombrado" && (
+      {top && (
         <div className="spotlight-section" style={{ paddingTop: 12, paddingBottom: 12 }}>
           <span className="suggest-tip">⭐ Más frecuente con </span>
           <NameLink p={top.person} /> <span style={{ color: "var(--text3)", fontSize: ".7rem" }}>· {top.count}×</span>
@@ -398,100 +339,23 @@ export function Spotlight({ personId, persons, records, sections, onPerson }: Pr
         </div>
       )}
 
-      {/* Actividad: barras (últimos 6 meses) + heatmap */}
-      {total > 0 && (
+      {/* Actividad en el tiempo */}
+      {myRecords.length > 0 && (
         <div className="spotlight-section">
-          <div className="spotlight-section-title">Actividad</div>
-          <div className="bar-list" style={{ marginBottom: heatYears.length ? 16 : 0 }}>
-            {months6.map((m) => (
-              <div className="bar-row" key={m.key}>
-                <div className="bar-row-head">
-                  <span className="bar-row-label" style={{ textTransform: "capitalize" }}>{m.label}</span>
-                  <span className="bar-row-value">{m.count}</span>
-                </div>
-                <div className="bar-track">
-                  <div className="bar-fill" style={{ width: `${(m.count / months6Max) * 100}%`, background: "var(--grad)" }} />
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {heatYears.length > 0 && (
-            <div className="heatmap">
-              <div className="hm-head">
-                <span />
-                {MONTH_LETTERS.map((l, i) => (
-                  <span key={i}>{l}</span>
-                ))}
-              </div>
-              {heatYears.map((year) => (
-                <div className="hm-row" key={year}>
-                  <span className="hm-year">{String(year).slice(2)}</span>
-                  {Array.from({ length: 12 }, (_, m) => {
-                    const key = `${year}-${String(m + 1).padStart(2, "0")}`;
-                    const count = byMonth[key] ?? 0;
-                    return (
-                      <span
-                        key={m}
-                        className="hm-cell"
-                        title={`${MONTH_LETTERS[m]} ${year}: ${count}`}
-                        style={{ background: heatColor(count, heatMax) }}
-                      />
-                    );
-                  })}
-                </div>
-              ))}
-              <div className="hm-legend">
-                menos
-                <i style={{ background: "var(--surface2)" }} />
-                <i style={{ background: heatColor(1, 4) }} />
-                <i style={{ background: heatColor(2, 4) }} />
-                <i style={{ background: heatColor(4, 4) }} />
-                más
-              </div>
-            </div>
-          )}
+          <div className="spotlight-section-title">Actividad · asignaciones en el tiempo</div>
+          <TimeChart records={myRecords} />
         </div>
       )}
 
-      {/* Línea de tiempo */}
-      <div className="spotlight-section">
-        <div className="spotlight-section-title">Línea de tiempo</div>
-        {timeline.length === 0 ? (
-          <div className="spotlight-empty">Sin asignaciones en este filtro.</div>
-        ) : (
-          <>
-            <div className="tl">
-              {tlShown.map((r) => {
-                const pt = partnerOf(r);
-                return (
-                  <div className="tl-row" key={r.id}>
-                    <span className="tl-date">{fmtShort(r.fecha)}</span>
-                    <div className="tl-main">
-                      <div className="tl-asig">
-                        {r.asignacion}
-                        {r.tipo === "NOMBRADO" && <span className="tl-tag">nombrado</span>}
-                        {r.section && <span className="tl-sec">{r.section}</span>}
-                      </div>
-                      <div className="tl-with">
-                        {pt ? <>con <NameLink p={pt} /></> : r.tipo === "NOMBRADO" ? "—" : "(sin pareja)"}
-                        {r.sala ? ` · ${r.sala}` : ""}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-            {timeline.length > tlLimit && (
-              <div style={{ textAlign: "center", marginTop: 10 }}>
-                <button className="btn btn-ghost btn-sm" onClick={() => setTlLimit((l) => l + TL_PAGE)}>
-                  Ver más ({timeline.length - tlLimit}) ↓
-                </button>
-              </div>
-            )}
-          </>
-        )}
-      </div>
+      {/* Línea(s) de tiempo */}
+      {isNombrado ? (
+        <>
+          <TimelineList title="Asignaciones de nombrado" records={timelineNombrado} partnerOf={partnerOf} onPerson={onPerson} />
+          <TimelineList title="Asignaciones normales (con otras personas)" records={timelineNormal} partnerOf={partnerOf} onPerson={onPerson} />
+        </>
+      ) : (
+        <TimelineList title="Línea de tiempo" records={timelineAll} partnerOf={partnerOf} onPerson={onPerson} />
+      )}
 
       {/* Nombrados: recencia por sección · resto: nunca asignado con */}
       {isNombrado ? (
@@ -528,6 +392,75 @@ export function Spotlight({ personId, persons, records, sections, onPerson }: Pr
             ))
           )}
         </div>
+      )}
+    </div>
+  );
+}
+
+// Lista de tiempo con su propio "ver más" (tope independiente por sección).
+function TimelineList({
+  title,
+  records,
+  partnerOf,
+  onPerson,
+}: {
+  title: string;
+  records: RecordItem[];
+  partnerOf: (r: RecordItem) => Person | null;
+  onPerson?: (id: string) => void;
+}) {
+  const [limit, setLimit] = useState(TL_PAGE);
+  const shown = records.slice(0, limit);
+
+  return (
+    <div className="spotlight-section">
+      <div className="spotlight-section-title">{title}</div>
+      {records.length === 0 ? (
+        <div className="spotlight-empty">Sin asignaciones en este filtro.</div>
+      ) : (
+        <>
+          <div className="tl">
+            {shown.map((r) => {
+              const pt = partnerOf(r);
+              return (
+                <div className="tl-row" key={r.id}>
+                  <span className="tl-date">{fmtShort(r.fecha)}</span>
+                  <div className="tl-main">
+                    <div className="tl-asig">
+                      {r.asignacion}
+                      {r.tipo === "NOMBRADO" && <span className="tl-tag">nombrado</span>}
+                      {r.section && <span className="tl-sec">{r.section}</span>}
+                    </div>
+                    <div className="tl-with">
+                      {pt ? (
+                        <>
+                          con{" "}
+                          {onPerson ? (
+                            <button className="person-link" onClick={() => onPerson(pt.id)}>{pt.nombre} {pt.apellido}</button>
+                          ) : (
+                            <span>{pt.nombre} {pt.apellido}</span>
+                          )}
+                        </>
+                      ) : r.tipo === "NOMBRADO" ? (
+                        "—"
+                      ) : (
+                        "(sin pareja)"
+                      )}
+                      {r.sala ? ` · ${r.sala}` : ""}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          {records.length > limit && (
+            <div style={{ textAlign: "center", marginTop: 10 }}>
+              <button className="btn btn-ghost btn-sm" onClick={() => setLimit((l) => l + TL_PAGE)}>
+                Ver más ({records.length - limit}) ↓
+              </button>
+            </div>
+          )}
+        </>
       )}
     </div>
   );
