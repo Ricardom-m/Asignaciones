@@ -20,6 +20,7 @@ import { DotsSixVertical, CaretRight, GearSix } from "@phosphor-icons/react";
 import { usePersons, useSections, useRoles, useMeetings, useMeetingConfig, useDateRecords } from "@/lib/hooks";
 import { PageHeader } from "@/components/PageHeader";
 import { ConfigFechas } from "@/components/ConfigFechas";
+import { MeetingDatePicker } from "@/components/MeetingDatePicker";
 import { RosterPanel } from "@/components/RosterPanel";
 import { PlannerPartModal } from "@/components/PlannerPartModal";
 import { EditRecordModal } from "@/components/EditRecordModal";
@@ -216,7 +217,7 @@ export default function PlanificarPage() {
           ))}
         </div>
         <div className="plan-date-custom">
-          <input type="date" value={fecha} onChange={(e) => setFecha(e.target.value)} />
+          <MeetingDatePicker value={fecha} onChange={setFecha} meetingWeekdays={config.weekdays} />
           <span className="plan-date-meta">
             {dow} · {fecha ? relativeLabel(fecha) : ""}
           </span>

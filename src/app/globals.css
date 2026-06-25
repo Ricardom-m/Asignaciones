@@ -665,6 +665,33 @@ input:focus, select:focus, .list-search-input:focus, .sel-search:focus, .cmd-inp
 .plan-date-custom input { width:auto; flex:1; min-width:140px; }
 .plan-date-meta { font-size:.7rem; color:var(--text3); text-transform:capitalize; flex-shrink:0; }
 
+/* Calendario propio (marca días de reunión + navegación a meses pasados) */
+.mdp { position:relative; flex:1; min-width:170px; }
+.mdp-trigger { width:100%; display:flex; align-items:center; gap:8px; padding:10px 12px; background:var(--surface2); border:1px solid var(--border); border-radius:10px; color:var(--text); cursor:pointer; font-size:.92rem; }
+.mdp-trigger:hover { border-color:var(--accent); }
+.mdp-trigger > svg { color:var(--accent); flex-shrink:0; }
+.mdp-pop { position:absolute; z-index:50; top:calc(100% + 6px); left:0; width:300px; max-width:92vw; background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:12px; box-shadow:0 16px 44px rgba(0,0,0,.42); }
+.mdp-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
+.mdp-month { font-weight:600; font-size:.9rem; }
+.mdp-nav { width:30px; height:30px; display:grid; place-items:center; border:1px solid var(--border); border-radius:8px; background:var(--surface2); color:var(--text2); cursor:pointer; }
+.mdp-nav:hover { color:var(--accent); border-color:var(--accent); }
+.mdp-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:3px; }
+.mdp-wdrow { margin-bottom:4px; }
+.mdp-wd { text-align:center; font-size:.66rem; font-weight:600; color:var(--text3); padding:2px 0; }
+.mdp-day { position:relative; aspect-ratio:1; display:grid; place-items:center; border:1px solid transparent; border-radius:8px; background:transparent; color:var(--text); font-size:.82rem; cursor:pointer; }
+.mdp-day:hover { background:var(--surface2); }
+.mdp-day.empty { cursor:default; }
+.mdp-day.empty:hover { background:transparent; }
+.mdp-day.meeting { color:var(--accent); font-weight:600; }
+.mdp-day.meeting::after { content:""; position:absolute; bottom:4px; left:50%; transform:translateX(-50%); width:4px; height:4px; border-radius:50%; background:var(--accent); }
+.mdp-day.today { border-color:var(--accent); }
+.mdp-day.selected { background:var(--accent); color:#fff; }
+.mdp-day.selected::after { background:#fff; }
+.mdp-foot { display:flex; align-items:center; justify-content:space-between; margin-top:10px; padding-top:8px; border-top:1px solid var(--border); }
+.mdp-legend { display:flex; align-items:center; gap:6px; font-size:.7rem; color:var(--text3); }
+.mdp-legend-dot { width:6px; height:6px; border-radius:50%; background:var(--accent); }
+.mdp-hoy { font-size:.78rem; color:var(--accent); background:none; border:none; cursor:pointer; font-weight:600; padding:2px 4px; }
+
 /* Panel plegable "Configuraciones y fechas" */
 .cfg-panel { padding:0; overflow:hidden; }
 .cfg-toggle { width:100%; display:flex; align-items:center; justify-content:space-between; gap:12px; padding:14px 16px; background:transparent; border:none; cursor:pointer; text-align:left; color:var(--text); }
