@@ -17,7 +17,7 @@ import {
 import { SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, arrayMove, useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { DotsSixVertical, CaretRight, GearSix } from "@phosphor-icons/react";
-import { usePersons, useSections, useRoles, useMeetings, useDateRecords } from "@/lib/hooks";
+import { usePersons, useSections, useRoles, useMeetings, useMeetingConfig, useDateRecords } from "@/lib/hooks";
 import { PageHeader } from "@/components/PageHeader";
 import { ConfigFechas } from "@/components/ConfigFechas";
 import { RosterPanel } from "@/components/RosterPanel";
@@ -27,7 +27,7 @@ import { useToast } from "@/components/Toast";
 import { useConfirm } from "@/components/Confirm";
 import { GenderIcon } from "@/components/GenderIcon";
 import { useIsAdmin } from "@/components/UserContext";
-import { arrangeRecords, deleteRecord, fmtShort, relativeLabel, todayYMD, weekdayLabel, weekdayOf } from "@/lib/client";
+import { addDaysYMD, arrangeRecords, deleteRecord, fmtShort, nextWeekdayDates, relativeLabel, todayYMD, weekdayLabel, weekdayOf } from "@/lib/client";
 import type { Person, RecordItem } from "@/lib/types";
 
 const SIN_SECCION = "__none__";
@@ -52,6 +52,7 @@ function groupBySala(items: RecordItem[]): { sala: string; items: RecordItem[] }
 
 export default function PlanificarPage() {
   const { meetings } = useMeetings();
+  const { config } = useMeetingConfig();
   const { sections } = useSections();
   const { roles } = useRoles();
   const { persons } = usePersons();
@@ -188,7 +189,15 @@ export default function PlanificarPage() {
     }
   };
 
-  const upcoming = meetings.slice(0, 6);
+  // Fechas para elegir: próximos ~3 meses según la regla (días de reunión),
+  // más cualquier reunión especial ya guardada dentro de ese rango.
+  const planDates = useMemo(() => {
+    const today = todayYMD();
+    const end = addDaysYMD(today, 91);
+    const set = new Set(nextWeekdayDates(config.weekdays, 13)); // 13 semanas ≈ 3 meses
+    for (const m of meetings) if (m.fecha >= today && m.fecha <= end) set.add(m.fecha);
+    return [...set].sort();
+  }, [config.weekdays, meetings]);
   const dow = fecha ? weekdayLabel(weekdayOf(fecha)) : "";
   const activeRec = activeId ? dayRecords.find((r) => r.id === activeId) ?? null : null;
 
@@ -200,9 +209,9 @@ export default function PlanificarPage() {
       <div className="content-card">
         <div className="section-label">Reunión</div>
         <div className="plan-dates">
-          {upcoming.map((m) => (
-            <button key={m.id} className={`reg-pill${fecha === m.fecha ? " active" : ""}`} onClick={() => setFecha(m.fecha)}>
-              {fmtShort(m.fecha)}
+          {planDates.map((d) => (
+            <button key={d} className={`reg-pill${fecha === d ? " active" : ""}`} onClick={() => setFecha(d)}>
+              {fmtShort(d)}
             </button>
           ))}
         </div>

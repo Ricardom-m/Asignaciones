@@ -658,7 +658,7 @@ input:focus, select:focus, .list-search-input:focus, .sel-search:focus, .cmd-inp
 ::-webkit-scrollbar-thumb { background:var(--border2); border-radius:3px; }
 
 /* ════ PLANIFICADOR ════ */
-.plan-dates { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px; }
+.plan-dates { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px; max-height:128px; overflow-y:auto; padding-right:2px; }
 .plan-dates .reg-pill { border:1px solid var(--border); background:var(--surface2); border-radius:20px; }
 .plan-dates .reg-pill.active { color:var(--accent); border-color:var(--accent); background:var(--accent-dim); }
 .plan-date-custom { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
