@@ -113,7 +113,7 @@ export default function RegistrosPage() {
   };
 
   return (
-    <div className="page-inner fade-up">
+    <div className="page-inner page-inner-wide fade-up">
       <PageHeader
         title="Registros"
         subtitle={`${stats.proximas} próximas · ${stats.estaSemana} esta semana · ${stats.total} en total`}
@@ -189,18 +189,20 @@ export default function RegistrosPage() {
               {groups.map((g) => (
                 <div key={g.key}>
                   <div className="month-group-title">{g.key}</div>
-                  {g.items.map((rec) => (
-                    <RecordCard
-                      key={rec.id}
-                      rec={rec}
-                      personsById={personsById}
-                      onEdit={setEditing}
-                      onDelete={onDelete}
-                      onPerson={openPerson}
-                      sections={sections}
-                      onChangeSection={changeSection}
-                    />
-                  ))}
+                  <div className="cols-2-wide">
+                    {g.items.map((rec) => (
+                      <RecordCard
+                        key={rec.id}
+                        rec={rec}
+                        personsById={personsById}
+                        onEdit={setEditing}
+                        onDelete={onDelete}
+                        onPerson={openPerson}
+                        sections={sections}
+                        onChangeSection={changeSection}
+                      />
+                    ))}
+                  </div>
                 </div>
               ))}
               {hasMore && (
@@ -214,7 +216,7 @@ export default function RegistrosPage() {
           )}
         </>
       ) : (
-        <>
+        <div className="spotlight-view">
           <div className="spotlight-search-wrap">
             <div className="field-label" style={{ marginBottom: 6 }}>
               Selecciona una persona para analizar
@@ -232,7 +234,7 @@ export default function RegistrosPage() {
               onDelete={onDelete}
             />
           )}
-        </>
+        </div>
       )}
 
       {editing && (

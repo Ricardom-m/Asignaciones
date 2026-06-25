@@ -756,6 +756,14 @@ input:focus, select:focus, .list-search-input:focus, .sel-search:focus, .cmd-inp
   .plan-aside { width:420px; }
 }
 
+/* Mismo criterio para las demás vistas: en pantallas grandes, listas y
+   tarjetas se reparten en 2 columnas. El detalle "Por persona" se centra. */
+.spotlight-view { max-width:880px; margin-left:auto; margin-right:auto; }
+@media (min-width:1280px) {
+  .cols-2-wide { display:grid; grid-template-columns:1fr 1fr; gap:14px; align-items:start; }
+  .persons-list { display:grid; grid-template-columns:1fr 1fr; align-items:start; }
+}
+
 /* MOBILE */
 @media(max-width:480px){
   .hbtn { padding:5px 7px; font-size:.6rem; }

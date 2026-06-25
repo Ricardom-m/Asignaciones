@@ -27,7 +27,7 @@ export default function InicioPage() {
   const hoyLabel = new Date().toLocaleDateString("es-MX", { weekday: "long", day: "numeric", month: "long" });
 
   return (
-    <div className="page-inner fade-up">
+    <div className="page-inner page-inner-wide fade-up">
       <PageHeader title="Inicio" subtitle={hoyLabel.charAt(0).toUpperCase() + hoyLabel.slice(1)} />
 
       <div className="stat-grid">
@@ -37,6 +37,7 @@ export default function InicioPage() {
         <StatCard value={roles.length} label="Roles" />
       </div>
 
+      <div className="cols-2-wide">
       {porRol.list.length > 0 && (
         <Reveal className="dash-section">
           <div className="dash-section-title">Personas por rol</div>
@@ -89,6 +90,7 @@ export default function InicioPage() {
           ))
         )}
       </Reveal>
+      </div>
     </div>
   );
 }

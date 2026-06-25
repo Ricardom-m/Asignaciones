@@ -87,7 +87,7 @@ export default function PersonasPage() {
   };
 
   return (
-    <div className="page-inner fade-up">
+    <div className="page-inner page-inner-wide fade-up">
       <PageHeader
         title="Personas"
         subtitle={`${activeCount} activas · ${persons.length} en total`}

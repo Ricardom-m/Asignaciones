@@ -145,9 +145,10 @@ export default function ReunionesPage() {
   };
 
   return (
-    <div className="page-inner fade-up">
+    <div className="page-inner page-inner-wide fade-up">
       <PageHeader title="Reuniones" subtitle={`${meetings.length} próxima${meetings.length !== 1 ? "s" : ""}`} />
 
+      <div className="cols-2-wide">
       {/* Secciones de la reunión */}
       <SectionsCard />
 
@@ -253,6 +254,7 @@ export default function ReunionesPage() {
             )}
           </div>
         )}
+      </div>
       </div>
     </div>
   );
