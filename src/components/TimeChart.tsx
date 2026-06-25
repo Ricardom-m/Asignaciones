@@ -200,7 +200,7 @@ export function TimeChart({ records }: { records: RecordItem[] }) {
               return (
                 <g key={i}>
                   <line x1={PL} y1={y} x2={W - PR} y2={y} style={{ stroke: "var(--border)" }} strokeWidth={1} strokeDasharray={i === 0 ? "0" : "3 3"} />
-                  <text x={PL - 6} y={y + 3} textAnchor="end" style={{ fill: "var(--text3)", fontSize: "11px" }}>
+                  <text x={PL - 6} y={y + 3} textAnchor="end" style={{ fill: "var(--text3)", fontSize: "12px" }}>
                     {Math.round(v)}
                   </text>
                 </g>
@@ -243,7 +243,7 @@ export function TimeChart({ records }: { records: RecordItem[] }) {
             {/* Etiquetas X */}
             {buckets.map((b, i) =>
               i % labelEvery === 0 || i === n - 1 ? (
-                <text key={b.key} x={cx(i)} y={H - 8} textAnchor="middle" style={{ fill: "var(--text3)", fontSize: "10px" }}>
+                <text key={b.key} x={cx(i)} y={H - 8} textAnchor="middle" style={{ fill: "var(--text3)", fontSize: "11px" }}>
                   {b.label}
                 </text>
               ) : null,

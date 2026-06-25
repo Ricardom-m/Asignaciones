@@ -35,6 +35,10 @@
 }
 
 * { -webkit-tap-highlight-color: transparent; }
+/* Base de tipografía: subimos el tamaño raíz para mayor legibilidad.
+   Casi todas las fuentes usan rem, así que todo escala proporcionalmente. */
+html { font-size:17.5px; }
+@media (max-width:380px) { html { font-size:16.5px; } } /* en móviles muy chicos, un poco menos para no apretar */
 html, body { height:100%; background:var(--bg); color:var(--text); font-family:var(--head); -webkit-font-smoothing:antialiased; }
 /* Aurora ambiental (mismo ADN que el login, muy sutil para no estorbar la lectura) */
 body::before {
