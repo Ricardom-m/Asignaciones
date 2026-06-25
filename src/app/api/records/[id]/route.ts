@@ -29,8 +29,16 @@ export async function PATCH(req: Request, { params }: Params) {
   const count = await prisma.person.count({ where: { id: { in: ids } } });
   if (count !== ids.length) return fail("Persona referida inexistente", 422);
 
-  if (sectionId && !(await prisma.section.findUnique({ where: { id: sectionId } })))
-    return fail("Sección inexistente", 422);
+  if (sectionId) {
+    const sec = await prisma.section.findUnique({ where: { id: sectionId } });
+    if (!sec) return fail("Sección inexistente", 422);
+    if (sec.unaPorSala) {
+      const dup = await prisma.record.findFirst({
+        where: { fecha: new Date(fecha), sectionId, sala: sala ?? null, id: { not: id } },
+      });
+      if (dup) return fail(`En "${sec.nombre}" ya hay alguien asignado en ${sala ?? "esa sala"} ese día`, 409);
+    }
+  }
 
   const record = await prisma.record.update({
     where: { id },

@@ -20,6 +20,7 @@ export const sectionInput = z.object({
   orden: z.number().int().optional(),
   active: z.boolean().optional(),
   sinAyudante: z.boolean().optional(),
+  unaPorSala: z.boolean().optional(),
 });
 export type SectionInput = z.infer<typeof sectionInput>;
 

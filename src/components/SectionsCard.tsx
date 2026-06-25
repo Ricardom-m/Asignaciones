@@ -99,6 +99,15 @@ function SectionRow({ section, onChanged }: { section: Section; onChanged: () =>
     }
   };
 
+  const toggleUnaPorSala = async () => {
+    try {
+      await updateSection(section.id, { unaPorSala: !section.unaPorSala });
+      await onChanged();
+    } catch (e) {
+      toast("❌ " + (e as Error).message, "error");
+    }
+  };
+
   const remove = async () => {
     const ok = await confirm({
       title: "Borrar sección",
@@ -143,6 +152,11 @@ function SectionRow({ section, onChanged }: { section: Section; onChanged: () =>
         <input type="checkbox" checked={section.sinAyudante} onChange={toggleSinAyudante} />
         <span className="track" />
         Sin ayudante (una sola persona)
+      </label>
+      <label className="switch" style={{ fontSize: ".72rem", marginTop: 4, marginLeft: 2 }}>
+        <input type="checkbox" checked={section.unaPorSala} onChange={toggleUnaPorSala} />
+        <span className="track" />
+        Máximo una por sala
       </label>
     </div>
   );

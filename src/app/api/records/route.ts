@@ -88,8 +88,14 @@ export async function POST(req: Request) {
   const count = await prisma.person.count({ where: { id: { in: ids } } });
   if (count !== ids.length) return fail("Persona referida inexistente", 422);
 
-  if (sectionId && !(await prisma.section.findUnique({ where: { id: sectionId } })))
-    return fail("Sección inexistente", 422);
+  if (sectionId) {
+    const sec = await prisma.section.findUnique({ where: { id: sectionId } });
+    if (!sec) return fail("Sección inexistente", 422);
+    if (sec.unaPorSala) {
+      const dup = await prisma.record.findFirst({ where: { fecha: new Date(fecha), sectionId, sala: sala ?? null } });
+      if (dup) return fail(`En "${sec.nombre}" ya hay alguien asignado en ${sala ?? "esa sala"} ese día`, 409);
+    }
+  }
 
   // El nuevo registro va al final de su grupo (fecha + sección + sala).
   const last = await prisma.record.findFirst({

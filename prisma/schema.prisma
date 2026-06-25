@@ -32,6 +32,7 @@ model Section {
   orden       Int      @default(0) // orden de aparición en los selects
   active      Boolean  @default(true)
   sinAyudante Boolean  @default(false) // true = la parte es de una sola persona (sin ayudante)
+  unaPorSala  Boolean  @default(false) // true = máximo una parte por sala (p. ej. Lectura de la Biblia)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 

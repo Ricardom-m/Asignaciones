@@ -96,7 +96,12 @@ export default function PlanificarPage() {
 
   const groups = useMemo(() => {
     const order = [...sections].sort((a, b) => a.orden - b.orden);
-    const g: { id: string; nombre: string; items: RecordItem[] }[] = order.map((s) => ({ id: s.id, nombre: s.nombre, items: [] }));
+    const g: { id: string; nombre: string; unaPorSala: boolean; items: RecordItem[] }[] = order.map((s) => ({
+      id: s.id,
+      nombre: s.nombre,
+      unaPorSala: s.unaPorSala,
+      items: [],
+    }));
     const none: RecordItem[] = [];
     const byId = new Map(g.map((x) => [x.id, x]));
     for (const r of dayRecords) {
@@ -104,7 +109,7 @@ export default function PlanificarPage() {
       if (tgt) tgt.items.push(r);
       else none.push(r);
     }
-    if (none.length) g.push({ id: SIN_SECCION, nombre: "Sin sección", items: none });
+    if (none.length) g.push({ id: SIN_SECCION, nombre: "Sin sección", unaPorSala: false, items: none });
     return g;
   }, [sections, dayRecords]);
 
@@ -223,12 +228,21 @@ export default function PlanificarPage() {
               onDragCancel={() => setActiveId(null)}
               onDragEnd={onDragEnd}
             >
-              {groups.map((g) => (
+              {groups.map((g) => {
+                // En secciones "una por sala", solo se puede agregar a la sala que falte.
+                const libres = g.unaPorSala
+                  ? ["Sala A", "Sala B"].filter((s) => !g.items.some((r) => (r.sala || "Otro") === s))
+                  : [];
+                const puedeAgregar = !g.unaPorSala || libres.length > 0;
+                return (
                 <div className="plan-section" key={g.id}>
                   <div className="plan-section-head">
                     <span className="plan-section-title">{g.nombre}</span>
-                    {g.id !== SIN_SECCION && (
-                      <button className="btn btn-ghost btn-sm plan-add-sec" onClick={() => openAdd({ sectionId: g.id })}>
+                    {g.id !== SIN_SECCION && puedeAgregar && (
+                      <button
+                        className="btn btn-ghost btn-sm plan-add-sec"
+                        onClick={() => openAdd(g.unaPorSala ? { sectionId: g.id, sala: libres[0] } : { sectionId: g.id })}
+                      >
                         + parte
                       </button>
                     )}
@@ -241,7 +255,7 @@ export default function PlanificarPage() {
                         <div className="plan-sala-head">
                           <span className={`plan-sala-tag ${salaClass(sg.sala)}`}>{sg.sala}</span>
                           <span className="plan-sala-count">{sg.items.length} parte{sg.items.length !== 1 ? "s" : ""}</span>
-                          {g.id !== SIN_SECCION && (
+                          {g.id !== SIN_SECCION && !g.unaPorSala && (
                             <button className="plan-sala-add" onClick={() => openAdd({ sectionId: g.id, sala: sg.sala })} title={`Agregar parte en ${sg.sala}`}>
                               +
                             </button>
@@ -256,7 +270,8 @@ export default function PlanificarPage() {
                     ))
                   )}
                 </div>
-              ))}
+                );
+              })}
 
               <DragOverlay>
                 {activeRec ? (

@@ -13,6 +13,7 @@ export interface Section {
   orden: number;
   active: boolean;
   sinAyudante: boolean; // true = parte de una sola persona (sin ayudante)
+  unaPorSala: boolean; // true = máximo una parte por sala
 }
 
 export interface Meeting {
