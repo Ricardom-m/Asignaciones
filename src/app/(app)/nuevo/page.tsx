@@ -54,6 +54,9 @@ export default function NuevoPage() {
   // Sugerencias de ayudante solo en modo "Asignación".
   const { candidates } = useSuggest(isNombrado ? "" : form.asignadoId, form.fecha);
 
+  // Secciones marcadas "sin ayudante" (p. ej. Tesoros de la Biblia / Lectura).
+  const noHelper = !!sections.find((s) => s.id === form.sectionId)?.sinAyudante;
+
   // Revelado progresivo
   const hasAsignado = !!form.asignadoId;
   const hasFecha = !!form.fecha;
@@ -67,7 +70,7 @@ export default function NuevoPage() {
     try {
       await createRecord({
         asignadoId: form.asignadoId,
-        ayudanteId: isNombrado ? null : form.ayudanteId || null,
+        ayudanteId: isNombrado || noHelper ? null : form.ayudanteId || null,
         fecha: form.fecha,
         sala: form.sala || null,
         asignacion: form.asignacion.trim(),
@@ -124,8 +127,8 @@ export default function NuevoPage() {
 
           {hasAsignado && (
             <>
-              {/* 2 · Ayudante + sugerencias (solo en "Asignación") */}
-              {!isNombrado && (
+              {/* 2 · Ayudante + sugerencias (solo en "Asignación" y secciones con ayudante) */}
+              {!isNombrado && !noHelper && (
                 <div className="field-group field-reveal">
                   <label className="field-label">Ayudante (opcional)</label>
                   <PersonSelect
@@ -169,7 +172,13 @@ export default function NuevoPage() {
               {sections.length > 0 && (
                 <div className="field-group field-reveal">
                   <label className="field-label">Sección</label>
-                  <SectionSelect sections={sections} value={form.sectionId} onChange={(id) => patch({ sectionId: id })} />
+                  <SectionSelect
+                    sections={sections}
+                    value={form.sectionId}
+                    onChange={(id) =>
+                      patch(sections.find((s) => s.id === id)?.sinAyudante ? { sectionId: id, ayudanteId: "" } : { sectionId: id })
+                    }
+                  />
                 </div>
               )}
 

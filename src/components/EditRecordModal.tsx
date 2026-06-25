@@ -46,6 +46,7 @@ export function EditRecordModal({ rec, persons, onClose, onSaved }: Props) {
   const [saving, setSaving] = useState(false);
 
   const isNombrado = rec.tipo === "NOMBRADO";
+  const noHelper = !!sections.find((s) => s.id === form.sectionId)?.sinAyudante;
 
   // Solo personas activas, conservando las ya referidas en este registro.
   const formPersons = useMemo(
@@ -72,7 +73,7 @@ export function EditRecordModal({ rec, persons, onClose, onSaved }: Props) {
     try {
       await updateRecord(rec.id, {
         asignadoId: form.asignadoId,
-        ayudanteId: isNombrado ? null : form.ayudanteId || null,
+        ayudanteId: isNombrado || noHelper ? null : form.ayudanteId || null,
         fecha: form.fecha,
         sala: form.sala || null,
         asignacion: form.asignacion.trim(),
@@ -103,7 +104,7 @@ export function EditRecordModal({ rec, persons, onClose, onSaved }: Props) {
           />
         </div>
 
-        {!isNombrado && (
+        {!isNombrado && !noHelper && (
           <div className="field-group">
             <label className="field-label">Ayudante del asignado</label>
             <PersonSelect
@@ -140,7 +141,13 @@ export function EditRecordModal({ rec, persons, onClose, onSaved }: Props) {
         {sections.length > 0 && (
           <div className="field-group">
             <label className="field-label">Sección</label>
-            <SectionSelect sections={sections} value={form.sectionId} onChange={(id) => patch({ sectionId: id })} />
+            <SectionSelect
+              sections={sections}
+              value={form.sectionId}
+              onChange={(id) =>
+                patch(sections.find((s) => s.id === id)?.sinAyudante ? { sectionId: id, ayudanteId: "" } : { sectionId: id })
+              }
+            />
           </div>
         )}
 

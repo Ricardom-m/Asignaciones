@@ -37,6 +37,7 @@ export function PlannerPartModal({ fecha, sections, persons, defaultAsignadoId, 
 
   const activePersons = useMemo(() => persons.filter((p) => p.active), [persons]);
   const { candidates } = useSuggest(asignadoId, fecha);
+  const noHelper = !!sections.find((s) => s.id === sectionId)?.sinAyudante;
 
   // Sugerencias de asignado: los más atrasados que NO estén ya ese día.
   const asignadoSugs = useMemo(
@@ -51,7 +52,7 @@ export function PlannerPartModal({ fecha, sections, persons, defaultAsignadoId, 
     try {
       await createRecord({
         asignadoId,
-        ayudanteId: ayudanteId || null,
+        ayudanteId: noHelper ? null : ayudanteId || null,
         fecha,
         sala: sala || null,
         asignacion: asignacion.trim(),
@@ -73,7 +74,14 @@ export function PlannerPartModal({ fecha, sections, persons, defaultAsignadoId, 
         {sections.length > 0 && (
           <div className="field-group">
             <label className="field-label">Sección</label>
-            <SectionSelect sections={sections} value={sectionId} onChange={setSectionId} />
+            <SectionSelect
+              sections={sections}
+              value={sectionId}
+              onChange={(id) => {
+                setSectionId(id);
+                if (sections.find((s) => s.id === id)?.sinAyudante) setAyudanteId("");
+              }}
+            />
           </div>
         )}
 
@@ -118,11 +126,13 @@ export function PlannerPartModal({ fecha, sections, persons, defaultAsignadoId, 
           )}
         </div>
 
-        <div className="field-group">
-          <label className="field-label">Ayudante (opcional)</label>
-          <PersonSelect persons={activePersons} value={ayudanteId} excludeId={asignadoId} onChange={setAyudanteId} />
-          <HelperPicker candidates={candidates} roles={roles} value={ayudanteId} onChange={setAyudanteId} />
-        </div>
+        {!noHelper && (
+          <div className="field-group">
+            <label className="field-label">Ayudante (opcional)</label>
+            <PersonSelect persons={activePersons} value={ayudanteId} excludeId={asignadoId} onChange={setAyudanteId} />
+            <HelperPicker candidates={candidates} roles={roles} value={ayudanteId} onChange={setAyudanteId} />
+          </div>
+        )}
 
         <div className="divider" />
         <div className="form-actions">

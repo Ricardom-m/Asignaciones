@@ -12,6 +12,7 @@ export interface Section {
   nombre: string;
   orden: number;
   active: boolean;
+  sinAyudante: boolean; // true = parte de una sola persona (sin ayudante)
 }
 
 export interface Meeting {

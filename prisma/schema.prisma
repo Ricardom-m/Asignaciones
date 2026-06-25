@@ -27,12 +27,13 @@ model Role {
 // Sección de la reunión (Tesoros de la Biblia, Seamos mejores maestros, …).
 // Editable desde la app; un registro puede pertenecer a una sección.
 model Section {
-  id        String   @id @default(cuid())
-  nombre    String   @unique
-  orden     Int      @default(0) // orden de aparición en los selects
-  active    Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          String   @id @default(cuid())
+  nombre      String   @unique
+  orden       Int      @default(0) // orden de aparición en los selects
+  active      Boolean  @default(true)
+  sinAyudante Boolean  @default(false) // true = la parte es de una sola persona (sin ayudante)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   records Record[]
 }

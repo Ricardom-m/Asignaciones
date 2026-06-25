@@ -47,7 +47,7 @@ export const deleteRole = (id: string) =>
 export const createSection = (data: { nombre: string }) =>
   apiFetch<Section>("/api/sections", { method: "POST", body: JSON.stringify(data) });
 
-export const updateSection = (id: string, data: { nombre?: string; orden?: number; active?: boolean }) =>
+export const updateSection = (id: string, data: { nombre?: string; orden?: number; active?: boolean; sinAyudante?: boolean }) =>
   apiFetch<Section>(`/api/sections/${id}`, { method: "PATCH", body: JSON.stringify(data) });
 
 export const deleteSection = (id: string) =>

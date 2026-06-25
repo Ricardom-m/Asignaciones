@@ -90,6 +90,15 @@ function SectionRow({ section, onChanged }: { section: Section; onChanged: () =>
     }
   };
 
+  const toggleSinAyudante = async () => {
+    try {
+      await updateSection(section.id, { sinAyudante: !section.sinAyudante });
+      await onChanged();
+    } catch (e) {
+      toast("❌ " + (e as Error).message, "error");
+    }
+  };
+
   const remove = async () => {
     const ok = await confirm({
       title: "Borrar sección",
@@ -108,26 +117,33 @@ function SectionRow({ section, onChanged }: { section: Section; onChanged: () =>
   };
 
   return (
-    <div className="role-manage-row" style={{ opacity: section.active ? 1 : 0.55 }}>
-      <input
-        className="role-name-input"
-        type="text"
-        value={nombre}
-        onChange={(e) => setNombre(e.target.value)}
-        autoComplete="off"
-      />
-      {dirty ? (
-        <button className="btn btn-primary btn-sm" onClick={save}>
-          Guardar
+    <div style={{ opacity: section.active ? 1 : 0.55 }}>
+      <div className="role-manage-row">
+        <input
+          className="role-name-input"
+          type="text"
+          value={nombre}
+          onChange={(e) => setNombre(e.target.value)}
+          autoComplete="off"
+        />
+        {dirty ? (
+          <button className="btn btn-primary btn-sm" onClick={save}>
+            Guardar
+          </button>
+        ) : (
+          <button className="btn btn-ghost btn-sm" onClick={toggleActive} title="Activar/desactivar">
+            {section.active ? "Activa" : "Inactiva"}
+          </button>
+        )}
+        <button className="btn btn-danger btn-sm" onClick={remove}>
+          Borrar
         </button>
-      ) : (
-        <button className="btn btn-ghost btn-sm" onClick={toggleActive} title="Activar/desactivar">
-          {section.active ? "Activa" : "Inactiva"}
-        </button>
-      )}
-      <button className="btn btn-danger btn-sm" onClick={remove}>
-        Borrar
-      </button>
+      </div>
+      <label className="switch" style={{ fontSize: ".72rem", marginTop: 6, marginLeft: 2 }}>
+        <input type="checkbox" checked={section.sinAyudante} onChange={toggleSinAyudante} />
+        <span className="track" />
+        Sin ayudante (una sola persona)
+      </label>
     </div>
   );
 }

@@ -24,7 +24,7 @@ export function serializeRole(r: PrismaRole): Role {
 }
 
 export function serializeSection(s: PrismaSection): Section {
-  return { id: s.id, nombre: s.nombre, orden: s.orden, active: s.active };
+  return { id: s.id, nombre: s.nombre, orden: s.orden, active: s.active, sinAyudante: s.sinAyudante };
 }
 
 export function serializeMeeting(m: PrismaMeeting): Meeting {

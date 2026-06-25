@@ -19,6 +19,7 @@ export const sectionInput = z.object({
   nombre: z.string().trim().min(1, "El nombre de la sección es obligatorio").max(60),
   orden: z.number().int().optional(),
   active: z.boolean().optional(),
+  sinAyudante: z.boolean().optional(),
 });
 export type SectionInput = z.infer<typeof sectionInput>;
 
