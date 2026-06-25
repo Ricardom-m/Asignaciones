@@ -60,7 +60,7 @@ export function CommandPalette() {
 
   const items = useMemo<Item[]>(() => {
     const actions: Item[] = [
-      { id: "a-nuevo", label: "Nuevo registro", icon: "✏️", run: () => router.push("/nuevo") },
+      { id: "a-planificar", label: "Planificar reunión", icon: "🗓️", run: () => router.push("/planificar") },
       { id: "a-inicio", label: "Ir a Inicio", icon: "🏠", run: () => router.push("/inicio") },
       { id: "a-registros", label: "Ir a Registros", icon: "📋", run: () => router.push("/registros") },
       { id: "a-personas", label: "Ir a Personas", icon: "👥", run: () => router.push("/personas") },

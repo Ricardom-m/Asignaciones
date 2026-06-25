@@ -72,7 +72,7 @@ export default function InicioPage() {
         <div className="dash-section-title">Actividad reciente</div>
         {recientes.length === 0 ? (
           <div className="spotlight-empty">
-            Aún no hay registros. <Link href="/nuevo" style={{ color: "var(--accent)" }}>Crea el primero →</Link>
+            Aún no hay registros. <Link href="/planificar" style={{ color: "var(--accent)" }}>Planifica la reunión →</Link>
           </div>
         ) : (
           recientes.map((r) => (

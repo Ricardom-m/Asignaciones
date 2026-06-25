@@ -181,7 +181,7 @@ export default function RegistrosPage() {
                   ? "No hay asignaciones próximas."
                   : query || salaFilter
                     ? "Prueba con otro filtro."
-                    : 'Ve a "Nuevo" para agregar el primero.'}
+                    : 'Ve a "Planificar" para agregar el primero.'}
               </p>
             </div>
           ) : (

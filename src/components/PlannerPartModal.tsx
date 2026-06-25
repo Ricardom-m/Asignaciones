@@ -35,21 +35,28 @@ export function PlannerPartModal({ fecha, sections, persons, defaultAsignadoId, 
   const [minutos, setMinutos] = useState("");
   const [asignadoId, setAsignadoId] = useState(defaultAsignadoId ?? "");
   const [ayudanteId, setAyudanteId] = useState("");
+  const [tipo, setTipo] = useState<"ASIGNACION" | "NOMBRADO">("ASIGNACION");
   const [saving, setSaving] = useState(false);
 
+  const nombrado = tipo === "NOMBRADO";
   const activePersons = useMemo(() => persons.filter((p) => p.active), [persons]);
-  const { candidates } = useSuggest(asignadoId, fecha);
-  const noHelper = !!sections.find((s) => s.id === sectionId)?.sinAyudante;
+  const { candidates } = useSuggest(nombrado ? "" : asignadoId, fecha);
+  // Sin ayudante: en nombrados o en secciones marcadas así.
+  const noHelper = nombrado || !!sections.find((s) => s.id === sectionId)?.sinAyudante;
 
-  // La lectura de la Biblia solo la hacen varones (Nombrados/Asignados/Precursores).
+  // Filtro del asignado según el caso.
   const lectura = esLectura(asignacion);
-  const asignadoPool = useMemo(() => (lectura ? eligibleLectura(activePersons) : activePersons), [lectura, activePersons]);
+  const asignadoPool = useMemo(() => {
+    if (nombrado) return activePersons.filter((p) => p.roles.some((r) => r.nombre === "Nombrados"));
+    if (lectura) return eligibleLectura(activePersons);
+    return activePersons;
+  }, [nombrado, lectura, activePersons]);
   const poolIds = useMemo(() => new Set(asignadoPool.map((p) => p.id)), [asignadoPool]);
 
   // Sugerencias de asignado: los más atrasados que NO estén ya ese día (y elegibles).
   const asignadoSugs = useMemo(
-    () => roster.filter((r) => !r.assignedOnTarget && r.id !== ayudanteId && (!lectura || poolIds.has(r.id))).slice(0, 6),
-    [roster, ayudanteId, lectura, poolIds],
+    () => roster.filter((r) => !r.assignedOnTarget && r.id !== ayudanteId && poolIds.has(r.id)).slice(0, 6),
+    [roster, ayudanteId, poolIds],
   );
 
   const save = async () => {
@@ -63,7 +70,7 @@ export function PlannerPartModal({ fecha, sections, persons, defaultAsignadoId, 
         fecha,
         sala: sala || null,
         asignacion: asignacion.trim(),
-        tipo: "ASIGNACION",
+        tipo,
         sectionId: sectionId || null,
         minutos: minutos ? Number(minutos) : null,
       });
@@ -79,6 +86,18 @@ export function PlannerPartModal({ fecha, sections, persons, defaultAsignadoId, 
   return (
     <Modal title={`Agregar parte · ${fmtShort(fecha)}`} onClose={onClose}>
       <div className="form-grid">
+        <div className="view-toggle">
+          <button className={`vt-btn${!nombrado ? " active" : ""}`} onClick={() => setTipo("ASIGNACION")}>
+            Asignación
+          </button>
+          <button
+            className={`vt-btn${nombrado ? " active" : ""}`}
+            onClick={() => { setTipo("NOMBRADO"); setAyudanteId(""); }}
+          >
+            Nombrado
+          </button>
+        </div>
+
         {sections.length > 0 && (
           <div className="field-group">
             <label className="field-label">Sección</label>
@@ -130,7 +149,7 @@ export function PlannerPartModal({ fecha, sections, persons, defaultAsignadoId, 
 
         <div className="field-group">
           <label className="field-label">
-            Asignado <span className="req">*</span>
+            {nombrado ? "Nombrado" : "Asignado"} <span className="req">*</span>
           </label>
           <PersonSelect persons={asignadoPool} value={asignadoId} excludeId={ayudanteId} onChange={setAsignadoId} placeholder="Seleccionar…" />
           {asignadoSugs.length > 0 && (

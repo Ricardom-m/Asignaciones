@@ -188,7 +188,7 @@ export default function PlanificarPage() {
   const activeRec = activeId ? dayRecords.find((r) => r.id === activeId) ?? null : null;
 
   return (
-    <div className="page-inner fade-up">
+    <div className="page-inner page-inner-wide fade-up">
       <PageHeader title="Planificar" subtitle="Arma la reunión por fecha" />
 
       {/* Selector de fecha */}
@@ -257,7 +257,8 @@ export default function PlanificarPage() {
                   {g.items.length === 0 ? (
                     <div className="plan-empty">— sin partes —</div>
                   ) : (
-                    groupBySala(g.items).map((sg) => (
+                    <div className="plan-salas">
+                    {groupBySala(g.items).map((sg) => (
                       <div className={`plan-sala-group ${salaClass(sg.sala)}`} key={sg.sala}>
                         <div className="plan-sala-head">
                           <span className={`plan-sala-tag ${salaClass(sg.sala)}`}>{sg.sala}</span>
@@ -274,7 +275,8 @@ export default function PlanificarPage() {
                           ))}
                         </SortableContext>
                       </div>
-                    ))
+                    ))}
+                    </div>
                   )}
                 </div>
                 );
@@ -330,6 +332,7 @@ function PartInner({ rec, personsById, dupIds }: { rec: RecordItem; personsById:
     <div className="plan-part-main">
       <div className="plan-part-asig">
         {rec.asignacion}
+        {rec.tipo === "NOMBRADO" && <span className="plan-part-tag">nombrado</span>}
         {rec.minutos != null && <span className="plan-part-sala">{rec.minutos} min</span>}
         {conflict && <span className="plan-part-warn" title="Esta persona ya tiene otra parte ese día">⚠ repetido</span>}
       </div>

@@ -736,10 +736,24 @@ input:focus, select:focus, .list-search-input:focus, .sel-search:focus, .cmd-inp
 .sug-chip:hover { border-color:var(--accent); color:var(--accent); }
 .sug-ago { font-family:var(--mono); font-size:.56rem; color:var(--text3); }
 
+.plan-part-tag { font-size:.56rem; font-family:var(--mono); color:var(--amber); border:1px solid var(--amber); background:var(--amber-dim); border-radius:20px; padding:1px 6px; text-transform:uppercase; flex-shrink:0; }
+.plan-salas { display:flex; flex-direction:column; }
+
 @media (min-width:980px) {
   .plan-grid { flex-direction:row; }
-  .plan-main { flex:1; }
+  .plan-main { flex:1; min-width:0; }
   .plan-aside { width:340px; flex-shrink:0; position:sticky; top:14px; }
+}
+/* Aprovechar pantallas grandes: página más ancha, aside más amplio y
+   Sala A / Sala B lado a lado dentro de cada sección. */
+@media (min-width:1280px) {
+  .page-inner-wide { max-width:1240px; }
+  .plan-aside { width:380px; }
+  .plan-salas { display:grid; grid-template-columns:1fr 1fr; gap:0 18px; align-items:start; }
+}
+@media (min-width:1600px) {
+  .page-inner-wide { max-width:1480px; }
+  .plan-aside { width:420px; }
 }
 
 /* MOBILE */

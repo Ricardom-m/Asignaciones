@@ -5,7 +5,6 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
   House,
-  NotePencil,
   ListBullets,
   UsersThree,
   CalendarBlank,
@@ -27,7 +26,6 @@ interface Props {
 const NAV = [
   { href: "/inicio", label: "Inicio", icon: House },
   { href: "/planificar", label: "Planificar", icon: CalendarCheck },
-  { href: "/nuevo", label: "Nuevo", icon: NotePencil },
   { href: "/registros", label: "Registros", icon: ListBullets },
   { href: "/personas", label: "Personas", icon: UsersThree },
   { href: "/reuniones", label: "Reuniones", icon: CalendarBlank },
