@@ -15,6 +15,7 @@ export async function GET(req: Request) {
 
   const sp = new URL(req.url).searchParams;
   const scope = sp.get("scope");
+  const fecha = sp.get("fecha"); // fecha exacta (YYYY-MM-DD) — para el planificador
   const sala = sp.get("sala");
   const q = sp.get("q")?.trim();
   const personId = sp.get("personId");
@@ -26,7 +27,8 @@ export async function GET(req: Request) {
 
   const today = new Date(todayYMD()); // hoy (zona MX) a medianoche UTC
   const and: Prisma.RecordWhereInput[] = [];
-  if (scope === "prox") and.push({ fecha: { gte: today } });
+  if (fecha && /^\d{4}-\d{2}-\d{2}$/.test(fecha)) and.push({ fecha: new Date(fecha) });
+  else if (scope === "prox") and.push({ fecha: { gte: today } });
   else if (scope === "pas") and.push({ fecha: { lt: today } });
   if (sala) and.push({ sala });
   if (tipo === "ASIGNACION" || tipo === "NOMBRADO") and.push({ tipo });

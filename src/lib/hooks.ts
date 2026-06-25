@@ -3,7 +3,7 @@
 import useSWR from "swr";
 import useSWRInfinite from "swr/infinite";
 import { fetcher } from "@/lib/client";
-import type { Person, RecordItem, Role, Section, Meeting, AllowedUser, MeetingConfig } from "@/lib/types";
+import type { Person, RecordItem, Role, Section, Meeting, AllowedUser, MeetingConfig, RosterPerson } from "@/lib/types";
 import type { ScoredCandidate } from "@/lib/suggest";
 
 export function usePersons() {
@@ -94,6 +94,22 @@ export function useRecordsStats() {
 export function useRecordsPage(query: string) {
   const { data, mutate } = useSWR<RecordsPage>(`/api/records?${query}`, fetcher);
   return { items: data?.items ?? [], mutate };
+}
+
+// Registros de UNA fecha exacta (planificador).
+export function useDateRecords(fecha: string | null) {
+  const { data, mutate } = useSWR<RecordsPage>(fecha ? `/api/records?fecha=${fecha}&all=1` : null, fetcher);
+  return { items: data?.items ?? [], mutate };
+}
+
+// Roster ordenado por "a quién le toca" para una fecha (equidad / sugerencia).
+export function useRoster(fecha: string | null, role?: string, genero?: string) {
+  const sp = new URLSearchParams();
+  if (fecha) sp.set("fecha", fecha);
+  if (role) sp.set("role", role);
+  if (genero) sp.set("genero", genero);
+  const { data, mutate, isLoading } = useSWR<RosterPerson[]>(fecha ? `/api/roster?${sp.toString()}` : null, fetcher);
+  return { roster: data ?? [], mutate, isLoading };
 }
 
 // Registros de UNA persona (para "Por persona"); consulta indacada por asignadoId/ayudanteId.

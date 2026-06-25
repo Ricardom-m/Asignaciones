@@ -45,6 +45,18 @@ export interface Person {
   updatedAt: string;
 }
 
+export interface RosterPerson {
+  id: string;
+  nombre: string; // nombre completo
+  genero: Genero | null;
+  roles: Role[];
+  lastFecha: string | null; // última participación antes de la fecha objetivo
+  daysSince: number | null;
+  countMonth: number; // participaciones en el mes de la fecha objetivo
+  countRecent: number; // participaciones en los últimos 60 días
+  assignedOnTarget: boolean; // ya asignado(a) en la fecha objetivo
+}
+
 export type RecordTipo = "ASIGNACION" | "NOMBRADO";
 
 export interface RecordItem {
