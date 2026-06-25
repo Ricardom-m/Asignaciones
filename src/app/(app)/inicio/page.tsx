@@ -37,7 +37,6 @@ export default function InicioPage() {
         <StatCard value={roles.length} label="Roles" />
       </div>
 
-      <div className="cols-2-wide">
       {porRol.list.length > 0 && (
         <Reveal className="dash-section">
           <div className="dash-section-title">Personas por rol</div>
@@ -49,6 +48,7 @@ export default function InicioPage() {
         </Reveal>
       )}
 
+      <div className="cols-2-wide">
       <Reveal className="dash-section">
         <div className="dash-section-title">Próximas asignaciones</div>
         {proximas.length === 0 ? (
