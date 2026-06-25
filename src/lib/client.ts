@@ -146,12 +146,19 @@ export function nextWeekdayDates(weekdays: number[], weeks: number, from = today
 }
 
 export type DateLevel = "prox" | "hoy" | "pasada";
-// Estado de una fecha respecto a hoy.
+// Estado de una fecha respecto a hoy. Para fechas futuras la etiqueta es
+// graduada: Mañana, Pasado mañana, En N días (hasta una semana) y Próxima.
 export function dateStatus(ymd: string): { label: string; level: DateLevel } {
   const today = todayYMD();
   if (ymd === today) return { label: "Hoy", level: "hoy" };
-  if (ymd > today) return { label: "Próxima", level: "prox" };
-  return { label: "Pasada", level: "pasada" };
+  if (ymd < today) return { label: "Pasada", level: "pasada" };
+  const diff = Math.round(
+    (new Date(ymd + "T00:00:00Z").getTime() - new Date(today + "T00:00:00Z").getTime()) / 86_400_000,
+  );
+  if (diff === 1) return { label: "Mañana", level: "prox" };
+  if (diff === 2) return { label: "Pasado mañana", level: "prox" };
+  if (diff <= 6) return { label: `En ${diff} días`, level: "prox" };
+  return { label: "Próxima", level: "prox" };
 }
 
 // Diferencia en días vs hoy, en texto ("en 3 días", "hace 2 días", "hoy"…).
