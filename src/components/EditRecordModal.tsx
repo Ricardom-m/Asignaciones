@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useMeetings, useRoles, useSuggest, useSections } from "@/lib/hooks";
+import { useMeetings, useRoles, useSuggest, useSections, useRoster } from "@/lib/hooks";
 import { useToast } from "@/components/Toast";
 import { Modal } from "@/components/Modal";
 import { PersonSelect } from "@/components/PersonSelect";
@@ -66,6 +66,21 @@ export function EditRecordModal({ rec, persons, onClose, onSaved }: Props) {
     return formPersons;
   }, [isNombrado, formPersons, rec.asignadoId, form.asignacion]);
   const { candidates } = useSuggest(isNombrado ? "" : form.asignadoId, form.fecha);
+
+  // Datos de decisión por persona (equidad/carga/conflicto + recencia por sección).
+  const { roster } = useRoster(form.fecha || null, undefined, undefined, form.sectionId || undefined);
+  const rosterMeta = useMemo(
+    () =>
+      new Map(
+        roster.map((r) => [
+          r.id,
+          { daysSince: r.daysSince, countMonth: r.countMonth, assignedOnTarget: r.assignedOnTarget, daysSinceSection: r.daysSinceSection },
+        ]),
+      ),
+    [roster],
+  );
+  const sectionLabel = useMemo(() => sections.find((s) => s.id === form.sectionId)?.nombre.split(" ")[0], [sections, form.sectionId]);
+
   const patch = (p: Partial<FormState>) => setForm((f) => ({ ...f, ...p }));
 
   const save = async () => {
@@ -106,6 +121,8 @@ export function EditRecordModal({ rec, persons, onClose, onSaved }: Props) {
             value={form.asignadoId}
             excludeId={isNombrado ? undefined : form.ayudanteId}
             onChange={(id) => patch({ asignadoId: id })}
+            meta={rosterMeta}
+            sectionLabel={form.sectionId ? sectionLabel : undefined}
           />
         </div>
 
@@ -117,6 +134,8 @@ export function EditRecordModal({ rec, persons, onClose, onSaved }: Props) {
               value={form.ayudanteId}
               excludeId={form.asignadoId}
               onChange={(id) => patch({ ayudanteId: id })}
+              meta={rosterMeta}
+              sectionLabel={form.sectionId ? sectionLabel : undefined}
             />
             <HelperPicker
               candidates={candidates}

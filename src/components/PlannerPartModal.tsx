@@ -188,7 +188,14 @@ export function PlannerPartModal({ fecha, sections, persons, defaultAsignadoId, 
         {!noHelper && (
           <div className="field-group">
             <label className="field-label">Ayudante (opcional)</label>
-            <PersonSelect persons={activePersons} value={ayudanteId} excludeId={asignadoId} onChange={setAyudanteId} />
+            <PersonSelect
+              persons={activePersons}
+              value={ayudanteId}
+              excludeId={asignadoId}
+              onChange={setAyudanteId}
+              meta={rosterMeta}
+              sectionLabel={sectionId ? sectionLabel : undefined}
+            />
             <HelperPicker candidates={candidates} roles={roles} value={ayudanteId} onChange={setAyudanteId} />
           </div>
         )}
