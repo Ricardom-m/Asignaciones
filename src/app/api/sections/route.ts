@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { sectionInput } from "@/lib/validation";
 import { serializeSection } from "@/lib/serialize";
-import { ok, fail, requireSession, rateLimit, clientKey } from "@/lib/server";
+import { ok, fail, requireSession, requireAdmin, rateLimit, clientKey } from "@/lib/server";
 
 // GET /api/sections — lista las secciones (ordenadas).
 export async function GET() {
@@ -11,9 +11,9 @@ export async function GET() {
   return ok(sections.map(serializeSection));
 }
 
-// POST /api/sections — crea una sección (se agrega al final).
+// POST /api/sections — crea una sección (se agrega al final). Solo admin.
 export async function POST(req: Request) {
-  const { session, response } = await requireSession();
+  const { session, response } = await requireAdmin();
   if (response) return response;
   if (!rateLimit(clientKey(req, session.user?.email)))
     return fail("Demasiadas solicitudes, espera un momento", 429);

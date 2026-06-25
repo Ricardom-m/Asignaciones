@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useMeetings, usePastMeetings, useMeetingConfig } from "@/lib/hooks";
 import { useToast } from "@/components/Toast";
 import { useConfirm } from "@/components/Confirm";
+import { useIsAdmin } from "@/components/UserContext";
 import { PageHeader } from "@/components/PageHeader";
 import { SectionsCard } from "@/components/SectionsCard";
 import {
@@ -30,6 +31,7 @@ const WEEKDAYS = [
 const WEEKS_OPTS = [1, 2, 4, 6, 8, 12];
 
 export default function ReunionesPage() {
+  const isAdmin = useIsAdmin();
   const { meetings, mutate } = useMeetings(); // solo próximas
   const { config, mutate: mutateConfig } = useMeetingConfig();
   const toast = useToast();
@@ -143,6 +145,19 @@ export default function ReunionesPage() {
       toast("❌ " + (e as Error).message, "error");
     }
   };
+
+  if (!isAdmin) {
+    return (
+      <div className="page-inner fade-up">
+        <PageHeader title="Reuniones" subtitle="Configuración" />
+        <div className="empty-state">
+          <div className="empty-icon">🔒</div>
+          <h3>Solo para administradores</h3>
+          <p>La configuración de reuniones y secciones es exclusiva del administrador.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="page-inner page-inner-wide fade-up">

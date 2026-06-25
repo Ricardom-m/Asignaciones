@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { meetingConfigInput } from "@/lib/validation";
-import { ok, fail, requireSession, rateLimit, clientKey } from "@/lib/server";
+import { ok, fail, requireSession, requireAdmin, rateLimit, clientKey } from "@/lib/server";
 
 const ID = "default";
 const DEFAULTS = { weekdays: [4, 6], weeks: 4 };
@@ -13,9 +13,9 @@ export async function GET() {
   return ok(cfg ? { weekdays: cfg.weekdays, weeks: cfg.weeks } : DEFAULTS);
 }
 
-// PUT /api/meetings/config — guarda la regla.
+// PUT /api/meetings/config — guarda la regla. Solo admin.
 export async function PUT(req: Request) {
-  const { session, response } = await requireSession();
+  const { session, response } = await requireAdmin();
   if (response) return response;
   if (!rateLimit(clientKey(req, session.user?.email)))
     return fail("Demasiadas solicitudes, espera un momento", 429);

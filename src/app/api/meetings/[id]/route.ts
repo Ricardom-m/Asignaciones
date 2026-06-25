@@ -1,13 +1,13 @@
 import { prisma } from "@/lib/prisma";
 import { meetingInput } from "@/lib/validation";
 import { serializeMeeting } from "@/lib/serialize";
-import { ok, fail, requireSession, rateLimit, clientKey } from "@/lib/server";
+import { ok, fail, requireAdmin, rateLimit, clientKey } from "@/lib/server";
 
 type Params = { params: Promise<{ id: string }> };
 
-// PATCH /api/meetings/[id] — edita la fecha o la nota.
+// PATCH /api/meetings/[id] — edita la fecha o la nota. Solo admin.
 export async function PATCH(req: Request, { params }: Params) {
-  const { session, response } = await requireSession();
+  const { session, response } = await requireAdmin();
   if (response) return response;
   if (!rateLimit(clientKey(req, session.user?.email)))
     return fail("Demasiadas solicitudes, espera un momento", 429);
@@ -37,9 +37,9 @@ export async function PATCH(req: Request, { params }: Params) {
   return ok(serializeMeeting(meeting));
 }
 
-// DELETE /api/meetings/[id]
+// DELETE /api/meetings/[id] — solo admin.
 export async function DELETE(req: Request, { params }: Params) {
-  const { session, response } = await requireSession();
+  const { session, response } = await requireAdmin();
   if (response) return response;
   if (!rateLimit(clientKey(req, session.user?.email)))
     return fail("Demasiadas solicitudes, espera un momento", 429);

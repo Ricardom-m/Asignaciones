@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { meetingBulkInput } from "@/lib/validation";
 import { serializeMeeting } from "@/lib/serialize";
-import { ok, fail, requireSession, rateLimit, clientKey } from "@/lib/server";
+import { ok, fail, requireSession, requireAdmin, rateLimit, clientKey } from "@/lib/server";
 import { todayYMD } from "@/lib/date";
 
 // GET /api/meetings?scope=upcoming|past|all&take= — lista de reuniones.
@@ -25,9 +25,9 @@ export async function GET(req: Request) {
   return ok(meetings.map(serializeMeeting));
 }
 
-// POST /api/meetings — crea una o varias fechas (no duplica).
+// POST /api/meetings — crea una o varias fechas (no duplica). Solo admin.
 export async function POST(req: Request) {
-  const { session, response } = await requireSession();
+  const { session, response } = await requireAdmin();
   if (response) return response;
   if (!rateLimit(clientKey(req, session.user?.email)))
     return fail("Demasiadas solicitudes, espera un momento", 429);

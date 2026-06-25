@@ -1,13 +1,13 @@
 import { prisma } from "@/lib/prisma";
 import { purgeInput } from "@/lib/validation";
-import { ok, fail, requireSession, rateLimit, clientKey } from "@/lib/server";
+import { ok, fail, requireAdmin, rateLimit, clientKey } from "@/lib/server";
 import { todayYMD } from "@/lib/date";
 
 // POST /api/meetings/purge — borra reuniones en bloque:
 //  { past: true } → todas las pasadas (fecha < hoy)
 //  { ids: [...] } → por id (p. ej. futuras de un día que se quitó)
 export async function POST(req: Request) {
-  const { session, response } = await requireSession();
+  const { session, response } = await requireAdmin();
   if (response) return response;
   if (!rateLimit(clientKey(req, session.user?.email)))
     return fail("Demasiadas solicitudes, espera un momento", 429);

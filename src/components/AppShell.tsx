@@ -28,7 +28,7 @@ const NAV = [
   { href: "/planificar", label: "Planificar", icon: CalendarCheck },
   { href: "/registros", label: "Registros", icon: ListBullets },
   { href: "/personas", label: "Personas", icon: UsersThree },
-  { href: "/reuniones", label: "Reuniones", icon: CalendarBlank },
+  { href: "/reuniones", label: "Reuniones", icon: CalendarBlank, adminOnly: true },
 ];
 
 const openCmd = () => window.dispatchEvent(new Event("open-command-palette"));
@@ -83,7 +83,7 @@ export function AppShell({ user, children }: Props) {
           <kbd>⌘K</kbd>
         </button>
         <nav className="sidebar-nav">
-          {NAV.map(({ href, label, icon: Icon }) => (
+          {NAV.filter((n) => !n.adminOnly || user.isAdmin).map(({ href, label, icon: Icon }) => (
             <Link key={href} href={href} className={`sidebar-link${pathname === href ? " active" : ""}`} onClick={() => setDrawer(false)}>
               <Icon weight={pathname === href ? "fill" : "regular"} />
               {label}
