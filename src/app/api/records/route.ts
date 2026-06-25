@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { recordInput } from "@/lib/validation";
 import { serializeRecord, recordInclude } from "@/lib/serialize";
-import { ok, fail, requireSession, rateLimit, clientKey } from "@/lib/server";
+import { ok, fail, requireSession, rateLimit, clientKey, isAdmin } from "@/lib/server";
 import { todayYMD } from "@/lib/date";
 import type { Prisma } from "@prisma/client";
 
@@ -88,9 +88,13 @@ export async function POST(req: Request) {
   const count = await prisma.person.count({ where: { id: { in: ids } } });
   if (count !== ids.length) return fail("Persona referida inexistente", 422);
 
+  let sectionSoloAdmin = false;
   if (sectionId) {
     const sec = await prisma.section.findUnique({ where: { id: sectionId } });
     if (!sec) return fail("Sección inexistente", 422);
+    sectionSoloAdmin = sec.soloAdmin;
+    if (sec.soloAdmin && !isAdmin(session))
+      return fail(`Solo el administrador puede agregar en "${sec.nombre}"`, 403);
     if (sec.unaPorSala) {
       const dup = await prisma.record.findFirst({ where: { fecha: new Date(fecha), sectionId, sala: sala ?? null } });
       if (dup) return fail(`En "${sec.nombre}" ya hay alguien asignado en ${sala ?? "esa sala"} ese día`, 409);
@@ -116,6 +120,7 @@ export async function POST(req: Request) {
       sectionId: sectionId ?? null,
       minutos: minutos ?? null,
       orden,
+      soloAdmin: sectionSoloAdmin,
     },
     include: recordInclude,
   });

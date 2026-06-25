@@ -14,6 +14,7 @@ export interface Section {
   active: boolean;
   sinAyudante: boolean; // true = parte de una sola persona (sin ayudante)
   unaPorSala: boolean; // true = máximo una parte por sala
+  soloAdmin: boolean; // true = solo el admin edita/borra/agrega en esta sección
 }
 
 export interface Meeting {
@@ -73,6 +74,7 @@ export interface RecordItem {
   asignacion: string;
   minutos: number | null; // duración en minutos
   orden: number; // posición en el planificador
+  bloqueado: boolean; // true = solo el admin puede editar/borrar
   sectionId: string | null;
   section: string | null; // nombre de la sección (derivado) o null
   createdAt: string; // ISO

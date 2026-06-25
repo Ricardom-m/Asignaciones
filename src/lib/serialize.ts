@@ -24,7 +24,7 @@ export function serializeRole(r: PrismaRole): Role {
 }
 
 export function serializeSection(s: PrismaSection): Section {
-  return { id: s.id, nombre: s.nombre, orden: s.orden, active: s.active, sinAyudante: s.sinAyudante, unaPorSala: s.unaPorSala };
+  return { id: s.id, nombre: s.nombre, orden: s.orden, active: s.active, sinAyudante: s.sinAyudante, unaPorSala: s.unaPorSala, soloAdmin: s.soloAdmin };
 }
 
 export function serializeMeeting(m: PrismaMeeting): Meeting {
@@ -61,6 +61,7 @@ export function serializeRecord(r: RecordWithPeople): RecordItem {
     asignacion: r.asignacion,
     minutos: r.minutos ?? null,
     orden: r.orden,
+    bloqueado: r.soloAdmin || (r.section?.soloAdmin ?? false),
     sectionId: r.sectionId ?? null,
     section: r.section ? r.section.nombre : null,
     createdAt: r.createdAt.toISOString(),

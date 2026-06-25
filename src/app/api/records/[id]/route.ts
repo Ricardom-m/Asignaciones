@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { recordInput } from "@/lib/validation";
 import { serializeRecord, recordInclude } from "@/lib/serialize";
-import { ok, fail, requireSession, rateLimit, clientKey } from "@/lib/server";
+import { ok, fail, requireSession, rateLimit, clientKey, isAdmin } from "@/lib/server";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -22,8 +22,10 @@ export async function PATCH(req: Request, { params }: Params) {
   if (ayudanteId && ayudanteId === asignadoId)
     return fail("El ayudante no puede ser la misma persona que el asignado", 422);
 
-  const exists = await prisma.record.findUnique({ where: { id } });
+  const exists = await prisma.record.findUnique({ where: { id }, include: { section: true } });
   if (!exists) return fail("Registro no encontrado", 404);
+  if ((exists.soloAdmin || exists.section?.soloAdmin) && !isAdmin(session))
+    return fail("Solo el administrador puede editar esta asignación", 403);
 
   const ids = [asignadoId, ...(ayudanteId ? [ayudanteId] : [])];
   const count = await prisma.person.count({ where: { id: { in: ids } } });
@@ -65,6 +67,9 @@ export async function DELETE(req: Request, { params }: Params) {
     return fail("Demasiadas solicitudes, espera un momento", 429);
 
   const { id } = await params;
+  const rec = await prisma.record.findUnique({ where: { id }, include: { section: true } });
+  if (rec && (rec.soloAdmin || rec.section?.soloAdmin) && !isAdmin(session))
+    return fail("Solo el administrador puede borrar esta asignación", 403);
   await prisma.record.delete({ where: { id } }).catch(() => null);
   return ok({ deleted: true });
 }

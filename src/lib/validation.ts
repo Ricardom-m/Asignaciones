@@ -21,6 +21,7 @@ export const sectionInput = z.object({
   active: z.boolean().optional(),
   sinAyudante: z.boolean().optional(),
   unaPorSala: z.boolean().optional(),
+  soloAdmin: z.boolean().optional(),
 });
 export type SectionInput = z.infer<typeof sectionInput>;
 

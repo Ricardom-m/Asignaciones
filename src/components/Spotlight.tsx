@@ -7,6 +7,7 @@ import { PencilSimple, Trash } from "@phosphor-icons/react";
 import { RoleBadge } from "@/components/RoleBadge";
 import { GenderIcon } from "@/components/GenderIcon";
 import { TimeChart } from "@/components/TimeChart";
+import { useIsAdmin } from "@/components/UserContext";
 import { usePersistedState } from "@/lib/usePersistedState";
 import type { Person, RecordItem, Section } from "@/lib/types";
 
@@ -440,6 +441,7 @@ function TimelineList({
   onDelete?: (rec: RecordItem) => void;
 }) {
   const [limit, setLimit] = useState(TL_PAGE);
+  const isAdmin = useIsAdmin();
   const shown = records.slice(0, limit);
 
   return (
@@ -479,7 +481,7 @@ function TimelineList({
                       {r.sala ? ` · ${r.sala}` : ""}
                     </div>
                   </div>
-                  {(onEdit || onDelete) && (
+                  {(onEdit || onDelete) && !(r.bloqueado && !isAdmin) && (
                     <div className="tl-actions">
                       {onEdit && (
                         <button className="tl-act" onClick={() => onEdit(r)} title="Editar" aria-label="Editar registro">

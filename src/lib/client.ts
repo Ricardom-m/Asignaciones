@@ -47,8 +47,10 @@ export const deleteRole = (id: string) =>
 export const createSection = (data: { nombre: string }) =>
   apiFetch<Section>("/api/sections", { method: "POST", body: JSON.stringify(data) });
 
-export const updateSection = (id: string, data: { nombre?: string; orden?: number; active?: boolean; sinAyudante?: boolean; unaPorSala?: boolean }) =>
-  apiFetch<Section>(`/api/sections/${id}`, { method: "PATCH", body: JSON.stringify(data) });
+export const updateSection = (
+  id: string,
+  data: { nombre?: string; orden?: number; active?: boolean; sinAyudante?: boolean; unaPorSala?: boolean; soloAdmin?: boolean },
+) => apiFetch<Section>(`/api/sections/${id}`, { method: "PATCH", body: JSON.stringify(data) });
 
 export const deleteSection = (id: string) =>
   apiFetch<{ deleted: boolean }>(`/api/sections/${id}`, { method: "DELETE" });
@@ -103,6 +105,13 @@ export const deleteRecord = (id: string) =>
 // Reordenar / cambiar de sala en lote (planificador).
 export const arrangeRecords = (updates: { id: string; orden: number; sala?: string | null }[]) =>
   apiFetch<{ updated: number }>("/api/records/arrange", { method: "POST", body: JSON.stringify({ updates }) });
+
+// ── Lectura de la Biblia ──────────────────────────────────
+// La lectura la hace un varón: Nombrados, Asignados o Precursores (hombre).
+const LECTURA_ROLES = new Set(["Nombrados", "Asignados", "Precursores"]);
+export const esLectura = (asignacion: string) => asignacion.trim().toLowerCase() === "lectura de la biblia";
+export const eligibleLectura = (persons: Person[]) =>
+  persons.filter((p) => p.genero === "H" && p.roles.some((r) => LECTURA_ROLES.has(r.nombre)));
 
 // ── Fechas ────────────────────────────────────────────────
 export function fmtDate(ymd?: string | null): string {

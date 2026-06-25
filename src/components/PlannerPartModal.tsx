@@ -9,7 +9,7 @@ import { SectionSelect } from "@/components/SectionSelect";
 import { AsignacionSuggest } from "@/components/AsignacionSuggest";
 import { HelperPicker } from "@/components/HelperPicker";
 import { agoShort } from "@/components/RosterPanel";
-import { createRecord, fmtShort } from "@/lib/client";
+import { createRecord, esLectura, eligibleLectura, fmtShort } from "@/lib/client";
 import type { Person, Section } from "@/lib/types";
 
 const SALAS = ["Sala A", "Sala B", "Otro"];
@@ -41,10 +41,15 @@ export function PlannerPartModal({ fecha, sections, persons, defaultAsignadoId, 
   const { candidates } = useSuggest(asignadoId, fecha);
   const noHelper = !!sections.find((s) => s.id === sectionId)?.sinAyudante;
 
-  // Sugerencias de asignado: los más atrasados que NO estén ya ese día.
+  // La lectura de la Biblia solo la hacen varones (Nombrados/Asignados/Precursores).
+  const lectura = esLectura(asignacion);
+  const asignadoPool = useMemo(() => (lectura ? eligibleLectura(activePersons) : activePersons), [lectura, activePersons]);
+  const poolIds = useMemo(() => new Set(asignadoPool.map((p) => p.id)), [asignadoPool]);
+
+  // Sugerencias de asignado: los más atrasados que NO estén ya ese día (y elegibles).
   const asignadoSugs = useMemo(
-    () => roster.filter((r) => !r.assignedOnTarget && r.id !== ayudanteId).slice(0, 6),
-    [roster, ayudanteId],
+    () => roster.filter((r) => !r.assignedOnTarget && r.id !== ayudanteId && (!lectura || poolIds.has(r.id))).slice(0, 6),
+    [roster, ayudanteId, lectura, poolIds],
   );
 
   const save = async () => {
@@ -127,7 +132,7 @@ export function PlannerPartModal({ fecha, sections, persons, defaultAsignadoId, 
           <label className="field-label">
             Asignado <span className="req">*</span>
           </label>
-          <PersonSelect persons={activePersons} value={asignadoId} excludeId={ayudanteId} onChange={setAsignadoId} placeholder="Seleccionar…" />
+          <PersonSelect persons={asignadoPool} value={asignadoId} excludeId={ayudanteId} onChange={setAsignadoId} placeholder="Seleccionar…" />
           {asignadoSugs.length > 0 && (
             <div className="sug-row">
               <span className="sug-tip">Le toca:</span>

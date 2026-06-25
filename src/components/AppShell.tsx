@@ -17,6 +17,7 @@ import {
 import { AccountMenu } from "@/components/AccountMenu";
 import { CommandPalette } from "@/components/CommandPalette";
 import { ThemeToggleButton } from "@/components/ThemeToggleButton";
+import { UserProvider } from "@/components/UserContext";
 
 interface Props {
   user: { name: string; email: string; image: string; isAdmin?: boolean };
@@ -117,7 +118,9 @@ export function AppShell({ user, children }: Props) {
           </div>
         </header>
 
-        <div className="scroll-area">{children}</div>
+        <div className="scroll-area">
+          <UserProvider user={user}>{children}</UserProvider>
+        </div>
       </div>
     </div>
   );

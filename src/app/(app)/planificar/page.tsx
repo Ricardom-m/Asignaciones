@@ -24,6 +24,7 @@ import { EditRecordModal } from "@/components/EditRecordModal";
 import { useToast } from "@/components/Toast";
 import { useConfirm } from "@/components/Confirm";
 import { GenderIcon } from "@/components/GenderIcon";
+import { useIsAdmin } from "@/components/UserContext";
 import { arrangeRecords, deleteRecord, fmtShort, relativeLabel, todayYMD, weekdayLabel, weekdayOf } from "@/lib/client";
 import type { Person, RecordItem } from "@/lib/types";
 
@@ -55,6 +56,7 @@ export default function PlanificarPage() {
   const { mutate: globalMutate } = useSWRConfig();
   const toast = useToast();
   const confirm = useConfirm();
+  const isAdmin = useIsAdmin();
 
   const [fecha, setFecha] = useState(todayYMD());
   const initRef = useRef(false);
@@ -96,10 +98,11 @@ export default function PlanificarPage() {
 
   const groups = useMemo(() => {
     const order = [...sections].sort((a, b) => a.orden - b.orden);
-    const g: { id: string; nombre: string; unaPorSala: boolean; items: RecordItem[] }[] = order.map((s) => ({
+    const g: { id: string; nombre: string; unaPorSala: boolean; soloAdmin: boolean; items: RecordItem[] }[] = order.map((s) => ({
       id: s.id,
       nombre: s.nombre,
       unaPorSala: s.unaPorSala,
+      soloAdmin: s.soloAdmin,
       items: [],
     }));
     const none: RecordItem[] = [];
@@ -109,7 +112,7 @@ export default function PlanificarPage() {
       if (tgt) tgt.items.push(r);
       else none.push(r);
     }
-    if (none.length) g.push({ id: SIN_SECCION, nombre: "Sin sección", unaPorSala: false, items: none });
+    if (none.length) g.push({ id: SIN_SECCION, nombre: "Sin sección", unaPorSala: false, soloAdmin: false, items: none });
     return g;
   }, [sections, dayRecords]);
 
@@ -233,11 +236,15 @@ export default function PlanificarPage() {
                 const libres = g.unaPorSala
                   ? ["Sala A", "Sala B"].filter((s) => !g.items.some((r) => (r.sala || "Otro") === s))
                   : [];
-                const puedeAgregar = !g.unaPorSala || libres.length > 0;
+                const bloqueada = g.soloAdmin && !isAdmin;
+                const puedeAgregar = !bloqueada && (!g.unaPorSala || libres.length > 0);
                 return (
                 <div className="plan-section" key={g.id}>
                   <div className="plan-section-head">
-                    <span className="plan-section-title">{g.nombre}</span>
+                    <span className="plan-section-title">
+                      {g.nombre}
+                      {g.soloAdmin && <span className="plan-lock-tag" title="Solo el administrador">🔒</span>}
+                    </span>
                     {g.id !== SIN_SECCION && puedeAgregar && (
                       <button
                         className="btn btn-ghost btn-sm plan-add-sec"
@@ -255,7 +262,7 @@ export default function PlanificarPage() {
                         <div className="plan-sala-head">
                           <span className={`plan-sala-tag ${salaClass(sg.sala)}`}>{sg.sala}</span>
                           <span className="plan-sala-count">{sg.items.length} parte{sg.items.length !== 1 ? "s" : ""}</span>
-                          {g.id !== SIN_SECCION && !g.unaPorSala && (
+                          {g.id !== SIN_SECCION && !g.unaPorSala && !bloqueada && (
                             <button className="plan-sala-add" onClick={() => openAdd({ sectionId: g.id, sala: sg.sala })} title={`Agregar parte en ${sg.sala}`}>
                               +
                             </button>
@@ -354,20 +361,28 @@ function PartRow({
   onEdit: () => void;
   onDelete: () => void;
 }) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: rec.id });
+  const isAdmin = useIsAdmin();
+  const locked = rec.bloqueado && !isAdmin;
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: rec.id, disabled: locked });
   const conflict = dupIds.has(rec.asignadoId) || (!!rec.ayudanteId && dupIds.has(rec.ayudanteId));
   const style: React.CSSProperties = { transform: CSS.Transform.toString(transform), transition };
 
   return (
     <div ref={setNodeRef} style={style} className={`plan-part${conflict ? " conflict" : ""}${isDragging ? " dragging" : ""}`}>
-      <button className="plan-grip" {...attributes} {...listeners} aria-label="Mover" title="Mover / cambiar de sala">
-        <DotsSixVertical size={16} weight="bold" />
-      </button>
+      {locked ? (
+        <span className="plan-grip plan-grip-locked" title="Solo el administrador">🔒</span>
+      ) : (
+        <button className="plan-grip" {...attributes} {...listeners} aria-label="Mover" title="Mover / cambiar de sala">
+          <DotsSixVertical size={16} weight="bold" />
+        </button>
+      )}
       <PartInner rec={rec} personsById={personsById} dupIds={dupIds} />
-      <div className="plan-part-actions">
-        <button className="tl-act" onClick={onEdit} title="Editar" aria-label="Editar">✎</button>
-        <button className="tl-act danger" onClick={onDelete} title="Quitar" aria-label="Quitar">✕</button>
-      </div>
+      {!locked && (
+        <div className="plan-part-actions">
+          <button className="tl-act" onClick={onEdit} title="Editar" aria-label="Editar">✎</button>
+          <button className="tl-act danger" onClick={onDelete} title="Quitar" aria-label="Quitar">✕</button>
+        </div>
+      )}
     </div>
   );
 }

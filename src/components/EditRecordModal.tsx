@@ -9,7 +9,7 @@ import { SectionSelect } from "@/components/SectionSelect";
 import { AsignacionSuggest } from "@/components/AsignacionSuggest";
 import { HelperPicker } from "@/components/HelperPicker";
 import { DateChips } from "@/components/DateChips";
-import { updateRecord } from "@/lib/client";
+import { updateRecord, esLectura, eligibleLectura } from "@/lib/client";
 import type { Person, RecordItem } from "@/lib/types";
 
 const SALAS = ["Sala A", "Sala B", "Otro"];
@@ -56,13 +56,15 @@ export function EditRecordModal({ rec, persons, onClose, onSaved }: Props) {
     [persons, rec.asignadoId, rec.ayudanteId],
   );
   // En registros de tipo NOMBRADO el asignado debe ser un Nombrado.
-  const asignadoPersons = useMemo(
-    () =>
-      isNombrado
-        ? formPersons.filter((p) => p.roles.some((r) => r.nombre === "Nombrados") || p.id === rec.asignadoId)
-        : formPersons,
-    [isNombrado, formPersons, rec.asignadoId],
-  );
+  const asignadoPersons = useMemo(() => {
+    if (isNombrado)
+      return formPersons.filter((p) => p.roles.some((r) => r.nombre === "Nombrados") || p.id === rec.asignadoId);
+    if (esLectura(form.asignacion)) {
+      const elig = eligibleLectura(formPersons);
+      return elig.some((p) => p.id === rec.asignadoId) ? elig : [...elig, ...formPersons.filter((p) => p.id === rec.asignadoId)];
+    }
+    return formPersons;
+  }, [isNombrado, formPersons, rec.asignadoId, form.asignacion]);
   const { candidates } = useSuggest(isNombrado ? "" : form.asignadoId, form.fecha);
   const patch = (p: Partial<FormState>) => setForm((f) => ({ ...f, ...p }));
 

@@ -5,6 +5,7 @@ import { fmtShort, fmtDT, dateStatus, relativeLabel } from "@/lib/client";
 import { RoleBadge } from "@/components/RoleBadge";
 import { GenderIcon } from "@/components/GenderIcon";
 import { SectionSelect } from "@/components/SectionSelect";
+import { useIsAdmin } from "@/components/UserContext";
 import type { Person, RecordItem, Section } from "@/lib/types";
 
 interface Props {
@@ -19,6 +20,8 @@ interface Props {
 
 export function RecordCard({ rec, personsById, onEdit, onDelete, onPerson, sections, onChangeSection }: Props) {
   const [open, setOpen] = useState(false);
+  const isAdmin = useIsAdmin();
+  const locked = rec.bloqueado && !isAdmin;
   const status = dateStatus(rec.fecha);
   const asignadoP = personsById.get(rec.asignadoId);
   const ayudanteP = rec.ayudanteId ? personsById.get(rec.ayudanteId) : undefined;
@@ -97,7 +100,7 @@ export function RecordCard({ rec, personsById, onEdit, onDelete, onPerson, secti
             </div>
           )}
 
-          {sections && onChangeSection ? (
+          {sections && onChangeSection && !locked ? (
             <div className="rc-detail-row">
               <span className="rc-detail-label">Sección</span>
               <div style={{ flex: 1, minWidth: 0 }}>
@@ -120,14 +123,18 @@ export function RecordCard({ rec, personsById, onEdit, onDelete, onPerson, secti
           </div>
 
           <div className="rc-foot">
-            <div className="rc-actions">
-              <button className="btn btn-edit btn-sm" onClick={() => onEdit(rec)}>
-                Editar
-              </button>
-              <button className="btn btn-danger btn-sm" onClick={() => onDelete(rec)}>
-                Borrar
-              </button>
-            </div>
+            {locked ? (
+              <span className="rc-lock">🔒 Solo el administrador puede editar</span>
+            ) : (
+              <div className="rc-actions">
+                <button className="btn btn-edit btn-sm" onClick={() => onEdit(rec)}>
+                  Editar
+                </button>
+                <button className="btn btn-danger btn-sm" onClick={() => onDelete(rec)}>
+                  Borrar
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}

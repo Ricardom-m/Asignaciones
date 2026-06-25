@@ -26,6 +26,11 @@ export async function requireSession(): Promise<SessionResult> {
   return { session, response: null };
 }
 
+// ¿La sesión es de un administrador? (correo en AUTHORIZED_EMAILS)
+export function isAdmin(session: Session): boolean {
+  return isEmailAllowed(session.user?.email);
+}
+
 // Exige sesión válida Y que sea administrador (correo en AUTHORIZED_EMAILS).
 export async function requireAdmin(): Promise<SessionResult> {
   const result = await requireSession();

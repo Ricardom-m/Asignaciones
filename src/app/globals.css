@@ -697,6 +697,9 @@ input:focus, select:focus, .list-search-input:focus, .sel-search:focus, .cmd-inp
 .plan-grip:active { cursor:grabbing; }
 .plan-part.dragging { opacity:.35; }
 .plan-part-overlay { background:var(--surface); border:1px solid var(--border2); box-shadow:0 16px 38px rgba(0,0,0,.55); border-radius:9px; padding:9px 8px; display:flex; align-items:center; gap:10px; cursor:grabbing; }
+.plan-grip-locked { cursor:default; color:var(--text3); font-size:.8rem; }
+.plan-lock-tag { font-size:.7rem; margin-left:6px; -webkit-text-fill-color:initial; }
+.rc-lock { font-size:.66rem; color:var(--text3); }
 
 .plan-part { display:flex; align-items:center; gap:10px; padding:9px 10px; margin:0 -10px; border-radius:9px; transition:background .14s; }
 .plan-part:hover { background:var(--surface2); }
