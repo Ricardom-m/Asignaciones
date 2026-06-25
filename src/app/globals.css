@@ -120,13 +120,16 @@ nav.bottom { flex-shrink:0; display:flex; background:var(--surface); background:
 .field-group { display:flex; flex-direction:column; gap:6px; }
 .field-label { font-size:.7rem; font-weight:500; color:var(--text2); }
 .req { color:var(--red); margin-left:2px; }
-input[type=text], input[type=date], select {
+input[type=text], input[type=date], input[type=number], select {
   width:100%; background:var(--surface2); border:1px solid var(--border); border-radius:var(--r2);
   color:var(--text); padding:11px 13px; font-family:var(--head); font-size:.85rem;
   transition:border-color .15s, background .15s; appearance:none; -webkit-appearance:none; outline:none;
 }
 input::placeholder { color:var(--text3); }
 input:focus, select:focus { border-color:var(--border2); background:var(--surface); }
+/* Sin flechitas de incremento (spinner) en los campos numéricos */
+input[type=number] { -moz-appearance:textfield; }
+input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance:none; margin:0; }
 select { background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%239696a1' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 13px center; padding-right:34px; }
 select option { background:var(--surface); color:var(--text); }
 input[type=date]::-webkit-calendar-picker-indicator { filter:invert(.55); }
