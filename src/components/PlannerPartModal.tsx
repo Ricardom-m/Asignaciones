@@ -20,16 +20,17 @@ interface Props {
   persons: Person[];
   defaultAsignadoId?: string;
   defaultSectionId?: string;
+  defaultSala?: string;
   onClose: () => void;
   onSaved: () => void;
 }
 
-export function PlannerPartModal({ fecha, sections, persons, defaultAsignadoId, defaultSectionId, onClose, onSaved }: Props) {
+export function PlannerPartModal({ fecha, sections, persons, defaultAsignadoId, defaultSectionId, defaultSala, onClose, onSaved }: Props) {
   const toast = useToast();
   const { roles } = useRoles();
   const { roster } = useRoster(fecha);
   const [sectionId, setSectionId] = useState(defaultSectionId ?? "");
-  const [sala, setSala] = useState("Sala A");
+  const [sala, setSala] = useState(defaultSala ?? "Sala A");
   const [asignacion, setAsignacion] = useState("");
   const [minutos, setMinutos] = useState("");
   const [asignadoId, setAsignadoId] = useState(defaultAsignadoId ?? "");

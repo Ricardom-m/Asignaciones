@@ -15,6 +15,24 @@ import type { Person, RecordItem } from "@/lib/types";
 
 const SIN_SECCION = "__none__";
 
+function salaClass(sala: string): string {
+  return sala === "Sala A" ? "a" : sala === "Sala B" ? "b" : "otro";
+}
+// Agrupa las partes por sala (Sala A, Sala B, luego el resto).
+function groupBySala(items: RecordItem[]): { sala: string; items: RecordItem[] }[] {
+  const map = new Map<string, RecordItem[]>();
+  for (const r of items) {
+    const k = r.sala || "Otro";
+    const arr = map.get(k);
+    if (arr) arr.push(r);
+    else map.set(k, [r]);
+  }
+  const ord = (s: string) => (s === "Sala A" ? 0 : s === "Sala B" ? 1 : 2);
+  return [...map.entries()]
+    .map(([sala, its]) => ({ sala, items: its }))
+    .sort((a, b) => ord(a.sala) - ord(b.sala) || a.sala.localeCompare(b.sala));
+}
+
 export default function PlanificarPage() {
   const { meetings } = useMeetings();
   const { sections } = useSections();
@@ -37,7 +55,7 @@ export default function PlanificarPage() {
   const personsById = useMemo(() => new Map(persons.map((p) => [p.id, p])), [persons]);
 
   const [adding, setAdding] = useState(false);
-  const [prefill, setPrefill] = useState<{ asignadoId?: string; sectionId?: string }>({});
+  const [prefill, setPrefill] = useState<{ asignadoId?: string; sectionId?: string; sala?: string }>({});
   const [editing, setEditing] = useState<RecordItem | null>(null);
 
   const refresh = () =>
@@ -72,7 +90,7 @@ export default function PlanificarPage() {
     return g;
   }, [sections, dayRecords]);
 
-  const openAdd = (opts: { asignadoId?: string; sectionId?: string } = {}) => {
+  const openAdd = (opts: { asignadoId?: string; sectionId?: string; sala?: string } = {}) => {
     setPrefill(opts);
     setAdding(true);
   };
@@ -150,8 +168,25 @@ export default function PlanificarPage() {
                 {g.items.length === 0 ? (
                   <div className="plan-empty">— sin partes —</div>
                 ) : (
-                  g.items.map((r) => (
-                    <PartRow key={r.id} rec={r} personsById={personsById} dupIds={dupIds} onEdit={() => setEditing(r)} onDelete={() => onDelete(r)} />
+                  groupBySala(g.items).map((sg) => (
+                    <div className={`plan-sala-group ${salaClass(sg.sala)}`} key={sg.sala}>
+                      <div className="plan-sala-head">
+                        <span className={`plan-sala-tag ${salaClass(sg.sala)}`}>{sg.sala}</span>
+                        <span className="plan-sala-count">{sg.items.length} parte{sg.items.length !== 1 ? "s" : ""}</span>
+                        {g.id !== SIN_SECCION && (
+                          <button
+                            className="plan-sala-add"
+                            onClick={() => openAdd({ sectionId: g.id, sala: sg.sala })}
+                            title={`Agregar parte en ${sg.sala}`}
+                          >
+                            +
+                          </button>
+                        )}
+                      </div>
+                      {sg.items.map((r) => (
+                        <PartRow key={r.id} rec={r} personsById={personsById} dupIds={dupIds} onEdit={() => setEditing(r)} onDelete={() => onDelete(r)} />
+                      ))}
+                    </div>
                   ))
                 )}
               </div>
@@ -172,6 +207,7 @@ export default function PlanificarPage() {
           persons={persons}
           defaultAsignadoId={prefill.asignadoId}
           defaultSectionId={prefill.sectionId}
+          defaultSala={prefill.sala}
           onClose={() => setAdding(false)}
           onSaved={() => { refresh(); setAdding(false); }}
         />
@@ -211,7 +247,6 @@ function PartRow({
         <div className="plan-part-asig">
           {rec.asignacion}
           {rec.minutos != null && <span className="plan-part-sala">{rec.minutos} min</span>}
-          {rec.sala && <span className="plan-part-sala">{rec.sala}</span>}
           {conflict && <span className="plan-part-warn" title="Esta persona ya tiene otra parte ese día">⚠ repetido</span>}
         </div>
         <div className="plan-part-people">
