@@ -68,7 +68,7 @@ export function Spotlight({ personId, persons, records, sections, onPerson, onEd
     const filtered = inPeriod.filter(matchesRole);
 
     // Resumen
-    const ym = new Date().toISOString().slice(0, 7);
+    const ym = todayYMD().slice(0, 7);
     const esteMes = myRecords.filter((r) => (r.fecha || "").startsWith(ym)).length;
     const lastRec = [...myRecords].sort(byDateDesc)[0];
 

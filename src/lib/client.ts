@@ -1,4 +1,5 @@
 import type { Person, RecordItem, Role, Section, Meeting, Genero, AllowedUser, RecordTipo, MeetingConfig } from "@/lib/types";
+import { todayYMD } from "@/lib/date";
 
 // Wrapper de fetch que lanza con el mensaje de error de la API.
 export async function apiFetch<T>(url: string, init?: RequestInit): Promise<T> {
@@ -113,7 +114,7 @@ export function fmtDT(iso?: string | null): string {
     d.toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit" })
   );
 }
-export const todayYMD = () => new Date().toISOString().slice(0, 10);
+export { todayYMD };
 
 // Suma días a una fecha YYYY-MM-DD (en UTC, consistente con todayYMD()).
 export function addDaysYMD(ymd: string, n: number): string {

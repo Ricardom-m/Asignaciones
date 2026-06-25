@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { todayYMD } from "@/lib/date";
 
 function addDays(ymd: string, n: number): string {
   const d = new Date(ymd + "T00:00:00Z");
@@ -20,7 +21,7 @@ export async function ensureMeetingWindow(): Promise<number> {
   const weeks = cfg?.weeks ?? 4;
   if (weekdays.size === 0) return 0;
 
-  const today = new Date().toISOString().slice(0, 10);
+  const today = todayYMD();
   const fechas: string[] = [];
   for (let i = 0; i < weeks * 7; i++) {
     const ymd = addDays(today, i);

@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { ok, requireSession } from "@/lib/server";
+import { todayYMD } from "@/lib/date";
 
 function ymdToDate(ymd: string) {
   return new Date(ymd + "T00:00:00.000Z");
@@ -15,7 +16,7 @@ export async function GET() {
   const { response } = await requireSession();
   if (response) return response;
 
-  const today = new Date().toISOString().slice(0, 10);
+  const today = todayYMD();
   const dow = ymdToDate(today).getUTCDay(); // 0 dom … 6 sáb
   const monday = addDays(today, -((dow + 6) % 7));
   const sunday = addDays(monday, 6);

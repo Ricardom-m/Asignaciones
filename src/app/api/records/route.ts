@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { recordInput } from "@/lib/validation";
 import { serializeRecord, recordInclude } from "@/lib/serialize";
 import { ok, fail, requireSession, rateLimit, clientKey } from "@/lib/server";
+import { todayYMD } from "@/lib/date";
 import type { Prisma } from "@prisma/client";
 
 const insensitive = (q: string): Prisma.StringFilter => ({ contains: q, mode: "insensitive" });
@@ -23,7 +24,7 @@ export async function GET(req: Request) {
   const take = Math.min(Math.max(Number(sp.get("take")) || 25, 1), 100);
   const cursor = sp.get("cursor");
 
-  const today = new Date(new Date().toISOString().slice(0, 10)); // hoy a medianoche UTC
+  const today = new Date(todayYMD()); // hoy (zona MX) a medianoche UTC
   const and: Prisma.RecordWhereInput[] = [];
   if (scope === "prox") and.push({ fecha: { gte: today } });
   else if (scope === "pas") and.push({ fecha: { lt: today } });
