@@ -7,6 +7,7 @@ import { useToast } from "@/components/Toast";
 import { PageHeader } from "@/components/PageHeader";
 import { PersonSelect } from "@/components/PersonSelect";
 import { SectionSelect } from "@/components/SectionSelect";
+import { AsignacionSuggest } from "@/components/AsignacionSuggest";
 import { HelperPicker } from "@/components/HelperPicker";
 import { DateChips } from "@/components/DateChips";
 import { createRecord } from "@/lib/client";
@@ -185,6 +186,7 @@ export default function NuevoPage() {
                   autoComplete="off"
                   autoFocus
                 />
+                <AsignacionSuggest sectionId={form.sectionId} value={form.asignacion} onPick={(v) => patch({ asignacion: v })} />
               </div>
 
               <div className="divider" />

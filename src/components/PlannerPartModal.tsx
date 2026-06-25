@@ -6,6 +6,7 @@ import { useToast } from "@/components/Toast";
 import { Modal } from "@/components/Modal";
 import { PersonSelect } from "@/components/PersonSelect";
 import { SectionSelect } from "@/components/SectionSelect";
+import { AsignacionSuggest } from "@/components/AsignacionSuggest";
 import { HelperPicker } from "@/components/HelperPicker";
 import { agoShort } from "@/components/RosterPanel";
 import { createRecord, fmtShort } from "@/lib/client";
@@ -98,6 +99,7 @@ export function PlannerPartModal({ fecha, sections, persons, defaultAsignadoId, 
             />
           </div>
         </div>
+        <AsignacionSuggest sectionId={sectionId} value={asignacion} onPick={setAsignacion} />
 
         <div className="field-group">
           <label className="field-label">

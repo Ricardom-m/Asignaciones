@@ -6,6 +6,7 @@ import { useToast } from "@/components/Toast";
 import { Modal } from "@/components/Modal";
 import { PersonSelect } from "@/components/PersonSelect";
 import { SectionSelect } from "@/components/SectionSelect";
+import { AsignacionSuggest } from "@/components/AsignacionSuggest";
 import { HelperPicker } from "@/components/HelperPicker";
 import { DateChips } from "@/components/DateChips";
 import { updateRecord } from "@/lib/client";
@@ -154,6 +155,7 @@ export function EditRecordModal({ rec, persons, onClose, onSaved }: Props) {
             placeholder="Describe la asignación"
             autoComplete="off"
           />
+          <AsignacionSuggest sectionId={form.sectionId} value={form.asignacion} onPick={(v) => patch({ asignacion: v })} />
         </div>
 
         <div className="divider" />

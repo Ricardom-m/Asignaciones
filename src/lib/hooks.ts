@@ -21,6 +21,13 @@ export function useSections() {
   return { sections: data ?? [], error, isLoading, mutate };
 }
 
+// Textos de asignación más usados (sugerencias al escribir), por sección.
+export function useAsignaciones(sectionId?: string) {
+  const key = sectionId ? `/api/records/asignaciones?section=${sectionId}` : "/api/records/asignaciones";
+  const { data } = useSWR<{ value: string; count: number }[]>(key, fetcher);
+  return { asignaciones: data ?? [] };
+}
+
 // Solo reuniones próximas (la lista que crece sin límite son las pasadas).
 export function useMeetings() {
   const { data, error, isLoading, mutate } = useSWR<Meeting[]>("/api/meetings?scope=upcoming", fetcher);
