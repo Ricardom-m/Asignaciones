@@ -665,6 +665,19 @@ input:focus, select:focus, .list-search-input:focus, .sel-search:focus, .cmd-inp
 .plan-date-custom input { width:auto; flex:1; min-width:140px; }
 .plan-date-meta { font-size:.7rem; color:var(--text3); text-transform:capitalize; flex-shrink:0; }
 
+/* Panel plegable "Configuraciones y fechas" */
+.cfg-panel { padding:0; overflow:hidden; }
+.cfg-toggle { width:100%; display:flex; align-items:center; justify-content:space-between; gap:12px; padding:14px 16px; background:transparent; border:none; cursor:pointer; text-align:left; color:var(--text); }
+.cfg-toggle:hover { background:var(--surface2); }
+.cfg-toggle-main { display:flex; align-items:center; gap:11px; min-width:0; }
+.cfg-toggle-main > svg { color:var(--accent); flex-shrink:0; }
+.cfg-toggle-title { display:block; font-weight:600; font-size:.92rem; }
+.cfg-toggle-sub { display:block; font-size:.72rem; color:var(--text3); margin-top:1px; }
+.cfg-toggle-caret { color:var(--text3); flex-shrink:0; transition:transform .2s ease; }
+.cfg-toggle.open .cfg-toggle-caret { transform:rotate(90deg); }
+.cfg-body { padding:0 16px 16px; border-top:1px solid var(--border); }
+.cfg-body > .cols-2-wide { margin-top:16px; }
+
 .plan-grid { display:flex; flex-direction:column; gap:14px; align-items:stretch; }
 .plan-main { min-width:0; }
 .plan-aside { min-width:0; }

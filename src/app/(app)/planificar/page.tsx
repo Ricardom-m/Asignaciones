@@ -16,9 +16,10 @@ import {
 } from "@dnd-kit/core";
 import { SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, arrayMove, useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { DotsSixVertical } from "@phosphor-icons/react";
+import { DotsSixVertical, CaretRight, GearSix } from "@phosphor-icons/react";
 import { usePersons, useSections, useRoles, useMeetings, useDateRecords } from "@/lib/hooks";
 import { PageHeader } from "@/components/PageHeader";
+import { ConfigFechas } from "@/components/ConfigFechas";
 import { RosterPanel } from "@/components/RosterPanel";
 import { PlannerPartModal } from "@/components/PlannerPartModal";
 import { EditRecordModal } from "@/components/EditRecordModal";
@@ -77,6 +78,7 @@ export default function PlanificarPage() {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
+  const [showConfig, setShowConfig] = useState(false);
 
   const sensors = useSensors(
     useSensor(MouseSensor, { activationConstraint: { distance: 6 } }),
@@ -211,6 +213,31 @@ export default function PlanificarPage() {
           </span>
         </div>
       </div>
+
+      {/* Configuraciones y fechas (solo administrador) */}
+      {isAdmin && (
+        <div className="content-card cfg-panel">
+          <button
+            className={`cfg-toggle${showConfig ? " open" : ""}`}
+            onClick={() => setShowConfig((s) => !s)}
+            aria-expanded={showConfig}
+          >
+            <span className="cfg-toggle-main">
+              <GearSix size={17} weight="bold" />
+              <span>
+                <span className="cfg-toggle-title">Configuraciones y fechas</span>
+                <span className="cfg-toggle-sub">Secciones, regla automática y fechas de reunión</span>
+              </span>
+            </span>
+            <CaretRight className="cfg-toggle-caret" size={16} weight="bold" />
+          </button>
+          {showConfig && (
+            <div className="cfg-body fade-up">
+              <ConfigFechas />
+            </div>
+          )}
+        </div>
+      )}
 
       <div className="plan-grid">
         {/* Panorama de la reunión */}

@@ -4,8 +4,6 @@ import { useEffect, useState } from "react";
 import { useMeetings, usePastMeetings, useMeetingConfig } from "@/lib/hooks";
 import { useToast } from "@/components/Toast";
 import { useConfirm } from "@/components/Confirm";
-import { useIsAdmin } from "@/components/UserContext";
-import { PageHeader } from "@/components/PageHeader";
 import { SectionsCard } from "@/components/SectionsCard";
 import {
   createMeetings,
@@ -30,8 +28,9 @@ const WEEKDAYS = [
 ];
 const WEEKS_OPTS = [1, 2, 4, 6, 8, 12];
 
-export default function ReunionesPage() {
-  const isAdmin = useIsAdmin();
+// Secciones de la reunión + regla automática + administración de fechas.
+// Se usa dentro del panel "Configuraciones y fechas" de Planificar (solo admin).
+export function ConfigFechas() {
   const { meetings, mutate } = useMeetings(); // solo próximas
   const { config, mutate: mutateConfig } = useMeetingConfig();
   const toast = useToast();
@@ -85,7 +84,7 @@ export default function ReunionesPage() {
     }
   };
 
-  // Al entrar a la sección, asegura la ventana actual de la regla.
+  // Al abrir el panel, asegura la ventana actual de la regla.
   useEffect(() => {
     autoGen();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -146,24 +145,8 @@ export default function ReunionesPage() {
     }
   };
 
-  if (!isAdmin) {
-    return (
-      <div className="page-inner fade-up">
-        <PageHeader title="Reuniones" subtitle="Configuración" />
-        <div className="empty-state">
-          <div className="empty-icon">🔒</div>
-          <h3>Solo para administradores</h3>
-          <p>La configuración de reuniones y secciones es exclusiva del administrador.</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="page-inner page-inner-wide fade-up">
-      <PageHeader title="Reuniones" subtitle={`${meetings.length} próxima${meetings.length !== 1 ? "s" : ""}`} />
-
-      <div className="cols-2-wide">
+    <div className="cols-2-wide">
       {/* Secciones de la reunión */}
       <SectionsCard />
 
@@ -173,7 +156,7 @@ export default function ReunionesPage() {
         <div className="field-hint" style={{ marginTop: 0, marginBottom: 12 }}>
           Se mantienen llenas las reuniones de <strong style={{ color: "var(--text)" }}>{ruleDays}</strong> para las próximas{" "}
           <strong style={{ color: "var(--text)" }}>{config.weeks}</strong> semana{config.weeks !== 1 ? "s" : ""}. Se generan
-          solas al entrar aquí y al cambiar la regla (se guarda automáticamente).
+          solas al abrir esta sección y al cambiar la regla (se guarda automáticamente).
         </div>
         <div className="form-grid">
           <div className="field-group">
@@ -226,7 +209,7 @@ export default function ReunionesPage() {
           <div className="empty-state">
             <div className="empty-icon">📅</div>
             <h3>Sin reuniones próximas</h3>
-            <p>Usa "Generar próximas" para crear las fechas según la regla.</p>
+            <p>Activa un día en la regla automática para generar las fechas.</p>
           </div>
         ) : (
           <div className="persons-list">
@@ -269,7 +252,6 @@ export default function ReunionesPage() {
             )}
           </div>
         )}
-      </div>
       </div>
     </div>
   );
