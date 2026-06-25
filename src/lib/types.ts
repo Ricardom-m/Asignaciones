@@ -58,6 +58,8 @@ export interface RosterPerson {
   countMonth: number; // participaciones en el mes de la fecha objetivo
   countRecent: number; // participaciones en los últimos 60 días
   assignedOnTarget: boolean; // ya asignado(a) en la fecha objetivo
+  daysSinceSection?: number | null; // última vez en la sección consultada (si se pidió ?section=)
+  countSection?: number; // participaciones totales en esa sección
 }
 
 export type RecordTipo = "ASIGNACION" | "NOMBRADO";

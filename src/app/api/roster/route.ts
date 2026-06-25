@@ -19,6 +19,7 @@ export async function GET(req: Request) {
   const target = sp.get("fecha") && /^\d{4}-\d{2}-\d{2}$/.test(sp.get("fecha")!) ? sp.get("fecha")! : todayYMD();
   const role = sp.get("role");
   const genero = sp.get("genero");
+  const section = sp.get("section"); // recencia por sección (opcional)
 
   const where: Prisma.PersonWhereInput = {
     active: true,
@@ -26,19 +27,22 @@ export async function GET(req: Request) {
     ...(genero === "H" || genero === "M" ? { genero } : {}),
   };
   const persons = await prisma.person.findMany({ where, include: { roles: true } });
-  const recs = await prisma.record.findMany({ select: { fecha: true, asignadoId: true, ayudanteId: true } });
+  const recs = await prisma.record.findMany({
+    select: { fecha: true, asignadoId: true, ayudanteId: true, sectionId: true },
+  });
 
   const targetT = new Date(target + "T00:00:00Z").getTime();
   const recentFrom = targetT - 60 * DAY;
   const targetMonth = target.slice(0, 7);
 
-  type Agg = { last: string | null; month: number; recent: number; onTarget: boolean };
+  type Agg = { last: string | null; month: number; recent: number; onTarget: boolean; lastSec: string | null; countSec: number };
   const agg = new Map<string, Agg>();
-  for (const p of persons) agg.set(p.id, { last: null, month: 0, recent: 0, onTarget: false });
+  for (const p of persons) agg.set(p.id, { last: null, month: 0, recent: 0, onTarget: false, lastSec: null, countSec: 0 });
 
   for (const r of recs) {
     const f = toYMD(r.fecha);
     const ft = new Date(f + "T00:00:00Z").getTime();
+    const inSection = !!section && r.sectionId === section;
     for (const pid of [r.asignadoId, r.ayudanteId]) {
       if (!pid) continue;
       const a = agg.get(pid);
@@ -47,8 +51,10 @@ export async function GET(req: Request) {
       if (ft < targetT) {
         if (!a.last || f > a.last) a.last = f;
         if (ft >= recentFrom) a.recent++;
+        if (inSection && (!a.lastSec || f > a.lastSec)) a.lastSec = f;
       }
       if (f.slice(0, 7) === targetMonth) a.month++;
+      if (inSection) a.countSec++;
     }
   }
 
@@ -65,6 +71,9 @@ export async function GET(req: Request) {
       countMonth: a.month,
       countRecent: a.recent,
       assignedOnTarget: a.onTarget,
+      ...(section
+        ? { daysSinceSection: a.lastSec ? Math.round((targetT - new Date(a.lastSec + "T00:00:00Z").getTime()) / DAY) : null, countSection: a.countSec }
+        : {}),
     };
   });
 

@@ -111,11 +111,12 @@ export function useDateRecords(fecha: string | null) {
 }
 
 // Roster ordenado por "a quién le toca" para una fecha (equidad / sugerencia).
-export function useRoster(fecha: string | null, role?: string, genero?: string) {
+export function useRoster(fecha: string | null, role?: string, genero?: string, section?: string) {
   const sp = new URLSearchParams();
   if (fecha) sp.set("fecha", fecha);
   if (role) sp.set("role", role);
   if (genero) sp.set("genero", genero);
+  if (section) sp.set("section", section);
   const { data, mutate, isLoading } = useSWR<RosterPerson[]>(fecha ? `/api/roster?${sp.toString()}` : null, fetcher);
   return { roster: data ?? [], mutate, isLoading };
 }

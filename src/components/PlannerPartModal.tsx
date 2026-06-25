@@ -28,8 +28,8 @@ interface Props {
 export function PlannerPartModal({ fecha, sections, persons, defaultAsignadoId, defaultSectionId, defaultSala, onClose, onSaved }: Props) {
   const toast = useToast();
   const { roles } = useRoles();
-  const { roster } = useRoster(fecha);
   const [sectionId, setSectionId] = useState(defaultSectionId ?? "");
+  const { roster } = useRoster(fecha, undefined, undefined, sectionId || undefined);
   const [sala, setSala] = useState(defaultSala ?? "Sala A");
   const [asignacion, setAsignacion] = useState("");
   const [minutos, setMinutos] = useState("");
@@ -58,6 +58,19 @@ export function PlannerPartModal({ fecha, sections, persons, defaultAsignadoId, 
     () => roster.filter((r) => !r.assignedOnTarget && r.id !== ayudanteId && poolIds.has(r.id)).slice(0, 6),
     [roster, ayudanteId, poolIds],
   );
+
+  // Datos de decisión por persona para enriquecer el selector de asignado.
+  const rosterMeta = useMemo(
+    () =>
+      new Map(
+        roster.map((r) => [
+          r.id,
+          { daysSince: r.daysSince, countMonth: r.countMonth, assignedOnTarget: r.assignedOnTarget, daysSinceSection: r.daysSinceSection },
+        ]),
+      ),
+    [roster],
+  );
+  const sectionLabel = useMemo(() => sections.find((s) => s.id === sectionId)?.nombre.split(" ")[0], [sections, sectionId]);
 
   const save = async () => {
     if (!asignadoId) return toast("⚠️ Selecciona el asignado", "error");
@@ -151,7 +164,15 @@ export function PlannerPartModal({ fecha, sections, persons, defaultAsignadoId, 
           <label className="field-label">
             {nombrado ? "Nombrado" : "Asignado"} <span className="req">*</span>
           </label>
-          <PersonSelect persons={asignadoPool} value={asignadoId} excludeId={ayudanteId} onChange={setAsignadoId} placeholder="Seleccionar…" />
+          <PersonSelect
+            persons={asignadoPool}
+            value={asignadoId}
+            excludeId={ayudanteId}
+            onChange={setAsignadoId}
+            placeholder="Seleccionar…"
+            meta={rosterMeta}
+            sectionLabel={sectionId ? sectionLabel : undefined}
+          />
           {asignadoSugs.length > 0 && (
             <div className="sug-row">
               <span className="sug-tip">Le toca:</span>

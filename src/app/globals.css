@@ -191,6 +191,22 @@ input[type=date]::-webkit-calendar-picker-indicator { filter:invert(.55); }
 .sel-opt.clear-opt { color:var(--text3); font-size:.76rem; }
 .sel-opt.clear-opt:hover { color:var(--text); }
 
+/* Selector enriquecido (asignado): orden + filas con datos de decisión */
+.sel-sort { display:flex; gap:4px; padding:8px 9px; border-bottom:1px solid var(--border); }
+.sel-sort-btn { flex:1; font-size:.72rem; font-weight:600; padding:6px 4px; border:1px solid var(--border); border-radius:7px; background:var(--surface2); color:var(--text3); cursor:pointer; }
+.sel-sort-btn:hover { color:var(--text2); }
+.sel-sort-btn.active { color:var(--accent); border-color:var(--accent); background:var(--accent-dim); }
+.sel-group { padding:8px 13px 4px; font-size:.64rem; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--text3); position:sticky; top:0; background:var(--surface); }
+.sel-opt.rich { display:flex; align-items:center; justify-content:space-between; gap:10px; }
+.po-id { display:flex; align-items:center; gap:7px; min-width:0; }
+.po-name { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.po-meta { display:flex; align-items:center; gap:8px; flex-shrink:0; }
+.po-ago { font-size:.72rem; color:var(--text3); white-space:nowrap; }
+.po-ago.over { color:var(--green, #34d399); font-weight:600; }
+.po-ago.sec { border-bottom:1px dotted color-mix(in srgb, currentColor 50%, transparent); }
+.po-load { font-size:.68rem; color:var(--text3); white-space:nowrap; }
+.po-tag.taken { font-size:.68rem; color:var(--amber); white-space:nowrap; }
+
 /* VIEW TOGGLE */
 .view-toggle { display:flex; gap:3px; margin-bottom:16px; background:var(--surface2); border:1px solid var(--border); border-radius:var(--r2); padding:3px; }
 .vt-btn { flex:1; display:flex; align-items:center; justify-content:center; gap:5px; padding:8px 10px; border-radius:7px; border:none; background:transparent; color:var(--text2); font-family:var(--head); font-size:.74rem; font-weight:500; cursor:pointer; transition:all .15s; }
