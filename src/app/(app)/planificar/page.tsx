@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useSWRConfig } from "swr";
 import {
   DndContext,
@@ -74,6 +75,8 @@ export default function PlanificarPage() {
   const [prefill, setPrefill] = useState<{ asignadoId?: string; sectionId?: string; sala?: string }>({});
   const [editing, setEditing] = useState<RecordItem | null>(null);
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
   const sensors = useSensors(
     useSensor(MouseSensor, { activationConstraint: { distance: 6 } }),
@@ -282,14 +285,18 @@ export default function PlanificarPage() {
                 );
               })}
 
-              <DragOverlay>
-                {activeRec ? (
-                  <div className="plan-part plan-part-overlay">
-                    <span className="plan-grip"><DotsSixVertical size={16} weight="bold" /></span>
-                    <PartInner rec={activeRec} personsById={personsById} dupIds={dupIds} />
-                  </div>
-                ) : null}
-              </DragOverlay>
+              {mounted &&
+                createPortal(
+                  <DragOverlay>
+                    {activeRec ? (
+                      <div className="plan-part plan-part-overlay">
+                        <span className="plan-grip"><DotsSixVertical size={16} weight="bold" /></span>
+                        <PartInner rec={activeRec} personsById={personsById} dupIds={dupIds} />
+                      </div>
+                    ) : null}
+                  </DragOverlay>,
+                  document.body,
+                )}
             </DndContext>
           </div>
         </div>
