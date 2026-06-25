@@ -2,6 +2,20 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSWRConfig } from "swr";
+import {
+  DndContext,
+  DragOverlay,
+  closestCenter,
+  MouseSensor,
+  TouchSensor,
+  KeyboardSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import { SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, arrayMove, useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import { DotsSixVertical } from "@phosphor-icons/react";
 import { usePersons, useSections, useRoles, useMeetings, useDateRecords } from "@/lib/hooks";
 import { PageHeader } from "@/components/PageHeader";
 import { RosterPanel } from "@/components/RosterPanel";
@@ -10,7 +24,7 @@ import { EditRecordModal } from "@/components/EditRecordModal";
 import { useToast } from "@/components/Toast";
 import { useConfirm } from "@/components/Confirm";
 import { GenderIcon } from "@/components/GenderIcon";
-import { deleteRecord, fmtShort, relativeLabel, todayYMD, weekdayLabel, weekdayOf } from "@/lib/client";
+import { arrangeRecords, deleteRecord, fmtShort, relativeLabel, todayYMD, weekdayLabel, weekdayOf } from "@/lib/client";
 import type { Person, RecordItem } from "@/lib/types";
 
 const SIN_SECCION = "__none__";
@@ -18,7 +32,7 @@ const SIN_SECCION = "__none__";
 function salaClass(sala: string): string {
   return sala === "Sala A" ? "a" : sala === "Sala B" ? "b" : "otro";
 }
-// Agrupa las partes por sala (Sala A, Sala B, luego el resto).
+// Agrupa por sala (Sala A, Sala B, luego el resto); cada grupo ordenado por `orden`.
 function groupBySala(items: RecordItem[]): { sala: string; items: RecordItem[] }[] {
   const map = new Map<string, RecordItem[]>();
   for (const r of items) {
@@ -29,7 +43,7 @@ function groupBySala(items: RecordItem[]): { sala: string; items: RecordItem[] }
   }
   const ord = (s: string) => (s === "Sala A" ? 0 : s === "Sala B" ? 1 : 2);
   return [...map.entries()]
-    .map(([sala, its]) => ({ sala, items: its }))
+    .map(([sala, its]) => ({ sala, items: its.sort((a, b) => a.orden - b.orden) }))
     .sort((a, b) => ord(a.sala) - ord(b.sala) || a.sala.localeCompare(b.sala));
 }
 
@@ -51,17 +65,23 @@ export default function PlanificarPage() {
     }
   }, [meetings]);
 
-  const { items: dayRecords } = useDateRecords(fecha || null);
+  const { items: dayRecords, mutate: mutateDay } = useDateRecords(fecha || null);
   const personsById = useMemo(() => new Map(persons.map((p) => [p.id, p])), [persons]);
 
   const [adding, setAdding] = useState(false);
   const [prefill, setPrefill] = useState<{ asignadoId?: string; sectionId?: string; sala?: string }>({});
   const [editing, setEditing] = useState<RecordItem | null>(null);
+  const [activeId, setActiveId] = useState<string | null>(null);
+
+  const sensors = useSensors(
+    useSensor(MouseSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 6 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
 
   const refresh = () =>
     globalMutate((k) => typeof k === "string" && (k.includes("/api/records") || k.includes("/api/roster")));
 
-  // Conflictos: personas (asignado o ayudante) que aparecen más de una vez ese día.
   const dupIds = useMemo(() => {
     const count = new Map<string, number>();
     for (const r of dayRecords) {
@@ -74,7 +94,6 @@ export default function PlanificarPage() {
     [dayRecords, dupIds],
   );
 
-  // Agrupar por sección (en orden), incluyendo "sin sección".
   const groups = useMemo(() => {
     const order = [...sections].sort((a, b) => a.orden - b.orden);
     const g: { id: string; nombre: string; items: RecordItem[] }[] = order.map((s) => ({ id: s.id, nombre: s.nombre, items: [] }));
@@ -85,7 +104,6 @@ export default function PlanificarPage() {
       if (tgt) tgt.items.push(r);
       else none.push(r);
     }
-    for (const grp of g) grp.items.sort((a, b) => (a.sala ?? "").localeCompare(b.sala ?? ""));
     if (none.length) g.push({ id: SIN_SECCION, nombre: "Sin sección", items: none });
     return g;
   }, [sections, dayRecords]);
@@ -93,6 +111,51 @@ export default function PlanificarPage() {
   const openAdd = (opts: { asignadoId?: string; sectionId?: string; sala?: string } = {}) => {
     setPrefill(opts);
     setAdding(true);
+  };
+
+  // Aplica orden/sala con actualización optimista + persistencia.
+  const applyArrange = async (updates: { id: string; orden: number; sala?: string | null }[]) => {
+    const m = new Map(updates.map((u) => [u.id, u]));
+    const next = dayRecords.map((r) => {
+      const u = m.get(r.id);
+      if (!u) return r;
+      return { ...r, orden: u.orden, ...(u.sala !== undefined ? { sala: u.sala ?? null } : {}) };
+    });
+    mutateDay({ items: next, nextCursor: null }, false);
+    try {
+      await arrangeRecords(updates);
+      refresh();
+    } catch (e) {
+      mutateDay();
+      toast("❌ " + (e as Error).message, "error");
+    }
+  };
+
+  const onDragEnd = (e: DragEndEvent) => {
+    setActiveId(null);
+    const { active, over } = e;
+    if (!over || active.id === over.id) return;
+    const a = dayRecords.find((r) => r.id === String(active.id));
+    const b = dayRecords.find((r) => r.id === String(over.id));
+    if (!a || !b) return;
+    if ((a.sectionId ?? "") !== (b.sectionId ?? "")) return; // solo dentro de la misma sección
+    const sa = a.sala ?? "Otro";
+    const sb = b.sala ?? "Otro";
+    if (sa === sb) {
+      // Reordenar dentro de la misma sala
+      const grp = dayRecords
+        .filter((r) => (r.sectionId ?? "") === (a.sectionId ?? "") && (r.sala ?? "Otro") === sa)
+        .sort((x, y) => x.orden - y.orden);
+      const oldIndex = grp.findIndex((r) => r.id === a.id);
+      const newIndex = grp.findIndex((r) => r.id === b.id);
+      applyArrange(arrayMove(grp, oldIndex, newIndex).map((r, i) => ({ id: r.id, orden: i })));
+    } else {
+      // Intercambiar sala (y posición) entre las dos partes
+      applyArrange([
+        { id: a.id, orden: b.orden, sala: b.sala },
+        { id: b.id, orden: a.orden, sala: a.sala },
+      ]);
+    }
   };
 
   const onDelete = async (rec: RecordItem) => {
@@ -114,6 +177,7 @@ export default function PlanificarPage() {
 
   const upcoming = meetings.slice(0, 6);
   const dow = fecha ? weekdayLabel(weekdayOf(fecha)) : "";
+  const activeRec = activeId ? dayRecords.find((r) => r.id === activeId) ?? null : null;
 
   return (
     <div className="page-inner fade-up">
@@ -124,11 +188,7 @@ export default function PlanificarPage() {
         <div className="section-label">Reunión</div>
         <div className="plan-dates">
           {upcoming.map((m) => (
-            <button
-              key={m.id}
-              className={`reg-pill${fecha === m.fecha ? " active" : ""}`}
-              onClick={() => setFecha(m.fecha)}
-            >
+            <button key={m.id} className={`reg-pill${fecha === m.fecha ? " active" : ""}`} onClick={() => setFecha(m.fecha)}>
               {fmtShort(m.fecha)}
             </button>
           ))}
@@ -154,43 +214,59 @@ export default function PlanificarPage() {
                 + Parte
               </button>
             </div>
+            <div className="plan-hint">Arrastra ⠿ para reordenar; suéltala sobre otra parte para intercambiar de sala.</div>
 
-            {groups.map((g) => (
-              <div className="plan-section" key={g.id}>
-                <div className="plan-section-head">
-                  <span className="plan-section-title">{g.nombre}</span>
-                  {g.id !== SIN_SECCION && (
-                    <button className="btn btn-ghost btn-sm plan-add-sec" onClick={() => openAdd({ sectionId: g.id })}>
-                      + parte
-                    </button>
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragStart={(e) => setActiveId(String(e.active.id))}
+              onDragCancel={() => setActiveId(null)}
+              onDragEnd={onDragEnd}
+            >
+              {groups.map((g) => (
+                <div className="plan-section" key={g.id}>
+                  <div className="plan-section-head">
+                    <span className="plan-section-title">{g.nombre}</span>
+                    {g.id !== SIN_SECCION && (
+                      <button className="btn btn-ghost btn-sm plan-add-sec" onClick={() => openAdd({ sectionId: g.id })}>
+                        + parte
+                      </button>
+                    )}
+                  </div>
+                  {g.items.length === 0 ? (
+                    <div className="plan-empty">— sin partes —</div>
+                  ) : (
+                    groupBySala(g.items).map((sg) => (
+                      <div className={`plan-sala-group ${salaClass(sg.sala)}`} key={sg.sala}>
+                        <div className="plan-sala-head">
+                          <span className={`plan-sala-tag ${salaClass(sg.sala)}`}>{sg.sala}</span>
+                          <span className="plan-sala-count">{sg.items.length} parte{sg.items.length !== 1 ? "s" : ""}</span>
+                          {g.id !== SIN_SECCION && (
+                            <button className="plan-sala-add" onClick={() => openAdd({ sectionId: g.id, sala: sg.sala })} title={`Agregar parte en ${sg.sala}`}>
+                              +
+                            </button>
+                          )}
+                        </div>
+                        <SortableContext items={sg.items.map((r) => r.id)} strategy={verticalListSortingStrategy}>
+                          {sg.items.map((r) => (
+                            <PartRow key={r.id} rec={r} personsById={personsById} dupIds={dupIds} onEdit={() => setEditing(r)} onDelete={() => onDelete(r)} />
+                          ))}
+                        </SortableContext>
+                      </div>
+                    ))
                   )}
                 </div>
-                {g.items.length === 0 ? (
-                  <div className="plan-empty">— sin partes —</div>
-                ) : (
-                  groupBySala(g.items).map((sg) => (
-                    <div className={`plan-sala-group ${salaClass(sg.sala)}`} key={sg.sala}>
-                      <div className="plan-sala-head">
-                        <span className={`plan-sala-tag ${salaClass(sg.sala)}`}>{sg.sala}</span>
-                        <span className="plan-sala-count">{sg.items.length} parte{sg.items.length !== 1 ? "s" : ""}</span>
-                        {g.id !== SIN_SECCION && (
-                          <button
-                            className="plan-sala-add"
-                            onClick={() => openAdd({ sectionId: g.id, sala: sg.sala })}
-                            title={`Agregar parte en ${sg.sala}`}
-                          >
-                            +
-                          </button>
-                        )}
-                      </div>
-                      {sg.items.map((r) => (
-                        <PartRow key={r.id} rec={r} personsById={personsById} dupIds={dupIds} onEdit={() => setEditing(r)} onDelete={() => onDelete(r)} />
-                      ))}
-                    </div>
-                  ))
-                )}
-              </div>
-            ))}
+              ))}
+
+              <DragOverlay>
+                {activeRec ? (
+                  <div className="plan-part plan-part-overlay">
+                    <span className="plan-grip"><DotsSixVertical size={16} weight="bold" /></span>
+                    <PartInner rec={activeRec} personsById={personsById} dupIds={dupIds} />
+                  </div>
+                ) : null}
+              </DragOverlay>
+            </DndContext>
           </div>
         </div>
 
@@ -224,6 +300,32 @@ export default function PlanificarPage() {
   );
 }
 
+function PartInner({ rec, personsById, dupIds }: { rec: RecordItem; personsById: Map<string, Person>; dupIds: Set<string> }) {
+  const aP = personsById.get(rec.asignadoId);
+  const hP = rec.ayudanteId ? personsById.get(rec.ayudanteId) : undefined;
+  const conflict = dupIds.has(rec.asignadoId) || (!!rec.ayudanteId && dupIds.has(rec.ayudanteId));
+  return (
+    <div className="plan-part-main">
+      <div className="plan-part-asig">
+        {rec.asignacion}
+        {rec.minutos != null && <span className="plan-part-sala">{rec.minutos} min</span>}
+        {conflict && <span className="plan-part-warn" title="Esta persona ya tiene otra parte ese día">⚠ repetido</span>}
+      </div>
+      <div className="plan-part-people">
+        {aP && <GenderIcon genero={aP.genero} />}
+        <span className="plan-part-name">{rec.asignado}</span>
+        {rec.ayudante && (
+          <>
+            <span className="plan-part-con">con</span>
+            {hP && <GenderIcon genero={hP.genero} />}
+            <span className="plan-part-name">{rec.ayudante}</span>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function PartRow({
   rec,
   personsById,
@@ -237,30 +339,16 @@ function PartRow({
   onEdit: () => void;
   onDelete: () => void;
 }) {
-  const aP = personsById.get(rec.asignadoId);
-  const hP = rec.ayudanteId ? personsById.get(rec.ayudanteId) : undefined;
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: rec.id });
   const conflict = dupIds.has(rec.asignadoId) || (!!rec.ayudanteId && dupIds.has(rec.ayudanteId));
+  const style: React.CSSProperties = { transform: CSS.Transform.toString(transform), transition };
 
   return (
-    <div className={`plan-part${conflict ? " conflict" : ""}`}>
-      <div className="plan-part-main">
-        <div className="plan-part-asig">
-          {rec.asignacion}
-          {rec.minutos != null && <span className="plan-part-sala">{rec.minutos} min</span>}
-          {conflict && <span className="plan-part-warn" title="Esta persona ya tiene otra parte ese día">⚠ repetido</span>}
-        </div>
-        <div className="plan-part-people">
-          {aP && <GenderIcon genero={aP.genero} />}
-          <span className="plan-part-name">{rec.asignado}</span>
-          {rec.ayudante && (
-            <>
-              <span className="plan-part-con">con</span>
-              {hP && <GenderIcon genero={hP.genero} />}
-              <span className="plan-part-name">{rec.ayudante}</span>
-            </>
-          )}
-        </div>
-      </div>
+    <div ref={setNodeRef} style={style} className={`plan-part${conflict ? " conflict" : ""}${isDragging ? " dragging" : ""}`}>
+      <button className="plan-grip" {...attributes} {...listeners} aria-label="Mover" title="Mover / cambiar de sala">
+        <DotsSixVertical size={16} weight="bold" />
+      </button>
+      <PartInner rec={rec} personsById={personsById} dupIds={dupIds} />
       <div className="plan-part-actions">
         <button className="tl-act" onClick={onEdit} title="Editar" aria-label="Editar">✎</button>
         <button className="tl-act danger" onClick={onDelete} title="Quitar" aria-label="Quitar">✕</button>

@@ -91,6 +91,14 @@ export async function POST(req: Request) {
   if (sectionId && !(await prisma.section.findUnique({ where: { id: sectionId } })))
     return fail("Sección inexistente", 422);
 
+  // El nuevo registro va al final de su grupo (fecha + sección + sala).
+  const last = await prisma.record.findFirst({
+    where: { fecha: new Date(fecha), sectionId: sectionId ?? null, sala: sala ?? null },
+    orderBy: { orden: "desc" },
+    select: { orden: true },
+  });
+  const orden = (last?.orden ?? -1) + 1;
+
   const record = await prisma.record.create({
     data: {
       asignadoId,
@@ -101,6 +109,7 @@ export async function POST(req: Request) {
       tipo: tipo ?? "ASIGNACION",
       sectionId: sectionId ?? null,
       minutos: minutos ?? null,
+      orden,
     },
     include: recordInclude,
   });

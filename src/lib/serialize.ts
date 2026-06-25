@@ -60,6 +60,7 @@ export function serializeRecord(r: RecordWithPeople): RecordItem {
     tipo: r.tipo,
     asignacion: r.asignacion,
     minutos: r.minutos ?? null,
+    orden: r.orden,
     sectionId: r.sectionId ?? null,
     section: r.section ? r.section.nombre : null,
     createdAt: r.createdAt.toISOString(),

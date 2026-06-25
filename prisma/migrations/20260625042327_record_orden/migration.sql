@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "Record" ADD COLUMN     "orden" INTEGER NOT NULL DEFAULT 0;

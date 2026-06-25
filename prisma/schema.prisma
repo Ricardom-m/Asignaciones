@@ -106,6 +106,7 @@ model Record {
   sala       String?
   asignacion String
   minutos    Int? // duración en minutos (p. ej. Lectura de la Biblia = 4)
+  orden      Int        @default(0) // posición dentro de su grupo (fecha+sección+sala) en el planificador
   tipo       RecordTipo @default(ASIGNACION)
 
   // Sección de la reunión (opcional). Si se borra la sección, queda en null.

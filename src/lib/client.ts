@@ -100,6 +100,10 @@ export const updateRecord = (id: string, data: RecordPayload) =>
 export const deleteRecord = (id: string) =>
   apiFetch<{ deleted: boolean }>(`/api/records/${id}`, { method: "DELETE" });
 
+// Reordenar / cambiar de sala en lote (planificador).
+export const arrangeRecords = (updates: { id: string; orden: number; sala?: string | null }[]) =>
+  apiFetch<{ updated: number }>("/api/records/arrange", { method: "POST", body: JSON.stringify({ updates }) });
+
 // ── Fechas ────────────────────────────────────────────────
 export function fmtDate(ymd?: string | null): string {
   if (!ymd) return "—";

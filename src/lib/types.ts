@@ -71,6 +71,7 @@ export interface RecordItem {
   tipo: RecordTipo; // categoría: Asignación o Nombrado
   asignacion: string;
   minutos: number | null; // duración en minutos
+  orden: number; // posición en el planificador
   sectionId: string | null;
   section: string | null; // nombre de la sección (derivado) o null
   createdAt: string; // ISO

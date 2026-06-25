@@ -77,6 +77,20 @@ export const recordInput = z.object({
 });
 export type RecordInput = z.infer<typeof recordInput>;
 
+// Reordenar / cambiar de sala (planificador): lote de {id, orden, sala}.
+export const arrangeInput = z.object({
+  updates: z
+    .array(
+      z.object({
+        id: z.string().min(1),
+        orden: z.number().int().min(0),
+        sala: z.string().trim().max(80).nullish(),
+      }),
+    )
+    .min(1)
+    .max(100),
+});
+
 // ── Importación del JSON de la app vieja (v1) ─────────────
 // Tolerante: acepta el export { records, persons, exportedAt }.
 const legacyPerson = z.object({
