@@ -22,8 +22,9 @@ interface FormState {
   sala: string;
   asignacion: string;
   sectionId: string;
+  minutos: string;
 }
-const empty = (): FormState => ({ asignadoId: "", ayudanteId: "", fecha: "", sala: "Sala A", asignacion: "", sectionId: "" });
+const empty = (): FormState => ({ asignadoId: "", ayudanteId: "", fecha: "", sala: "Sala A", asignacion: "", sectionId: "", minutos: "" });
 
 export default function NuevoPage() {
   const { persons } = usePersons();
@@ -76,6 +77,7 @@ export default function NuevoPage() {
         asignacion: form.asignacion.trim(),
         tipo: isNombrado ? "NOMBRADO" : "ASIGNACION",
         sectionId: form.sectionId || null,
+        minutos: form.minutos ? Number(form.minutos) : null,
       });
       await mutate((k) => typeof k === "string" && k.includes("/api/records"));
       setForm(empty());
@@ -195,7 +197,24 @@ export default function NuevoPage() {
                   autoComplete="off"
                   autoFocus
                 />
-                <AsignacionSuggest sectionId={form.sectionId} value={form.asignacion} onPick={(v) => patch({ asignacion: v })} />
+                <AsignacionSuggest
+                  sectionId={form.sectionId}
+                  value={form.asignacion}
+                  onPick={(v, min) => patch(min != null ? { asignacion: v, minutos: String(min) } : { asignacion: v })}
+                />
+              </div>
+
+              {/* 7 · Duración */}
+              <div className="field-group field-reveal">
+                <label className="field-label">Duración (min)</label>
+                <input
+                  type="number"
+                  min="1"
+                  max="600"
+                  value={form.minutos}
+                  onChange={(e) => patch({ minutos: e.target.value })}
+                  placeholder="—"
+                />
               </div>
 
               <div className="divider" />

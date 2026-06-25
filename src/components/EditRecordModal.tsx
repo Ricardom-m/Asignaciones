@@ -28,6 +28,7 @@ interface FormState {
   sala: string;
   asignacion: string;
   sectionId: string;
+  minutos: string;
 }
 
 export function EditRecordModal({ rec, persons, onClose, onSaved }: Props) {
@@ -42,6 +43,7 @@ export function EditRecordModal({ rec, persons, onClose, onSaved }: Props) {
     sala: rec.sala ?? "Sala A",
     asignacion: rec.asignacion,
     sectionId: rec.sectionId ?? "",
+    minutos: rec.minutos != null ? String(rec.minutos) : "",
   });
   const [saving, setSaving] = useState(false);
 
@@ -79,6 +81,7 @@ export function EditRecordModal({ rec, persons, onClose, onSaved }: Props) {
         asignacion: form.asignacion.trim(),
         tipo: rec.tipo,
         sectionId: form.sectionId || null,
+        minutos: form.minutos ? Number(form.minutos) : null,
       });
       toast("✏️ Registro actualizado", "success");
       onSaved();
@@ -162,7 +165,23 @@ export function EditRecordModal({ rec, persons, onClose, onSaved }: Props) {
             placeholder="Describe la asignación"
             autoComplete="off"
           />
-          <AsignacionSuggest sectionId={form.sectionId} value={form.asignacion} onPick={(v) => patch({ asignacion: v })} />
+          <AsignacionSuggest
+            sectionId={form.sectionId}
+            value={form.asignacion}
+            onPick={(v, min) => patch(min != null ? { asignacion: v, minutos: String(min) } : { asignacion: v })}
+          />
+        </div>
+
+        <div className="field-group">
+          <label className="field-label">Duración (min)</label>
+          <input
+            type="number"
+            min="1"
+            max="600"
+            value={form.minutos}
+            onChange={(e) => patch({ minutos: e.target.value })}
+            placeholder="—"
+          />
         </div>
 
         <div className="divider" />

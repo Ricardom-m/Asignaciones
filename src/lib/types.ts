@@ -70,6 +70,7 @@ export interface RecordItem {
   sala: string | null;
   tipo: RecordTipo; // categoría: Asignación o Nombrado
   asignacion: string;
+  minutos: number | null; // duración en minutos
   sectionId: string | null;
   section: string | null; // nombre de la sección (derivado) o null
   createdAt: string; // ISO

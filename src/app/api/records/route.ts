@@ -80,7 +80,7 @@ export async function POST(req: Request) {
   if (!parsed.success)
     return fail("Datos inválidos", 422, parsed.error.flatten().fieldErrors);
 
-  const { asignadoId, ayudanteId, fecha, sala, asignacion, tipo, sectionId } = parsed.data;
+  const { asignadoId, ayudanteId, fecha, sala, asignacion, tipo, sectionId, minutos } = parsed.data;
   if (ayudanteId && ayudanteId === asignadoId)
     return fail("El ayudante no puede ser la misma persona que el asignado", 422);
 
@@ -100,6 +100,7 @@ export async function POST(req: Request) {
       asignacion,
       tipo: tipo ?? "ASIGNACION",
       sectionId: sectionId ?? null,
+      minutos: minutos ?? null,
     },
     include: recordInclude,
   });

@@ -105,6 +105,7 @@ model Record {
   fecha      DateTime   @db.Date // fecha de la asignación (solo día)
   sala       String?
   asignacion String
+  minutos    Int? // duración en minutos (p. ej. Lectura de la Biblia = 4)
   tipo       RecordTipo @default(ASIGNACION)
 
   // Sección de la reunión (opcional). Si se borra la sección, queda en null.

@@ -90,7 +90,10 @@ export function RecordCard({ rec, personsById, onEdit, onDelete, onPerson, secti
           {rec.asignacion && (
             <div className="rc-detail-row">
               <span className="rc-detail-label">Asignación</span>
-              <span className="rc-task">{rec.asignacion}</span>
+              <span className="rc-task">
+                {rec.asignacion}
+                {rec.minutos != null && <span className="rc-sala" style={{ marginLeft: 8 }}>{rec.minutos} min</span>}
+              </span>
             </div>
           )}
 

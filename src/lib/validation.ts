@@ -73,6 +73,7 @@ export const recordInput = z.object({
   asignacion: z.string().trim().min(1, "La asignación es obligatoria").max(500),
   tipo: z.enum(["ASIGNACION", "NOMBRADO"]).optional(),
   sectionId: z.string().min(1).nullish(),
+  minutos: z.number().int().min(1).max(600).nullish(),
 });
 export type RecordInput = z.infer<typeof recordInput>;
 

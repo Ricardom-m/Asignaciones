@@ -21,10 +21,11 @@ export function useSections() {
   return { sections: data ?? [], error, isLoading, mutate };
 }
 
-// Textos de asignación más usados (sugerencias al escribir), por sección.
+// Textos de asignación más usados (sugerencias al escribir), por sección,
+// con su duración más frecuente.
 export function useAsignaciones(sectionId?: string) {
   const key = sectionId ? `/api/records/asignaciones?section=${sectionId}` : "/api/records/asignaciones";
-  const { data } = useSWR<{ value: string; count: number }[]>(key, fetcher);
+  const { data } = useSWR<{ value: string; count: number; minutos: number | null }[]>(key, fetcher);
   return { asignaciones: data ?? [] };
 }
 

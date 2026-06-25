@@ -210,6 +210,7 @@ function PartRow({
       <div className="plan-part-main">
         <div className="plan-part-asig">
           {rec.asignacion}
+          {rec.minutos != null && <span className="plan-part-sala">{rec.minutos} min</span>}
           {rec.sala && <span className="plan-part-sala">{rec.sala}</span>}
           {conflict && <span className="plan-part-warn" title="Esta persona ya tiene otra parte ese día">⚠ repetido</span>}
         </div>

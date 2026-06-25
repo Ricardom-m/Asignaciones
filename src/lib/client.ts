@@ -89,6 +89,7 @@ export interface RecordPayload {
   asignacion: string;
   tipo?: RecordTipo;
   sectionId?: string | null;
+  minutos?: number | null;
 }
 export const createRecord = (data: RecordPayload) =>
   apiFetch<RecordItem>("/api/records", { method: "POST", body: JSON.stringify(data) });

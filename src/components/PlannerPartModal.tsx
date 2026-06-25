@@ -31,6 +31,7 @@ export function PlannerPartModal({ fecha, sections, persons, defaultAsignadoId, 
   const [sectionId, setSectionId] = useState(defaultSectionId ?? "");
   const [sala, setSala] = useState("Sala A");
   const [asignacion, setAsignacion] = useState("");
+  const [minutos, setMinutos] = useState("");
   const [asignadoId, setAsignadoId] = useState(defaultAsignadoId ?? "");
   const [ayudanteId, setAyudanteId] = useState("");
   const [saving, setSaving] = useState(false);
@@ -58,6 +59,7 @@ export function PlannerPartModal({ fecha, sections, persons, defaultAsignadoId, 
         asignacion: asignacion.trim(),
         tipo: "ASIGNACION",
         sectionId: sectionId || null,
+        minutos: minutos ? Number(minutos) : null,
       });
       toast("✅ Parte agregada", "success");
       onSaved();
@@ -85,6 +87,26 @@ export function PlannerPartModal({ fecha, sections, persons, defaultAsignadoId, 
           </div>
         )}
 
+        <div className="field-group">
+          <label className="field-label">
+            Asignación <span className="req">*</span>
+          </label>
+          <input
+            type="text"
+            value={asignacion}
+            onChange={(e) => setAsignacion(e.target.value)}
+            placeholder="Ej. Lectura de la Biblia"
+            autoComplete="off"
+          />
+          <AsignacionSuggest
+            sectionId={sectionId}
+            value={asignacion}
+            onPick={(v, min) => {
+              setAsignacion(v);
+              if (min != null) setMinutos(String(min));
+            }}
+          />
+        </div>
         <div className="row-2">
           <div className="field-group">
             <label className="field-label">Sala</label>
@@ -95,19 +117,10 @@ export function PlannerPartModal({ fecha, sections, persons, defaultAsignadoId, 
             </select>
           </div>
           <div className="field-group">
-            <label className="field-label">
-              Asignación <span className="req">*</span>
-            </label>
-            <input
-              type="text"
-              value={asignacion}
-              onChange={(e) => setAsignacion(e.target.value)}
-              placeholder="Ej. Lectura de la Biblia"
-              autoComplete="off"
-            />
+            <label className="field-label">Duración (min)</label>
+            <input type="number" min="1" max="600" value={minutos} onChange={(e) => setMinutos(e.target.value)} placeholder="—" />
           </div>
         </div>
-        <AsignacionSuggest sectionId={sectionId} value={asignacion} onPick={setAsignacion} />
 
         <div className="field-group">
           <label className="field-label">
