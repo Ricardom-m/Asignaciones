@@ -354,22 +354,23 @@ export default function PlanificarPage() {
                         <div className="plan-empty">— sin partes —</div>
                       ) : (
                         <div className="plan-tesoros">
-                          {generales.map((r) => (
-                            <TesorosRow key={r.id} rec={r} personsById={personsById} dupIds={dupIds} onEdit={() => setEditing(r)} onDelete={() => onDelete(r)} />
-                          ))}
+                          {generales.length > 0 && (
+                            <div className="plan-tg main">
+                              {generales.map((r) => (
+                                <TesorosRow key={r.id} rec={r} personsById={personsById} dupIds={dupIds} onEdit={() => setEditing(r)} onDelete={() => onDelete(r)} />
+                              ))}
+                            </div>
+                          )}
                           {lecturas.length > 0 && (
-                            <div className="plan-tesoros-lectura">
-                              <div className="plan-sub-label">Lectura de la Biblia</div>
-                              <div className="plan-tesoros-salas">
-                                {groupBySala(lecturas).map((sg) => (
-                                  <div className="plan-tesoros-sala" key={sg.sala}>
-                                    <span className={`plan-sala-tag ${salaClass(sg.sala)}`}>{sg.sala}</span>
-                                    {sg.items.map((r) => (
-                                      <TesorosRow key={r.id} rec={r} personsById={personsById} dupIds={dupIds} onEdit={() => setEditing(r)} onDelete={() => onDelete(r)} />
-                                    ))}
-                                  </div>
-                                ))}
-                              </div>
+                            <div className="plan-tesoros-salas">
+                              {groupBySala(lecturas).map((sg) => (
+                                <div className={`plan-tg ${salaClass(sg.sala)}`} key={sg.sala}>
+                                  <span className={`plan-sala-tag ${salaClass(sg.sala)}`}>{sg.sala}</span>
+                                  {sg.items.map((r) => (
+                                    <TesorosRow key={r.id} rec={r} personsById={personsById} dupIds={dupIds} onEdit={() => setEditing(r)} onDelete={() => onDelete(r)} />
+                                  ))}
+                                </div>
+                              ))}
                             </div>
                           )}
                         </div>

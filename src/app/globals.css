@@ -739,16 +739,21 @@ input:focus, select:focus, .list-search-input:focus, .sel-search:focus, .cmd-inp
 /* Aviso suave (p. ej. falta la Lectura en Tesoros) */
 .plan-warn-note { font-size:.66rem; color:var(--amber); background:var(--amber-dim); border:1px solid color-mix(in srgb, var(--amber) 35%, transparent); border-radius:8px; padding:5px 9px; margin:2px 0 6px; }
 
-/* Tesoros de la Biblia: orden fijo, filas-tarjeta y Lectura por sala.
-   Espaciado por gap (sin márgenes negativos) para evitar solapamientos. */
-.plan-tesoros { display:flex; flex-direction:column; gap:7px; }
-.plan-tesoros-row { display:flex; align-items:center; gap:10px; padding:9px 11px; border:1px solid var(--border); border-radius:10px; background:var(--surface2); }
-.plan-tesoros-row.conflict { border-color:var(--amber); background:color-mix(in srgb, var(--amber) 10%, transparent); }
+/* Tesoros de la Biblia: una sola sección con barras de color a la izquierda.
+   Orden fijo (discurso/perlas arriba, Lectura por sala abajo). Espaciado por
+   gap (sin márgenes negativos) para evitar solapamientos. */
+.plan-tesoros { display:flex; flex-direction:column; gap:10px; }
+/* Grupo con barra de color (como las demás secciones) */
+.plan-tg { border-left:2px solid var(--border); padding-left:12px; display:flex; flex-direction:column; gap:4px; }
+.plan-tg.main { border-left-color:color-mix(in srgb, var(--accent) 45%, var(--border)); }
+.plan-tg.a { border-left-color:var(--accent); }
+.plan-tg.b { border-left-color:var(--accent2); }
+.plan-tg .plan-sala-tag { align-self:flex-start; margin-bottom:2px; }
+.plan-tesoros-row { display:flex; align-items:center; gap:10px; padding:7px 8px; border-radius:8px; transition:background .14s; }
+.plan-tesoros-row:hover { background:var(--surface2); }
+.plan-tesoros-row.conflict { background:color-mix(in srgb, var(--amber) 10%, transparent); }
 .plan-tesoros-row .plan-part-main { flex:1; min-width:0; }
-.plan-tesoros-lectura { display:flex; flex-direction:column; gap:6px; margin-top:3px; padding-top:9px; border-top:1px dashed var(--border); }
-.plan-sub-label { font-size:.62rem; font-weight:600; letter-spacing:.06em; text-transform:uppercase; color:var(--text3); }
-.plan-tesoros-salas { display:flex; flex-direction:column; gap:7px; }
-.plan-tesoros-sala { display:flex; flex-direction:column; gap:6px; min-width:0; }
+.plan-tesoros-salas { display:flex; flex-direction:column; gap:10px; }
 @media (min-width:1280px) {
   .plan-tesoros-salas { display:grid; grid-template-columns:1fr 1fr; gap:14px; align-items:start; }
 }
