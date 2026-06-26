@@ -321,11 +321,13 @@ export default function PlanificarPage() {
                   if (g.items.length === 0) return null;
                   return (
                     <div className="plan-section plan-inicio" key={g.id}>
-                      {[...g.items]
-                        .sort((a, b) => a.orden - b.orden)
-                        .map((r) => (
-                          <StartRow key={r.id} rec={r} onCantico={(n) => saveCantico(r, n)} />
-                        ))}
+                      <div className="plan-tg main">
+                        {[...g.items]
+                          .sort((a, b) => a.orden - b.orden)
+                          .map((r) => (
+                            <StartRow key={r.id} rec={r} onCantico={(n) => saveCantico(r, n)} />
+                          ))}
+                      </div>
                     </div>
                   );
                 }

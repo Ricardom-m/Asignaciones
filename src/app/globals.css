@@ -758,9 +758,11 @@ input:focus, select:focus, .list-search-input:focus, .sel-search:focus, .cmd-inp
   .plan-tesoros-salas { display:grid; grid-template-columns:1fr 1fr; gap:14px; align-items:start; }
 }
 
-/* Sección "Inicio": partes fijas sin persona ni título */
+/* Sección "Inicio": partes fijas sin persona ni título. Mismo estilo de
+   barra de color + filas que Tesoros (ver .plan-tg). */
 .plan-inicio { border-top:none; padding-top:2px; }
-.plan-inicio-row { display:flex; align-items:center; gap:9px; padding:8px 10px; border:1px solid var(--border); border-radius:10px; background:var(--surface2); margin-bottom:6px; }
+.plan-inicio-row { display:flex; align-items:center; gap:9px; padding:7px 8px; border-radius:8px; transition:background .14s; }
+.plan-inicio-row:hover { background:var(--surface2); }
 .plan-inicio-ico { font-size:.95rem; flex-shrink:0; }
 .plan-inicio-asig { font-weight:600; font-size:.86rem; min-width:0; }
 .plan-inicio-min { margin-left:auto; font-size:.72rem; color:var(--text3); white-space:nowrap; }
