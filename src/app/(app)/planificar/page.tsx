@@ -660,9 +660,9 @@ function StartRow({ rec, onCantico }: { rec: RecordItem; onCantico: (n: number |
 // auxiliar, Oración): selector en línea filtrado a Nombrados.
 function InicioPersonaRow({ rec, nombrados, onPersona }: { rec: RecordItem; nombrados: Person[]; onPersona: (id: string) => void }) {
   return (
-    <div className="plan-inicio-row">
+    <div className="plan-inicio-row role">
       <span className="plan-inicio-asig">{rec.asignacion}</span>
-      <div className="plan-inicio-persona">
+      <div className="plan-inicio-sel">
         <PersonSelect persons={nombrados} value={rec.asignadoId ?? ""} onChange={onPersona} placeholder="Asignar nombrado…" />
       </div>
     </div>

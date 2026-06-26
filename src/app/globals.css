@@ -760,18 +760,24 @@ input:focus, select:focus, .list-search-input:focus, .sel-search:focus, .cmd-inp
 }
 
 /* Sección "Inicio": dos grupos (roles con Nombrado + partes fijas) con barra
-   de color, sin título ni iconos. Mismo estilo que Tesoros (ver .plan-tg). */
+   de color. Misma densidad/tipografía que las partes de Seamos (ver .plan-part). */
 .plan-inicio { border-top:none; padding-top:2px; display:flex; flex-direction:column; gap:10px; }
+.plan-tg.main, .plan-tg.alt { gap:2px; }
 .plan-inicio-row { display:flex; align-items:center; gap:9px; padding:7px 8px; border-radius:8px; transition:background .14s; }
 .plan-inicio-row:hover { background:var(--surface2); }
-.plan-inicio-ico { font-size:.95rem; flex-shrink:0; }
-.plan-inicio-asig { font-weight:600; font-size:.86rem; min-width:0; }
-.plan-inicio-min { margin-left:auto; font-size:.72rem; color:var(--text3); white-space:nowrap; }
-.plan-inicio-persona { margin-left:auto; width:230px; max-width:58%; flex-shrink:0; }
-.plan-inicio-persona .sel-trigger { padding:7px 10px; }
+/* Roles (Presidente/Consejero/Oración): dos líneas como Seamos — nombre arriba,
+   persona abajo con su ícono de género (selector "fantasma"). */
+.plan-inicio-row.role { flex-direction:column; align-items:stretch; gap:1px; }
+.plan-inicio-asig { font-weight:600; font-size:.82rem; min-width:0; }
+.plan-inicio-min { margin-left:auto; font-size:.7rem; color:var(--text3); white-space:nowrap; }
+.plan-inicio-sel .sel-trigger { width:auto; background:transparent; border:none; border-radius:0; padding:1px 0; font-family:var(--head); font-size:.74rem; gap:5px; justify-content:flex-start; overflow:visible; }
+.plan-inicio-sel .sel-trigger-text { flex:0 1 auto; color:var(--text2); font-weight:500; }
+.plan-inicio-sel .sel-trigger-text.ph { color:var(--text3); font-style:italic; font-weight:400; }
+.plan-inicio-sel .sel-trigger:hover .sel-trigger-text { color:var(--accent); }
+.plan-inicio-sel .sel-chevron { min-width:11px; width:11px; }
 .plan-inicio-cant { margin-left:auto; display:flex; align-items:center; gap:7px; }
-.plan-inicio-cant-lbl { font-size:.68rem; color:var(--text3); text-transform:uppercase; letter-spacing:.04em; }
-.plan-inicio-input { width:72px; text-align:center; padding:6px 8px !important; }
+.plan-inicio-cant-lbl { font-size:.66rem; color:var(--text3); text-transform:uppercase; letter-spacing:.04em; }
+.plan-inicio-input { width:64px; text-align:center; padding:5px 8px !important; }
 .plan-inicio-input::-webkit-outer-spin-button, .plan-inicio-input::-webkit-inner-spin-button { -webkit-appearance:none; margin:0; }
 .plan-inicio-input { -moz-appearance:textfield; }
 

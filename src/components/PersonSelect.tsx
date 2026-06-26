@@ -249,6 +249,7 @@ export function PersonSelect({
         className={`sel-trigger${open ? " open" : ""}`}
         onClick={() => setOpen((o) => !o)}
       >
+        {selected && <GenderIcon genero={selected.genero} />}
         <span className={`sel-trigger-text${label ? "" : " ph"}`}>{label || placeholder}</span>
         <svg className="sel-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="13" height="13">
           <polyline points="6 9 12 15 18 9" />
