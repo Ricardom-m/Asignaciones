@@ -2,7 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { recordInput } from "@/lib/validation";
 import { serializeRecord, recordInclude } from "@/lib/serialize";
 import { ok, fail, requireSession, rateLimit, clientKey, isAdmin } from "@/lib/server";
-import { SECCION_TESOROS, TESOROS_MAX, norm } from "@/lib/sections";
+import { SECCION_TESOROS, TESOROS_MAX, esLecturaNombre, norm } from "@/lib/sections";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -27,6 +27,14 @@ export async function PATCH(req: Request, { params }: Params) {
   if (!exists) return fail("Registro no encontrado", 404);
   if ((exists.soloAdmin || exists.section?.soloAdmin) && !isAdmin(session))
     return fail("Solo el administrador puede editar esta asignación", 403);
+
+  // "Lectura de la Biblia": como mucho una por sala ese día (regla por nombre).
+  if (esLecturaNombre(asignacion)) {
+    const dupLect = await prisma.record.findFirst({
+      where: { fecha: new Date(fecha), sala: sala ?? null, asignacion: { equals: asignacion.trim(), mode: "insensitive" }, id: { not: id } },
+    });
+    if (dupLect) return fail(`Ya hay una Lectura de la Biblia en ${sala ?? "esa sala"} ese día`, 409);
+  }
 
   let sinPersona = false;
   if (sectionId) {
