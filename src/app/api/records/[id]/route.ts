@@ -2,7 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { recordInput } from "@/lib/validation";
 import { serializeRecord, recordInclude } from "@/lib/serialize";
 import { ok, fail, requireSession, rateLimit, clientKey, isAdmin } from "@/lib/server";
-import { SECCION_TESOROS, TESOROS_MAX, esLecturaNombre, esParteSinPersona, norm } from "@/lib/sections";
+import { SECCION_TESOROS, TESOROS_MAX, esLecturaNombre, esRolInicio, norm } from "@/lib/sections";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -64,7 +64,7 @@ export async function PATCH(req: Request, { params }: Params) {
   }
 
   // Inicio: un Nombrado no puede repetirse entre los roles (Presidente/Consejero/Oración) ese día.
-  if (personaOpcional && sectionId && finalAsignado && !esParteSinPersona(asignacion)) {
+  if (sectionId && finalAsignado && esRolInicio(asignacion)) {
     const dupRole = await prisma.record.findFirst({
       where: { fecha: new Date(fecha), sectionId, asignadoId: finalAsignado, id: { not: id } },
     });

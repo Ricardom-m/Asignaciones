@@ -30,7 +30,7 @@ import { GenderIcon } from "@/components/GenderIcon";
 import { useIsAdmin } from "@/components/UserContext";
 import { addDaysYMD, arrangeRecords, deleteRecord, ensureInicio, esLectura, fmtShort, nextWeekdayDates, relativeLabel, todayYMD, updateRecord, weekdayLabel, weekdayOf } from "@/lib/client";
 import { PersonSelect } from "@/components/PersonSelect";
-import { SECCION_TESOROS, PARTE_PRESIDENTE, PARTE_CONSEJERO, PARTE_ORACION, esCancion, esParteSinPersona, inicioRank, norm, tesorosRank } from "@/lib/sections";
+import { SECCION_TESOROS, PARTE_PRESIDENTE, PARTE_CONSEJERO, PARTE_ORACION, esCancion, esParteSinPersona, esRolInicio, inicioRank, norm, tesorosRank } from "@/lib/sections";
 import type { Person, RecordItem } from "@/lib/types";
 
 const SIN_SECCION = "__none__";
@@ -76,16 +76,16 @@ export default function PlanificarPage() {
   const { items: dayRecords, mutate: mutateDay } = useDateRecords(fecha || null);
   const personsById = useMemo(() => new Map(persons.map((p) => [p.id, p])), [persons]);
   const nombrados = useMemo(() => persons.filter((p) => p.active && p.roles.some((r) => r.nombre === "Nombrados")), [persons]);
-  const inicioSectionId = useMemo(() => sections.find((s) => s.sinPersona)?.id, [sections]);
   // Nombrados ya usados en los roles de Inicio (Presidente/Consejero/Oración):
-  // ninguno puede repetirse entre esas 3 partes el mismo día.
+  // ninguno puede repetirse entre esas 3 partes el mismo día. Por nombre de
+  // parte (no depende de localizar la sección).
   const inicioRolesTomados = useMemo(() => {
     const s = new Set<string>();
     for (const r of dayRecords) {
-      if (r.sectionId === inicioSectionId && r.asignadoId && !esParteSinPersona(r.asignacion)) s.add(r.asignadoId);
+      if (r.asignadoId && esRolInicio(r.asignacion)) s.add(r.asignadoId);
     }
     return s;
-  }, [dayRecords, inicioSectionId]);
+  }, [dayRecords]);
 
   // Al abrir una fecha, asegura las partes fijas de "Inicio" (Canción + Palabras).
   const ensuredRef = useRef<Set<string>>(new Set());

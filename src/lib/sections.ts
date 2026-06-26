@@ -44,6 +44,8 @@ export const esParteSinPersona = (a: string) => {
 };
 // ¿Es una de las 5 partes válidas de Inicio?
 export const esParteInicio = (a: string) => PARTES_INICIO.some((p) => norm(p.value) === norm(a));
+// ¿Es uno de los 3 roles de Inicio que llevan Nombrado (Presidente/Consejero/Oración)?
+export const esRolInicio = (a: string) => esParteInicio(a) && !esParteSinPersona(a);
 // Posición canónica dentro de Inicio (para el render).
 export const inicioRank = (a: string) => {
   const i = PARTES_INICIO.findIndex((p) => norm(p.value) === norm(a));
