@@ -76,16 +76,6 @@ export default function PlanificarPage() {
   const { items: dayRecords, mutate: mutateDay } = useDateRecords(fecha || null);
   const personsById = useMemo(() => new Map(persons.map((p) => [p.id, p])), [persons]);
   const nombrados = useMemo(() => persons.filter((p) => p.active && p.roles.some((r) => r.nombre === "Nombrados")), [persons]);
-  // Nombrados ya usados en los roles de Inicio (Presidente/Consejero/Oración):
-  // ninguno puede repetirse entre esas 3 partes el mismo día. Por nombre de
-  // parte (no depende de localizar la sección).
-  const inicioRolesTomados = useMemo(() => {
-    const s = new Set<string>();
-    for (const r of dayRecords) {
-      if (r.asignadoId && esRolInicio(r.asignacion)) s.add(r.asignadoId);
-    }
-    return s;
-  }, [dayRecords]);
 
   // Al abrir una fecha, asegura las partes fijas de "Inicio" (Canción + Palabras).
   const ensuredRef = useRef<Set<string>>(new Set());
@@ -241,6 +231,11 @@ export default function PlanificarPage() {
 
   // Asigna/limpia el Nombrado de una parte de Inicio (Presidente, Consejero, Oración).
   const savePersona = async (rec: RecordItem, id: string) => {
+    // Un Nombrado no puede repetirse entre los 3 roles del inicio el mismo día.
+    if (id && dayRecords.some((r) => r.id !== rec.id && r.asignadoId === id && esRolInicio(r.asignacion))) {
+      const per = personsById.get(id);
+      return toast(`⚠️ ${per ? per.nombre : "Esa persona"} ya tiene otro rol en el inicio`, "error");
+    }
     const asignadoId = id || null;
     mutateDay({ items: dayRecords.map((r) => (r.id === rec.id ? { ...r, asignadoId } : r)), nextCursor: null }, false);
     try {
@@ -329,9 +324,6 @@ export default function PlanificarPage() {
                 Panorama · {dayRecords.length} parte{dayRecords.length !== 1 ? "s" : ""}
                 {conflictCount > 0 && <span className="plan-conflict-pill">⚠ {conflictCount} en conflicto</span>}
               </div>
-              <button className="btn btn-primary btn-sm" onClick={() => openAdd()}>
-                + Parte
-              </button>
             </div>
             <div className="plan-hint">Arrastra ⠿ para reordenar; suéltala sobre otra parte para intercambiar de sala.</div>
 
@@ -362,13 +354,7 @@ export default function PlanificarPage() {
                             esParteSinPersona(r.asignacion) ? (
                               <StartRow key={r.id} rec={r} onCantico={(n) => saveCantico(r, n)} />
                             ) : (
-                              <InicioPersonaRow
-                                key={r.id}
-                                rec={r}
-                                nombrados={nombrados}
-                                excludeIds={[...inicioRolesTomados].filter((id) => id !== r.asignadoId)}
-                                onPersona={(id) => savePersona(r, id)}
-                              />
+                              <InicioPersonaRow key={r.id} rec={r} nombrados={nombrados} onPersona={(id) => savePersona(r, id)} />
                             ),
                           )}
                       </div>
@@ -659,17 +645,7 @@ function StartRow({ rec, onCantico }: { rec: RecordItem; onCantico: (n: number |
 
 // Parte fija de "Inicio" con un Nombrado (Presidente, Consejero de la sala
 // auxiliar, Oración): selector en línea filtrado a Nombrados.
-function InicioPersonaRow({
-  rec,
-  nombrados,
-  excludeIds,
-  onPersona,
-}: {
-  rec: RecordItem;
-  nombrados: Person[];
-  excludeIds: string[];
-  onPersona: (id: string) => void;
-}) {
+function InicioPersonaRow({ rec, nombrados, onPersona }: { rec: RecordItem; nombrados: Person[]; onPersona: (id: string) => void }) {
   const a = norm(rec.asignacion);
   const ico = a === norm(PARTE_PRESIDENTE) ? "🎤" : a === norm(PARTE_ORACION) ? "🙏" : a === norm(PARTE_CONSEJERO) ? "💬" : "👤";
   return (
@@ -677,7 +653,7 @@ function InicioPersonaRow({
       <span className="plan-inicio-ico">{ico}</span>
       <span className="plan-inicio-asig">{rec.asignacion}</span>
       <div className="plan-inicio-persona">
-        <PersonSelect persons={nombrados} value={rec.asignadoId ?? ""} excludeIds={excludeIds} onChange={onPersona} placeholder="Asignar nombrado…" />
+        <PersonSelect persons={nombrados} value={rec.asignadoId ?? ""} onChange={onPersona} placeholder="Asignar nombrado…" />
       </div>
     </div>
   );
