@@ -353,28 +353,26 @@ export default function PlanificarPage() {
                       {g.items.length === 0 ? (
                         <div className="plan-empty">— sin partes —</div>
                       ) : (
-                        <>
+                        <div className="plan-tesoros">
                           {generales.map((r) => (
-                            <FixedPartRow key={r.id} rec={r} personsById={personsById} dupIds={dupIds} onEdit={() => setEditing(r)} onDelete={() => onDelete(r)} />
+                            <TesorosRow key={r.id} rec={r} personsById={personsById} dupIds={dupIds} onEdit={() => setEditing(r)} onDelete={() => onDelete(r)} />
                           ))}
                           {lecturas.length > 0 && (
                             <div className="plan-tesoros-lectura">
                               <div className="plan-sub-label">Lectura de la Biblia</div>
-                              <div className="plan-salas">
+                              <div className="plan-tesoros-salas">
                                 {groupBySala(lecturas).map((sg) => (
-                                  <div className={`plan-sala-group ${salaClass(sg.sala)}`} key={sg.sala}>
-                                    <div className="plan-sala-head">
-                                      <span className={`plan-sala-tag ${salaClass(sg.sala)}`}>{sg.sala}</span>
-                                    </div>
+                                  <div className="plan-tesoros-sala" key={sg.sala}>
+                                    <span className={`plan-sala-tag ${salaClass(sg.sala)}`}>{sg.sala}</span>
                                     {sg.items.map((r) => (
-                                      <FixedPartRow key={r.id} rec={r} personsById={personsById} dupIds={dupIds} onEdit={() => setEditing(r)} onDelete={() => onDelete(r)} />
+                                      <TesorosRow key={r.id} rec={r} personsById={personsById} dupIds={dupIds} onEdit={() => setEditing(r)} onDelete={() => onDelete(r)} />
                                     ))}
                                   </div>
                                 ))}
                               </div>
                             </div>
                           )}
-                        </>
+                        </div>
                       )}
                     </div>
                   );
@@ -537,8 +535,9 @@ function PartRow({
   );
 }
 
-// Fila de parte con orden fijo (Tesoros): sin agarradera para arrastrar.
-function FixedPartRow({
+// Fila de parte de Tesoros (orden fijo, sin arrastrar): tarjeta autónoma con
+// espaciado por gap (sin los márgenes negativos de .plan-part).
+function TesorosRow({
   rec,
   personsById,
   dupIds,
@@ -555,7 +554,7 @@ function FixedPartRow({
   const locked = rec.bloqueado && !isAdmin;
   const conflict = (!!rec.asignadoId && dupIds.has(rec.asignadoId)) || (!!rec.ayudanteId && dupIds.has(rec.ayudanteId));
   return (
-    <div className={`plan-part fixed${conflict ? " conflict" : ""}`}>
+    <div className={`plan-tesoros-row${conflict ? " conflict" : ""}`}>
       <PartInner rec={rec} personsById={personsById} dupIds={dupIds} />
       {!locked && (
         <div className="plan-part-actions">

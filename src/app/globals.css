@@ -739,9 +739,19 @@ input:focus, select:focus, .list-search-input:focus, .sel-search:focus, .cmd-inp
 /* Aviso suave (p. ej. falta la Lectura en Tesoros) */
 .plan-warn-note { font-size:.66rem; color:var(--amber); background:var(--amber-dim); border:1px solid color-mix(in srgb, var(--amber) 35%, transparent); border-radius:8px; padding:5px 9px; margin:2px 0 6px; }
 
-/* Sub-bloque dentro de una sección (p. ej. la Lectura por sala en Tesoros) */
-.plan-tesoros-lectura { margin-top:8px; padding-top:8px; border-top:1px dashed var(--border); }
-.plan-sub-label { font-size:.62rem; font-weight:600; letter-spacing:.06em; text-transform:uppercase; color:var(--text3); margin-bottom:6px; }
+/* Tesoros de la Biblia: orden fijo, filas-tarjeta y Lectura por sala.
+   Espaciado por gap (sin márgenes negativos) para evitar solapamientos. */
+.plan-tesoros { display:flex; flex-direction:column; gap:7px; }
+.plan-tesoros-row { display:flex; align-items:center; gap:10px; padding:9px 11px; border:1px solid var(--border); border-radius:10px; background:var(--surface2); }
+.plan-tesoros-row.conflict { border-color:var(--amber); background:color-mix(in srgb, var(--amber) 10%, transparent); }
+.plan-tesoros-row .plan-part-main { flex:1; min-width:0; }
+.plan-tesoros-lectura { display:flex; flex-direction:column; gap:6px; margin-top:3px; padding-top:9px; border-top:1px dashed var(--border); }
+.plan-sub-label { font-size:.62rem; font-weight:600; letter-spacing:.06em; text-transform:uppercase; color:var(--text3); }
+.plan-tesoros-salas { display:flex; flex-direction:column; gap:7px; }
+.plan-tesoros-sala { display:flex; flex-direction:column; gap:6px; min-width:0; }
+@media (min-width:1280px) {
+  .plan-tesoros-salas { display:grid; grid-template-columns:1fr 1fr; gap:14px; align-items:start; }
+}
 
 /* Sección "Inicio": partes fijas sin persona ni título */
 .plan-inicio { border-top:none; padding-top:2px; }
@@ -782,9 +792,6 @@ input:focus, select:focus, .list-search-input:focus, .sel-search:focus, .cmd-inp
 
 .plan-part { display:flex; align-items:center; gap:10px; padding:9px 10px; margin:0 -10px; border-radius:9px; transition:background .14s; }
 .plan-part:hover { background:var(--surface2); }
-/* Parte de orden fijo (Tesoros): sin agarradera; alinea con un borde guía. */
-.plan-part.fixed { padding-left:12px; border-left:2px solid var(--border); border-radius:0 9px 9px 0; }
-.plan-sala-group .plan-part.fixed { padding-left:10px; border-left:none; }
 .plan-part.conflict { background:color-mix(in srgb, var(--amber) 10%, transparent); }
 .plan-part-main { flex:1; min-width:0; }
 .plan-part-asig { font-size:.82rem; font-weight:500; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
