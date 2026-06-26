@@ -746,6 +746,7 @@ input:focus, select:focus, .list-search-input:focus, .sel-search:focus, .cmd-inp
 /* Grupo con barra de color (como las demás secciones) */
 .plan-tg { border-left:2px solid var(--border); padding-left:12px; display:flex; flex-direction:column; gap:4px; }
 .plan-tg.main { border-left-color:color-mix(in srgb, var(--accent) 45%, var(--border)); }
+.plan-tg.alt { border-left-color:color-mix(in srgb, var(--accent2) 45%, var(--border)); }
 .plan-tg.a { border-left-color:var(--accent); }
 .plan-tg.b { border-left-color:var(--accent2); }
 .plan-tg .plan-sala-tag { align-self:flex-start; margin-bottom:2px; }
@@ -758,9 +759,9 @@ input:focus, select:focus, .list-search-input:focus, .sel-search:focus, .cmd-inp
   .plan-tesoros-salas { display:grid; grid-template-columns:1fr 1fr; gap:14px; align-items:start; }
 }
 
-/* Sección "Inicio": partes fijas sin persona ni título. Mismo estilo de
-   barra de color + filas que Tesoros (ver .plan-tg). */
-.plan-inicio { border-top:none; padding-top:2px; }
+/* Sección "Inicio": dos grupos (roles con Nombrado + partes fijas) con barra
+   de color, sin título ni iconos. Mismo estilo que Tesoros (ver .plan-tg). */
+.plan-inicio { border-top:none; padding-top:2px; display:flex; flex-direction:column; gap:10px; }
 .plan-inicio-row { display:flex; align-items:center; gap:9px; padding:7px 8px; border-radius:8px; transition:background .14s; }
 .plan-inicio-row:hover { background:var(--surface2); }
 .plan-inicio-ico { font-size:.95rem; flex-shrink:0; }

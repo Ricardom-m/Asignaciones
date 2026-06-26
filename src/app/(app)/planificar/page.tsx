@@ -30,7 +30,7 @@ import { GenderIcon } from "@/components/GenderIcon";
 import { useIsAdmin } from "@/components/UserContext";
 import { addDaysYMD, arrangeRecords, deleteRecord, ensureInicio, esLectura, fmtShort, nextWeekdayDates, relativeLabel, todayYMD, updateRecord, weekdayLabel, weekdayOf } from "@/lib/client";
 import { PersonSelect } from "@/components/PersonSelect";
-import { SECCION_TESOROS, PARTE_PRESIDENTE, PARTE_CONSEJERO, PARTE_ORACION, esCancion, esParteSinPersona, esRolInicio, inicioRank, norm, tesorosRank } from "@/lib/sections";
+import { SECCION_TESOROS, esCancion, esParteSinPersona, inicioRank, norm, tesorosRank } from "@/lib/sections";
 import type { Person, RecordItem } from "@/lib/types";
 
 const SIN_SECCION = "__none__";
@@ -230,12 +230,8 @@ export default function PlanificarPage() {
   };
 
   // Asigna/limpia el Nombrado de una parte de Inicio (Presidente, Consejero, Oración).
+  // La misma persona puede ocupar los 3 roles.
   const savePersona = async (rec: RecordItem, id: string) => {
-    // Un Nombrado no puede repetirse entre los 3 roles del inicio el mismo día.
-    if (id && dayRecords.some((r) => r.id !== rec.id && r.asignadoId === id && esRolInicio(r.asignacion))) {
-      const per = personsById.get(id);
-      return toast(`⚠️ ${per ? per.nombre : "Esa persona"} ya tiene otro rol en el inicio`, "error");
-    }
     const asignadoId = id || null;
     mutateDay({ items: dayRecords.map((r) => (r.id === rec.id ? { ...r, asignadoId } : r)), nextCursor: null }, false);
     try {
@@ -345,19 +341,25 @@ export default function PlanificarPage() {
                 // Sección "Inicio": partes fijas sin persona y sin título.
                 if (g.sinPersona) {
                   if (g.items.length === 0) return null;
+                  const ordInicio = [...g.items].sort((a, b) => inicioRank(a.asignacion) - inicioRank(b.asignacion) || a.orden - b.orden);
+                  const roles = ordInicio.filter((r) => !esParteSinPersona(r.asignacion)); // Presidente, Consejero, Oración
+                  const fijas = ordInicio.filter((r) => esParteSinPersona(r.asignacion)); // Canción, Palabras
                   return (
                     <div className="plan-section plan-inicio" key={g.id}>
-                      <div className="plan-tg main">
-                        {[...g.items]
-                          .sort((a, b) => inicioRank(a.asignacion) - inicioRank(b.asignacion) || a.orden - b.orden)
-                          .map((r) =>
-                            esParteSinPersona(r.asignacion) ? (
-                              <StartRow key={r.id} rec={r} onCantico={(n) => saveCantico(r, n)} />
-                            ) : (
-                              <InicioPersonaRow key={r.id} rec={r} nombrados={nombrados} onPersona={(id) => savePersona(r, id)} />
-                            ),
-                          )}
-                      </div>
+                      {roles.length > 0 && (
+                        <div className="plan-tg main">
+                          {roles.map((r) => (
+                            <InicioPersonaRow key={r.id} rec={r} nombrados={nombrados} onPersona={(id) => savePersona(r, id)} />
+                          ))}
+                        </div>
+                      )}
+                      {fijas.length > 0 && (
+                        <div className="plan-tg alt">
+                          {fijas.map((r) => (
+                            <StartRow key={r.id} rec={r} onCantico={(n) => saveCantico(r, n)} />
+                          ))}
+                        </div>
+                      )}
                     </div>
                   );
                 }
@@ -616,7 +618,6 @@ function StartRow({ rec, onCantico }: { rec: RecordItem; onCantico: (n: number |
 
   return (
     <div className="plan-inicio-row">
-      <span className="plan-inicio-ico">{cancion ? "🎵" : "🗣️"}</span>
       <span className="plan-inicio-asig">{rec.asignacion}</span>
       {cancion ? (
         <span className="plan-inicio-cant">
@@ -646,11 +647,8 @@ function StartRow({ rec, onCantico }: { rec: RecordItem; onCantico: (n: number |
 // Parte fija de "Inicio" con un Nombrado (Presidente, Consejero de la sala
 // auxiliar, Oración): selector en línea filtrado a Nombrados.
 function InicioPersonaRow({ rec, nombrados, onPersona }: { rec: RecordItem; nombrados: Person[]; onPersona: (id: string) => void }) {
-  const a = norm(rec.asignacion);
-  const ico = a === norm(PARTE_PRESIDENTE) ? "🎤" : a === norm(PARTE_ORACION) ? "🙏" : a === norm(PARTE_CONSEJERO) ? "💬" : "👤";
   return (
     <div className="plan-inicio-row">
-      <span className="plan-inicio-ico">{ico}</span>
       <span className="plan-inicio-asig">{rec.asignacion}</span>
       <div className="plan-inicio-persona">
         <PersonSelect persons={nombrados} value={rec.asignadoId ?? ""} onChange={onPersona} placeholder="Asignar nombrado…" />
