@@ -34,6 +34,7 @@ model Section {
   sinAyudante Boolean  @default(false) // true = la parte es de una sola persona (sin ayudante)
   unaPorSala  Boolean  @default(false) // true = máximo una parte por sala (p. ej. Lectura de la Biblia)
   soloAdmin   Boolean  @default(false) // true = solo el admin edita/borra/agrega en esta sección
+  sinPersona  Boolean  @default(false) // true = partes fijas sin asignado (p. ej. Inicio: Canción + Palabras); sin título en el panorama
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -99,8 +100,8 @@ model MeetingConfig {
 
 model Record {
   id         String  @id @default(cuid())
-  asignadoId String
-  asignado   Person  @relation("Asignado", fields: [asignadoId], references: [id])
+  asignadoId String? // opcional: las partes de la sección "Inicio" no tienen persona
+  asignado   Person? @relation("Asignado", fields: [asignadoId], references: [id], onDelete: SetNull)
   ayudanteId String?
   ayudante   Person? @relation("Ayudante", fields: [ayudanteId], references: [id], onDelete: SetNull)
 
@@ -108,6 +109,7 @@ model Record {
   sala       String?
   asignacion String
   minutos    Int? // duración en minutos (p. ej. Lectura de la Biblia = 4)
+  cantico    Int? // número de cántico (solo para la parte "Canción" de Inicio)
   orden      Int        @default(0) // posición dentro de su grupo (fecha+sección+sala) en el planificador
   soloAdmin  Boolean    @default(false) // true = solo el admin puede editar/borrar este registro
   tipo       RecordTipo @default(ASIGNACION)

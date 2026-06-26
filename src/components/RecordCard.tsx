@@ -23,7 +23,7 @@ export function RecordCard({ rec, personsById, onEdit, onDelete, onPerson, secti
   const isAdmin = useIsAdmin();
   const locked = rec.bloqueado && !isAdmin;
   const status = dateStatus(rec.fecha);
-  const asignadoP = personsById.get(rec.asignadoId);
+  const asignadoP = rec.asignadoId ? personsById.get(rec.asignadoId) : undefined;
   const ayudanteP = rec.ayudanteId ? personsById.get(rec.ayudanteId) : undefined;
 
   return (
@@ -63,7 +63,7 @@ export function RecordCard({ rec, personsById, onEdit, onDelete, onPerson, secti
               <span className="rc-person">
                 {asignadoP && <GenderIcon genero={asignadoP.genero} />}
                 {onPerson ? (
-                  <button className="person-link rc-pname" onClick={() => onPerson(rec.asignadoId)}>
+                  <button className="person-link rc-pname" onClick={() => rec.asignadoId && onPerson(rec.asignadoId)}>
                     {rec.asignado}
                   </button>
                 ) : (

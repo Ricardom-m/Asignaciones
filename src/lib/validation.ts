@@ -68,7 +68,9 @@ export type PersonInput = z.infer<typeof personInput>;
 
 // ── Registros ─────────────────────────────────────────────
 export const recordInput = z.object({
-  asignadoId: z.string().min(1, "Selecciona el asignado"),
+  // Opcional: las partes de la sección "Inicio" no tienen persona. El servidor
+  // exige el asignado para las demás secciones.
+  asignadoId: z.string().min(1).nullish(),
   ayudanteId: z.string().min(1).nullish(),
   fecha: fechaSchema,
   sala: z.string().trim().max(80).nullish(),
@@ -76,6 +78,7 @@ export const recordInput = z.object({
   tipo: z.enum(["ASIGNACION", "NOMBRADO"]).optional(),
   sectionId: z.string().min(1).nullish(),
   minutos: z.number().int().min(1).max(600).nullish(),
+  cantico: z.number().int().min(1).max(999).nullish(),
 });
 export type RecordInput = z.infer<typeof recordInput>;
 

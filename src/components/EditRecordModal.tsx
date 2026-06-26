@@ -37,7 +37,7 @@ export function EditRecordModal({ rec, persons, onClose, onSaved }: Props) {
   const { sections } = useSections();
   const toast = useToast();
   const [form, setForm] = useState<FormState>({
-    asignadoId: rec.asignadoId,
+    asignadoId: rec.asignadoId ?? "",
     ayudanteId: rec.ayudanteId ?? "",
     fecha: rec.fecha,
     sala: rec.sala ?? "Sala A",
@@ -166,7 +166,7 @@ export function EditRecordModal({ rec, persons, onClose, onSaved }: Props) {
           <div className="field-group">
             <label className="field-label">Sección</label>
             <SectionSelect
-              sections={sections}
+              sections={sections.filter((s) => !s.sinPersona)}
               value={form.sectionId}
               onChange={(id) =>
                 patch(sections.find((s) => s.id === id)?.sinAyudante ? { sectionId: id, ayudanteId: "" } : { sectionId: id })

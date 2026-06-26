@@ -84,7 +84,7 @@ export const deleteUser = (id: string) =>
 
 // ── Registros ─────────────────────────────────────────────
 export interface RecordPayload {
-  asignadoId: string;
+  asignadoId: string | null;
   ayudanteId: string | null;
   fecha: string;
   sala: string | null;
@@ -92,6 +92,7 @@ export interface RecordPayload {
   tipo?: RecordTipo;
   sectionId?: string | null;
   minutos?: number | null;
+  cantico?: number | null;
 }
 export const createRecord = (data: RecordPayload) =>
   apiFetch<RecordItem>("/api/records", { method: "POST", body: JSON.stringify(data) });
@@ -101,6 +102,14 @@ export const updateRecord = (id: string, data: RecordPayload) =>
 
 export const deleteRecord = (id: string) =>
   apiFetch<{ deleted: boolean }>(`/api/records/${id}`, { method: "DELETE" });
+
+// Crea (idempotente) la sección "Inicio" y sus 2 partes fijas (Canción +
+// Palabras de instrucción) para una fecha. Se llama al abrir el planificador.
+export const ensureInicio = (fecha: string) =>
+  apiFetch<{ created: number; sectionCreated: boolean }>("/api/records/ensure-inicio", {
+    method: "POST",
+    body: JSON.stringify({ fecha }),
+  });
 
 // Reordenar / cambiar de sala en lote (planificador).
 export const arrangeRecords = (updates: { id: string; orden: number; sala?: string | null }[]) =>

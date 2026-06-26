@@ -55,7 +55,7 @@ function lastFechaMap(records: RecordItem[]): Map<string, string> {
 function loadMap(records: RecordItem[]): Map<string, number> {
   const m = new Map<string, number>();
   for (const r of records) {
-    m.set(r.asignadoId, (m.get(r.asignadoId) ?? 0) + 1);
+    if (r.asignadoId) m.set(r.asignadoId, (m.get(r.asignadoId) ?? 0) + 1);
     if (r.ayudanteId) m.set(r.ayudanteId, (m.get(r.ayudanteId) ?? 0) + 1);
   }
   return m;
@@ -77,7 +77,7 @@ function peopleOnDate(records: RecordItem[], fecha: string): Set<string> {
   const s = new Set<string>();
   for (const r of records) {
     if (r.fecha !== fecha) continue;
-    s.add(r.asignadoId);
+    if (r.asignadoId) s.add(r.asignadoId);
     if (r.ayudanteId) s.add(r.ayudanteId);
   }
   return s;
@@ -87,7 +87,7 @@ function peopleInWeek(records: RecordItem[], fecha: string): Set<string> {
   const s = new Set<string>();
   for (const r of records) {
     if (!r.fecha || mondayOf(r.fecha) !== wk) continue;
-    s.add(r.asignadoId);
+    if (r.asignadoId) s.add(r.asignadoId);
     if (r.ayudanteId) s.add(r.ayudanteId);
   }
   return s;

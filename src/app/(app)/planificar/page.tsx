@@ -28,7 +28,8 @@ import { useToast } from "@/components/Toast";
 import { useConfirm } from "@/components/Confirm";
 import { GenderIcon } from "@/components/GenderIcon";
 import { useIsAdmin } from "@/components/UserContext";
-import { addDaysYMD, arrangeRecords, deleteRecord, fmtShort, nextWeekdayDates, relativeLabel, todayYMD, weekdayLabel, weekdayOf } from "@/lib/client";
+import { addDaysYMD, arrangeRecords, deleteRecord, ensureInicio, esLectura, fmtShort, nextWeekdayDates, relativeLabel, todayYMD, updateRecord, weekdayLabel, weekdayOf } from "@/lib/client";
+import { SECCION_TESOROS, esCancion, norm } from "@/lib/sections";
 import type { Person, RecordItem } from "@/lib/types";
 
 const SIN_SECCION = "__none__";
@@ -74,6 +75,20 @@ export default function PlanificarPage() {
   const { items: dayRecords, mutate: mutateDay } = useDateRecords(fecha || null);
   const personsById = useMemo(() => new Map(persons.map((p) => [p.id, p])), [persons]);
 
+  // Al abrir una fecha, asegura las partes fijas de "Inicio" (Canción + Palabras).
+  const ensuredRef = useRef<Set<string>>(new Set());
+  useEffect(() => {
+    if (!fecha || ensuredRef.current.has(fecha)) return;
+    ensuredRef.current.add(fecha);
+    ensureInicio(fecha)
+      .then((res) => {
+        if (res.sectionCreated) globalMutate((k) => typeof k === "string" && k.includes("/api/sections"));
+        if (res.created > 0) mutateDay();
+      })
+      .catch(() => ensuredRef.current.delete(fecha));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fecha]);
+
   const [adding, setAdding] = useState(false);
   const [prefill, setPrefill] = useState<{ asignadoId?: string; sectionId?: string; sala?: string }>({});
   const [editing, setEditing] = useState<RecordItem | null>(null);
@@ -99,17 +114,18 @@ export default function PlanificarPage() {
     return new Set([...count].filter(([, n]) => n > 1).map(([id]) => id));
   }, [dayRecords]);
   const conflictCount = useMemo(
-    () => dayRecords.filter((r) => dupIds.has(r.asignadoId) || (r.ayudanteId && dupIds.has(r.ayudanteId))).length,
+    () => dayRecords.filter((r) => (!!r.asignadoId && dupIds.has(r.asignadoId)) || (!!r.ayudanteId && dupIds.has(r.ayudanteId))).length,
     [dayRecords, dupIds],
   );
 
   const groups = useMemo(() => {
     const order = [...sections].sort((a, b) => a.orden - b.orden);
-    const g: { id: string; nombre: string; unaPorSala: boolean; soloAdmin: boolean; items: RecordItem[] }[] = order.map((s) => ({
+    const g: { id: string; nombre: string; unaPorSala: boolean; soloAdmin: boolean; sinPersona: boolean; items: RecordItem[] }[] = order.map((s) => ({
       id: s.id,
       nombre: s.nombre,
       unaPorSala: s.unaPorSala,
       soloAdmin: s.soloAdmin,
+      sinPersona: s.sinPersona,
       items: [],
     }));
     const none: RecordItem[] = [];
@@ -119,7 +135,7 @@ export default function PlanificarPage() {
       if (tgt) tgt.items.push(r);
       else none.push(r);
     }
-    if (none.length) g.push({ id: SIN_SECCION, nombre: "Sin sección", unaPorSala: false, soloAdmin: false, items: none });
+    if (none.length) g.push({ id: SIN_SECCION, nombre: "Sin sección", unaPorSala: false, soloAdmin: false, sinPersona: false, items: none });
     return g;
   }, [sections, dayRecords]);
 
@@ -186,6 +202,27 @@ export default function PlanificarPage() {
       refresh();
       toast("🗑️ Parte quitada");
     } catch (e) {
+      toast("❌ " + (e as Error).message, "error");
+    }
+  };
+
+  // Guarda el número de cántico (parte "Canción" de Inicio) con update optimista.
+  const saveCantico = async (rec: RecordItem, cantico: number | null) => {
+    const next = dayRecords.map((r) => (r.id === rec.id ? { ...r, cantico } : r));
+    mutateDay({ items: next, nextCursor: null }, false);
+    try {
+      await updateRecord(rec.id, {
+        asignadoId: null,
+        ayudanteId: null,
+        fecha: rec.fecha,
+        sala: rec.sala,
+        asignacion: rec.asignacion,
+        sectionId: rec.sectionId,
+        minutos: rec.minutos,
+        cantico,
+      });
+    } catch (e) {
+      mutateDay();
       toast("❌ " + (e as Error).message, "error");
     }
   };
@@ -278,6 +315,23 @@ export default function PlanificarPage() {
                   : [];
                 const bloqueada = g.soloAdmin && !isAdmin;
                 const puedeAgregar = !bloqueada && (!g.unaPorSala || libres.length > 0);
+
+                // Sección "Inicio": partes fijas sin persona y sin título.
+                if (g.sinPersona) {
+                  if (g.items.length === 0) return null;
+                  return (
+                    <div className="plan-section plan-inicio" key={g.id}>
+                      {[...g.items]
+                        .sort((a, b) => a.orden - b.orden)
+                        .map((r) => (
+                          <StartRow key={r.id} rec={r} onCantico={(n) => saveCantico(r, n)} />
+                        ))}
+                    </div>
+                  );
+                }
+
+                const faltaLectura =
+                  norm(g.nombre) === norm(SECCION_TESOROS) && g.items.length > 0 && !g.items.some((r) => esLectura(r.asignacion));
                 return (
                 <div className="plan-section" key={g.id}>
                   <div className="plan-section-head">
@@ -294,6 +348,7 @@ export default function PlanificarPage() {
                       </button>
                     )}
                   </div>
+                  {faltaLectura && <div className="plan-warn-note">⚠ Falta la Lectura de la Biblia</div>}
                   {g.items.length === 0 ? (
                     <div className="plan-empty">— sin partes —</div>
                   ) : (
@@ -369,9 +424,9 @@ export default function PlanificarPage() {
 }
 
 function PartInner({ rec, personsById, dupIds }: { rec: RecordItem; personsById: Map<string, Person>; dupIds: Set<string> }) {
-  const aP = personsById.get(rec.asignadoId);
+  const aP = rec.asignadoId ? personsById.get(rec.asignadoId) : undefined;
   const hP = rec.ayudanteId ? personsById.get(rec.ayudanteId) : undefined;
-  const conflict = dupIds.has(rec.asignadoId) || (!!rec.ayudanteId && dupIds.has(rec.ayudanteId));
+  const conflict = (!!rec.asignadoId && dupIds.has(rec.asignadoId)) || (!!rec.ayudanteId && dupIds.has(rec.ayudanteId));
   return (
     <div className="plan-part-main">
       <div className="plan-part-asig">
@@ -411,7 +466,7 @@ function PartRow({
   const isAdmin = useIsAdmin();
   const locked = rec.bloqueado && !isAdmin;
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: rec.id, disabled: locked });
-  const conflict = dupIds.has(rec.asignadoId) || (!!rec.ayudanteId && dupIds.has(rec.ayudanteId));
+  const conflict = (!!rec.asignadoId && dupIds.has(rec.asignadoId)) || (!!rec.ayudanteId && dupIds.has(rec.ayudanteId));
   const style: React.CSSProperties = { transform: CSS.Transform.toString(transform), transition };
 
   return (
@@ -429,6 +484,50 @@ function PartRow({
           <button className="tl-act" onClick={onEdit} title="Editar" aria-label="Editar">✎</button>
           <button className="tl-act danger" onClick={onDelete} title="Quitar" aria-label="Quitar">✕</button>
         </div>
+      )}
+    </div>
+  );
+}
+
+// Parte fija de la sección "Inicio" (sin persona): Canción (con número de cántico)
+// o Palabras de instrucción (duración fija). No se arrastra ni se borra.
+function StartRow({ rec, onCantico }: { rec: RecordItem; onCantico: (n: number | null) => void }) {
+  const cancion = esCancion(rec.asignacion);
+  const [val, setVal] = useState(rec.cantico != null ? String(rec.cantico) : "");
+  useEffect(() => {
+    setVal(rec.cantico != null ? String(rec.cantico) : "");
+  }, [rec.cantico]);
+
+  const commit = () => {
+    const raw = val.trim();
+    const n = raw === "" ? null : Math.max(1, Math.min(999, parseInt(raw, 10) || 0)) || null;
+    if ((n ?? null) !== (rec.cantico ?? null)) onCantico(n);
+  };
+
+  return (
+    <div className="plan-inicio-row">
+      <span className="plan-inicio-ico">{cancion ? "🎵" : "🗣️"}</span>
+      <span className="plan-inicio-asig">{rec.asignacion}</span>
+      {cancion ? (
+        <span className="plan-inicio-cant">
+          <span className="plan-inicio-cant-lbl">Cántico</span>
+          <input
+            type="number"
+            min={1}
+            max={999}
+            inputMode="numeric"
+            className="plan-inicio-input"
+            placeholder="#"
+            value={val}
+            onChange={(e) => setVal(e.target.value)}
+            onBlur={commit}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+            }}
+          />
+        </span>
+      ) : (
+        rec.minutos != null && <span className="plan-inicio-min">{rec.minutos} min</span>
       )}
     </div>
   );

@@ -15,6 +15,7 @@ export interface Section {
   sinAyudante: boolean; // true = parte de una sola persona (sin ayudante)
   unaPorSala: boolean; // true = máximo una parte por sala
   soloAdmin: boolean; // true = solo el admin edita/borra/agrega en esta sección
+  sinPersona: boolean; // true = partes fijas sin asignado (Inicio); sin título en el panorama
 }
 
 export interface Meeting {
@@ -66,8 +67,8 @@ export type RecordTipo = "ASIGNACION" | "NOMBRADO";
 
 export interface RecordItem {
   id: string;
-  asignadoId: string;
-  asignado: string; // nombre completo (derivado)
+  asignadoId: string | null; // null en partes sin persona (Inicio)
+  asignado: string; // nombre completo (derivado) o "—"
   ayudanteId: string | null;
   ayudante: string | null; // nombre completo (derivado) o null
   fecha: string; // YYYY-MM-DD
@@ -75,6 +76,7 @@ export interface RecordItem {
   tipo: RecordTipo; // categoría: Asignación o Nombrado
   asignacion: string;
   minutos: number | null; // duración en minutos
+  cantico: number | null; // número de cántico (parte "Canción" de Inicio)
   orden: number; // posición en el planificador
   bloqueado: boolean; // true = solo el admin puede editar/borrar
   sectionId: string | null;

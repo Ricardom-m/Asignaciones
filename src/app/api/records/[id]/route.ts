@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { recordInput } from "@/lib/validation";
 import { serializeRecord, recordInclude } from "@/lib/serialize";
 import { ok, fail, requireSession, rateLimit, clientKey, isAdmin } from "@/lib/server";
+import { SECCION_TESOROS, TESOROS_MAX, norm } from "@/lib/sections";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -18,7 +19,7 @@ export async function PATCH(req: Request, { params }: Params) {
   if (!parsed.success)
     return fail("Datos inválidos", 422, parsed.error.flatten().fieldErrors);
 
-  const { asignadoId, ayudanteId, fecha, sala, asignacion, tipo, sectionId, minutos } = parsed.data;
+  const { asignadoId, ayudanteId, fecha, sala, asignacion, tipo, sectionId, minutos, cantico } = parsed.data;
   if (ayudanteId && ayudanteId === asignadoId)
     return fail("El ayudante no puede ser la misma persona que el asignado", 422);
 
@@ -27,32 +28,45 @@ export async function PATCH(req: Request, { params }: Params) {
   if ((exists.soloAdmin || exists.section?.soloAdmin) && !isAdmin(session))
     return fail("Solo el administrador puede editar esta asignación", 403);
 
-  const ids = [asignadoId, ...(ayudanteId ? [ayudanteId] : [])];
-  const count = await prisma.person.count({ where: { id: { in: ids } } });
-  if (count !== ids.length) return fail("Persona referida inexistente", 422);
-
+  let sinPersona = false;
   if (sectionId) {
     const sec = await prisma.section.findUnique({ where: { id: sectionId } });
     if (!sec) return fail("Sección inexistente", 422);
+    sinPersona = sec.sinPersona;
     if (sec.unaPorSala) {
       const dup = await prisma.record.findFirst({
         where: { fecha: new Date(fecha), sectionId, sala: sala ?? null, id: { not: id } },
       });
       if (dup) return fail(`En "${sec.nombre}" ya hay alguien asignado en ${sala ?? "esa sala"} ese día`, 409);
     }
+    if (norm(sec.nombre) === norm(SECCION_TESOROS)) {
+      const rows = await prisma.record.findMany({ where: { fecha: new Date(fecha), sectionId, id: { not: id } }, select: { asignacion: true } });
+      const names = new Set(rows.map((r) => norm(r.asignacion)));
+      if (!names.has(norm(asignacion)) && names.size >= TESOROS_MAX)
+        return fail(`Máximo ${TESOROS_MAX} asignaciones en ${sec.nombre}`, 409);
+    }
+  }
+
+  const finalAsignado = sinPersona ? null : asignadoId ?? null;
+  if (!sinPersona && !finalAsignado) return fail("Selecciona el asignado", 422);
+  const ids = [...(finalAsignado ? [finalAsignado] : []), ...(ayudanteId ? [ayudanteId] : [])];
+  if (ids.length) {
+    const count = await prisma.person.count({ where: { id: { in: ids } } });
+    if (count !== ids.length) return fail("Persona referida inexistente", 422);
   }
 
   const record = await prisma.record.update({
     where: { id },
     data: {
-      asignadoId,
-      ayudanteId: ayudanteId ?? null,
+      asignadoId: finalAsignado,
+      ayudanteId: sinPersona ? null : ayudanteId ?? null,
       fecha: new Date(fecha),
       sala: sala ?? null,
       asignacion,
       ...(tipo ? { tipo } : {}),
       sectionId: sectionId ?? null,
       minutos: minutos ?? null,
+      cantico: cantico ?? null,
     },
     include: recordInclude,
   });

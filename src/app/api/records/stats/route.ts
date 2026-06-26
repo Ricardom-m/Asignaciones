@@ -1,6 +1,10 @@
 import { prisma } from "@/lib/prisma";
 import { ok, requireSession } from "@/lib/server";
 import { todayYMD } from "@/lib/date";
+import type { Prisma } from "@prisma/client";
+
+// Las partes sin persona (Inicio: Canción/Palabras) no cuentan como asignaciones.
+const notInicio: Prisma.RecordWhereInput = { OR: [{ sectionId: null }, { section: { is: { sinPersona: false } } }] };
 
 function ymdToDate(ymd: string) {
   return new Date(ymd + "T00:00:00.000Z");
@@ -24,11 +28,11 @@ export async function GET() {
   const nextMonthStart = addDays(monthStart, 31).slice(0, 7) + "-01";
 
   const [total, proximas, estaSemana, esteMes] = await Promise.all([
-    prisma.record.count(),
-    prisma.record.count({ where: { fecha: { gte: ymdToDate(today) } } }),
-    prisma.record.count({ where: { fecha: { gte: ymdToDate(monday), lte: ymdToDate(sunday) } } }),
+    prisma.record.count({ where: notInicio }),
+    prisma.record.count({ where: { AND: [notInicio, { fecha: { gte: ymdToDate(today) } }] } }),
+    prisma.record.count({ where: { AND: [notInicio, { fecha: { gte: ymdToDate(monday), lte: ymdToDate(sunday) } }] } }),
     prisma.record.count({
-      where: { fecha: { gte: ymdToDate(monthStart), lt: ymdToDate(nextMonthStart) } },
+      where: { AND: [notInicio, { fecha: { gte: ymdToDate(monthStart), lt: ymdToDate(nextMonthStart) } }] },
     }),
   ]);
 

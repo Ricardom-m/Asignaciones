@@ -115,7 +115,7 @@ export function PlannerPartModal({ fecha, sections, persons, defaultAsignadoId, 
           <div className="field-group">
             <label className="field-label">Sección</label>
             <SectionSelect
-              sections={sections}
+              sections={sections.filter((s) => !s.sinPersona)}
               value={sectionId}
               onChange={(id) => {
                 setSectionId(id);

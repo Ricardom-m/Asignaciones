@@ -9,7 +9,7 @@ import type {
 import type { Person, RecordItem, Role, Meeting, AllowedUser, Section } from "@/lib/types";
 
 type RecordWithPeople = PrismaRecord & {
-  asignado: PrismaPerson;
+  asignado: PrismaPerson | null;
   ayudante: PrismaPerson | null;
   section?: PrismaSection | null;
 };
@@ -24,7 +24,7 @@ export function serializeRole(r: PrismaRole): Role {
 }
 
 export function serializeSection(s: PrismaSection): Section {
-  return { id: s.id, nombre: s.nombre, orden: s.orden, active: s.active, sinAyudante: s.sinAyudante, unaPorSala: s.unaPorSala, soloAdmin: s.soloAdmin };
+  return { id: s.id, nombre: s.nombre, orden: s.orden, active: s.active, sinAyudante: s.sinAyudante, unaPorSala: s.unaPorSala, soloAdmin: s.soloAdmin, sinPersona: s.sinPersona };
 }
 
 export function serializeMeeting(m: PrismaMeeting): Meeting {
@@ -60,6 +60,7 @@ export function serializeRecord(r: RecordWithPeople): RecordItem {
     tipo: r.tipo,
     asignacion: r.asignacion,
     minutos: r.minutos ?? null,
+    cantico: r.cantico ?? null,
     orden: r.orden,
     bloqueado: r.soloAdmin || (r.section?.soloAdmin ?? false),
     sectionId: r.sectionId ?? null,
