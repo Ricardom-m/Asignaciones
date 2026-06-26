@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { ok, requireSession } from "@/lib/server";
+import { SUGERENCIAS_CURADAS, norm } from "@/lib/sections";
 
 // GET /api/records/asignaciones?section=<id>
 // Devuelve los textos de asignación más usados (para sugerirlos al escribir),
@@ -22,6 +23,17 @@ export async function GET(req: Request) {
     m.count += r._count._all;
     if (r.minutos != null) m.votes.set(r.minutos, (m.votes.get(r.minutos) ?? 0) + r._count._all);
     map.set(r.asignacion, m);
+  }
+
+  // Sugerencias curadas de la sección (aparecen aunque no haya registros).
+  if (section) {
+    const sec = await prisma.section.findUnique({ where: { id: section }, select: { nombre: true } });
+    const curadas = sec ? SUGERENCIAS_CURADAS[Object.keys(SUGERENCIAS_CURADAS).find((k) => norm(k) === norm(sec.nombre)) ?? ""] : undefined;
+    for (const c of curadas ?? []) {
+      const m = map.get(c.value) ?? { count: 0, votes: new Map<number, number>() };
+      if (m.count === 0) m.votes.set(c.minutos, (m.votes.get(c.minutos) ?? 0) + 1); // solo como default inicial
+      map.set(c.value, m);
+    }
   }
 
   const out = [...map]

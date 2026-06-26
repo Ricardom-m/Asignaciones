@@ -17,3 +17,10 @@ export const TESOROS_MAX = 3;
 export const norm = (s: string) => s.trim().toLowerCase();
 export const esCancion = (a: string) => norm(a) === norm(PARTE_CANCION);
 export const esLecturaNombre = (a: string) => norm(a) === norm(LECTURA_NOMBRE);
+
+// Sugerencias "Frecuentes" curadas por sección: aparecen aunque no haya
+// registros previos, con su duración típica (editable al usarlas).
+export const SUGERENCIAS_CURADAS: Record<string, { value: string; minutos: number }[]> = {
+  [SECCION_TESOROS]: [{ value: "Busquemos perlas escondidas", minutos: 10 }],
+};
+
