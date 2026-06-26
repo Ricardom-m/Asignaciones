@@ -10,10 +10,11 @@ import { AsignacionSuggest } from "@/components/AsignacionSuggest";
 import { HelperPicker } from "@/components/HelperPicker";
 import { DateChips } from "@/components/DateChips";
 import { updateRecord, esLectura, eligibleLectura } from "@/lib/client";
-import { SECCION_TESOROS, norm } from "@/lib/sections";
+import { SECCION_TESOROS, esEstudio, norm } from "@/lib/sections";
 import type { Person, RecordItem } from "@/lib/types";
 
 const soloNombrados = (ps: Person[]) => ps.filter((p) => p.roles.some((r) => r.nombre === "Nombrados"));
+const soloAsignados = (ps: Person[]) => ps.filter((p) => p.roles.some((r) => r.nombre === "Asignados"));
 
 const SALAS = ["Sala A", "Sala B", "Otro"];
 
@@ -51,37 +52,52 @@ export function EditRecordModal({ rec, persons, onClose, onSaved }: Props) {
   const [saving, setSaving] = useState(false);
 
   const isNombrado = rec.tipo === "NOMBRADO";
-  const noHelper = !!sections.find((s) => s.id === form.sectionId)?.sinAyudante;
+  // Estudio bíblico: asignado = Conductor (Nombrados), ayudante = Lector (Asignados).
+  const estudio = esEstudio(form.asignacion);
+  const noHelper = !estudio && !!sections.find((s) => s.id === form.sectionId)?.sinAyudante;
 
   // Solo personas activas, conservando las ya referidas en este registro.
   const formPersons = useMemo(
     () => persons.filter((p) => p.active || p.id === rec.asignadoId || p.id === rec.ayudanteId),
     [persons, rec.asignadoId, rec.ayudanteId],
   );
+  const conActual = (elig: Person[], keepId: string | null) =>
+    elig.some((p) => p.id === keepId) ? elig : [...elig, ...formPersons.filter((p) => p.id === keepId)];
   // En registros de tipo NOMBRADO el asignado debe ser un Nombrado.
   const esTesoros = norm(sections.find((s) => s.id === form.sectionId)?.nombre ?? "") === norm(SECCION_TESOROS);
   const asignadoPersons = useMemo(() => {
-    // Conserva al asignado actual aunque no cumpla el filtro (para no perderlo al editar).
-    const conActual = (elig: Person[]) =>
-      elig.some((p) => p.id === rec.asignadoId) ? elig : [...elig, ...formPersons.filter((p) => p.id === rec.asignadoId)];
-    if (isNombrado) return conActual(soloNombrados(formPersons));
-    if (esLectura(form.asignacion)) return conActual(eligibleLectura(formPersons));
-    if (esTesoros) return conActual(soloNombrados(formPersons)); // Discurso y Busquemos perlas → solo Nombrados
+    if (estudio) return conActual(soloNombrados(formPersons), rec.asignadoId); // Conductor
+    if (isNombrado) return conActual(soloNombrados(formPersons), rec.asignadoId);
+    if (esLectura(form.asignacion)) return conActual(eligibleLectura(formPersons), rec.asignadoId);
+    if (esTesoros) return conActual(soloNombrados(formPersons), rec.asignadoId); // Discurso y Busquemos perlas → solo Nombrados
     return formPersons;
-  }, [isNombrado, esTesoros, formPersons, rec.asignadoId, form.asignacion]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [estudio, isNombrado, esTesoros, formPersons, rec.asignadoId, form.asignacion]);
+  const ayudantePersons = useMemo(
+    () => (estudio ? conActual(soloAsignados(formPersons), rec.ayudanteId) : formPersons),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [estudio, formPersons, rec.ayudanteId],
+  );
   const { candidates } = useSuggest(isNombrado ? "" : form.asignadoId, form.fecha);
 
-  // Datos de decisión por persona (equidad/carga/conflicto + recencia por sección).
-  const { roster } = useRoster(form.fecha || null, undefined, undefined, form.sectionId || undefined);
+  // Datos de decisión por persona. En el Estudio la recencia es por rol/asignación
+  // ("última vez en el Estudio"); en lo demás, por sección.
+  const { roster } = useRoster(
+    form.fecha || null,
+    undefined,
+    undefined,
+    estudio ? undefined : form.sectionId || undefined,
+    estudio ? form.asignacion : undefined,
+  );
   const rosterMeta = useMemo(
     () =>
       new Map(
         roster.map((r) => [
           r.id,
-          { daysSince: r.daysSince, countMonth: r.countMonth, assignedOnTarget: r.assignedOnTarget, daysSinceSection: r.daysSinceSection },
+          { daysSince: r.daysSince, countMonth: r.countMonth, assignedOnTarget: r.assignedOnTarget, daysSinceSection: estudio ? r.daysSinceAsignacion : r.daysSinceSection },
         ]),
       ),
-    [roster],
+    [roster, estudio],
   );
   const sectionLabel = useMemo(() => sections.find((s) => s.id === form.sectionId)?.nombre.split(" ")[0], [sections, form.sectionId]);
 
@@ -118,7 +134,7 @@ export function EditRecordModal({ rec, persons, onClose, onSaved }: Props) {
       <div className="form-grid">
         <div className="field-group">
           <label className="field-label">
-            {isNombrado ? "Nombre del nombrado" : "Nombre del asignado"} <span className="req">*</span>
+            {estudio ? "Conductor" : isNombrado ? "Nombre del nombrado" : "Nombre del asignado"} <span className="req">*</span>
           </label>
           <PersonSelect
             persons={asignadoPersons}
@@ -126,27 +142,29 @@ export function EditRecordModal({ rec, persons, onClose, onSaved }: Props) {
             excludeId={isNombrado ? undefined : form.ayudanteId}
             onChange={(id) => patch({ asignadoId: id })}
             meta={rosterMeta}
-            sectionLabel={form.sectionId ? sectionLabel : undefined}
+            sectionLabel={estudio ? form.asignacion : form.sectionId ? sectionLabel : undefined}
           />
         </div>
 
         {!isNombrado && !noHelper && (
           <div className="field-group">
-            <label className="field-label">Ayudante del asignado</label>
+            <label className="field-label">{estudio ? "Lector" : "Ayudante del asignado"}</label>
             <PersonSelect
-              persons={formPersons}
+              persons={ayudantePersons}
               value={form.ayudanteId}
               excludeId={form.asignadoId}
               onChange={(id) => patch({ ayudanteId: id })}
               meta={rosterMeta}
-              sectionLabel={form.sectionId ? sectionLabel : undefined}
+              sectionLabel={estudio ? form.asignacion : form.sectionId ? sectionLabel : undefined}
             />
-            <HelperPicker
-              candidates={candidates}
-              roles={roles}
-              value={form.ayudanteId}
-              onChange={(id) => patch({ ayudanteId: id })}
-            />
+            {!estudio && (
+              <HelperPicker
+                candidates={candidates}
+                roles={roles}
+                value={form.ayudanteId}
+                onChange={(id) => patch({ ayudanteId: id })}
+              />
+            )}
           </div>
         )}
 

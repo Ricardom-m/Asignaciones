@@ -10,10 +10,11 @@ import { AsignacionSuggest } from "@/components/AsignacionSuggest";
 import { HelperPicker } from "@/components/HelperPicker";
 import { agoShort } from "@/components/RosterPanel";
 import { createRecord, esLectura, eligibleLectura, fmtShort } from "@/lib/client";
-import { SECCION_TESOROS, norm } from "@/lib/sections";
+import { SECCION_TESOROS, esEstudio, norm } from "@/lib/sections";
 import type { Person, Section } from "@/lib/types";
 
 const soloNombrados = (ps: Person[]) => ps.filter((p) => p.roles.some((r) => r.nombre === "Nombrados"));
+const soloAsignados = (ps: Person[]) => ps.filter((p) => p.roles.some((r) => r.nombre === "Asignados"));
 
 const SALAS = ["Sala A", "Sala B", "Otro"];
 
@@ -32,7 +33,6 @@ export function PlannerPartModal({ fecha, sections, persons, defaultAsignadoId, 
   const toast = useToast();
   const { roles } = useRoles();
   const [sectionId, setSectionId] = useState(defaultSectionId ?? "");
-  const { roster } = useRoster(fecha, undefined, undefined, sectionId || undefined);
   const [sala, setSala] = useState(defaultSala ?? "Sala A");
   const [asignacion, setAsignacion] = useState("");
   const [minutos, setMinutos] = useState("");
@@ -44,18 +44,24 @@ export function PlannerPartModal({ fecha, sections, persons, defaultAsignadoId, 
   const nombrado = tipo === "NOMBRADO";
   const activePersons = useMemo(() => persons.filter((p) => p.active), [persons]);
   const { candidates } = useSuggest(nombrado ? "" : asignadoId, fecha);
-  // Sin ayudante: en nombrados o en secciones marcadas así.
-  const noHelper = nombrado || !!sections.find((s) => s.id === sectionId)?.sinAyudante;
+  // Estudio bíblico de congregación: asignado = Conductor (Nombrados), ayudante = Lector (Asignados).
+  const estudio = esEstudio(asignacion);
+  // Recencia por rol/asignación en el Estudio; por sección en lo demás.
+  const { roster } = useRoster(fecha, undefined, undefined, estudio ? undefined : sectionId || undefined, estudio ? asignacion : undefined);
+  // Sin ayudante: en nombrados o en secciones marcadas así (pero el Estudio sí lleva Lector).
+  const noHelper = !estudio && (nombrado || !!sections.find((s) => s.id === sectionId)?.sinAyudante);
 
   // Filtro del asignado según el caso.
   const lectura = esLectura(asignacion);
   const esTesoros = norm(sections.find((s) => s.id === sectionId)?.nombre ?? "") === norm(SECCION_TESOROS);
   const asignadoPool = useMemo(() => {
+    if (estudio) return soloNombrados(activePersons); // Conductor
     if (nombrado) return soloNombrados(activePersons);
     if (lectura) return eligibleLectura(activePersons);
     if (esTesoros) return soloNombrados(activePersons); // Discurso y Busquemos perlas → solo Nombrados
     return activePersons;
-  }, [nombrado, lectura, esTesoros, activePersons]);
+  }, [estudio, nombrado, lectura, esTesoros, activePersons]);
+  const ayudantePool = useMemo(() => (estudio ? soloAsignados(activePersons) : activePersons), [estudio, activePersons]);
   const poolIds = useMemo(() => new Set(asignadoPool.map((p) => p.id)), [asignadoPool]);
 
   // Sugerencias de asignado: los más atrasados que NO estén ya ese día (y elegibles).
@@ -70,10 +76,10 @@ export function PlannerPartModal({ fecha, sections, persons, defaultAsignadoId, 
       new Map(
         roster.map((r) => [
           r.id,
-          { daysSince: r.daysSince, countMonth: r.countMonth, assignedOnTarget: r.assignedOnTarget, daysSinceSection: r.daysSinceSection },
+          { daysSince: r.daysSince, countMonth: r.countMonth, assignedOnTarget: r.assignedOnTarget, daysSinceSection: estudio ? r.daysSinceAsignacion : r.daysSinceSection },
         ]),
       ),
-    [roster],
+    [roster, estudio],
   );
   const sectionLabel = useMemo(() => sections.find((s) => s.id === sectionId)?.nombre.split(" ")[0], [sections, sectionId]);
 
@@ -167,7 +173,7 @@ export function PlannerPartModal({ fecha, sections, persons, defaultAsignadoId, 
 
         <div className="field-group">
           <label className="field-label">
-            {nombrado ? "Nombrado" : "Asignado"} <span className="req">*</span>
+            {estudio ? "Conductor" : nombrado ? "Nombrado" : "Asignado"} <span className="req">*</span>
           </label>
           <PersonSelect
             persons={asignadoPool}
@@ -176,7 +182,7 @@ export function PlannerPartModal({ fecha, sections, persons, defaultAsignadoId, 
             onChange={setAsignadoId}
             placeholder="Seleccionar…"
             meta={rosterMeta}
-            sectionLabel={sectionId ? sectionLabel : undefined}
+            sectionLabel={estudio ? asignacion : sectionId ? sectionLabel : undefined}
           />
           {asignadoSugs.length > 0 && (
             <div className="sug-row">
@@ -192,16 +198,16 @@ export function PlannerPartModal({ fecha, sections, persons, defaultAsignadoId, 
 
         {!noHelper && (
           <div className="field-group">
-            <label className="field-label">Ayudante (opcional)</label>
+            <label className="field-label">{estudio ? "Lector" : "Ayudante (opcional)"}</label>
             <PersonSelect
-              persons={activePersons}
+              persons={ayudantePool}
               value={ayudanteId}
               excludeId={asignadoId}
               onChange={setAyudanteId}
               meta={rosterMeta}
-              sectionLabel={sectionId ? sectionLabel : undefined}
+              sectionLabel={estudio ? asignacion : sectionId ? sectionLabel : undefined}
             />
-            <HelperPicker candidates={candidates} roles={roles} value={ayudanteId} onChange={setAyudanteId} />
+            {!estudio && <HelperPicker candidates={candidates} roles={roles} value={ayudanteId} onChange={setAyudanteId} />}
           </div>
         )}
 

@@ -1,10 +1,17 @@
 import { prisma } from "@/lib/prisma";
 import { ok, requireSession } from "@/lib/server";
 import { todayYMD } from "@/lib/date";
+import { PARTE_CANCION, PARTE_PALABRAS } from "@/lib/sections";
 import type { Prisma } from "@prisma/client";
 
-// Las partes sin persona (Inicio: Canción/Palabras) no cuentan como asignaciones.
-const notInicio: Prisma.RecordWhereInput = { OR: [{ sectionId: null }, { section: { is: { sinPersona: false } } }] };
+// Las partes "de programa" (sección Inicio + canciones/palabras sin persona) no
+// cuentan como asignaciones.
+const notInicio: Prisma.RecordWhereInput = {
+  AND: [
+    { OR: [{ sectionId: null }, { section: { is: { sinPersona: false } } }] },
+    { NOT: { asignacion: { in: [PARTE_CANCION, PARTE_PALABRAS] } } },
+  ],
+};
 
 function ymdToDate(ymd: string) {
   return new Date(ymd + "T00:00:00.000Z");

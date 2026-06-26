@@ -3,7 +3,7 @@ import { recordInput } from "@/lib/validation";
 import { serializeRecord, recordInclude } from "@/lib/serialize";
 import { ok, fail, requireSession, rateLimit, clientKey, isAdmin } from "@/lib/server";
 import { todayYMD } from "@/lib/date";
-import { SECCION_TESOROS, TESOROS_MAX, esLecturaNombre, esParteInicio, norm } from "@/lib/sections";
+import { SECCION_TESOROS, TESOROS_MAX, PARTE_CANCION, PARTE_PALABRAS, esLecturaNombre, esParteInicio, norm } from "@/lib/sections";
 import type { Prisma } from "@prisma/client";
 
 const insensitive = (q: string): Prisma.StringFilter => ({ contains: q, mode: "insensitive" });
@@ -34,9 +34,12 @@ export async function GET(req: Request) {
   if (sala) and.push({ sala });
   if (tipo === "ASIGNACION" || tipo === "NOMBRADO") and.push({ tipo });
   if (personId) and.push({ OR: [{ asignadoId: personId }, { ayudanteId: personId }] });
-  // Las partes sin persona (Inicio) solo se usan en el planificador (consulta por fecha
-  // exacta); se ocultan de las listas/dashboard.
-  if (!fecha) and.push({ OR: [{ sectionId: null }, { section: { is: { sinPersona: false } } }] });
+  // Las partes "de programa" (sección Inicio + canciones/palabras sin persona) solo
+  // viven en el planificador; se ocultan de las listas/dashboard.
+  if (!fecha) {
+    and.push({ OR: [{ sectionId: null }, { section: { is: { sinPersona: false } } }] });
+    and.push({ NOT: { asignacion: { in: [PARTE_CANCION, PARTE_PALABRAS] } } });
+  }
   if (q)
     and.push({
       OR: [

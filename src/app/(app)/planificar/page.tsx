@@ -30,7 +30,7 @@ import { GenderIcon } from "@/components/GenderIcon";
 import { useIsAdmin } from "@/components/UserContext";
 import { addDaysYMD, arrangeRecords, deleteRecord, ensureInicio, esLectura, fmtShort, nextWeekdayDates, relativeLabel, todayYMD, updateRecord, weekdayLabel, weekdayOf } from "@/lib/client";
 import { PersonSelect } from "@/components/PersonSelect";
-import { SECCION_TESOROS, esCancion, esParteSinPersona, inicioRank, norm, tesorosRank } from "@/lib/sections";
+import { SECCION_TESOROS, SECCION_VIDA, esCancion, esParteSinPersona, esRolNombrado, inicioRank, norm, tesorosRank, vidaRank } from "@/lib/sections";
 import type { Person, RecordItem } from "@/lib/types";
 
 const SIN_SECCION = "__none__";
@@ -418,6 +418,42 @@ export default function PlanificarPage() {
                                 </div>
                               ))}
                             </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  );
+                }
+
+                // Nuestra vida cristiana: marco fijo (Canción al inicio, Oración +
+                // Canción al final) con las partes del usuario en medio, en orden.
+                if (norm(g.nombre) === norm(SECCION_VIDA)) {
+                  const ordVida = [...g.items].sort((a, b) => vidaRank(a) - vidaRank(b));
+                  return (
+                    <div className="plan-section" key={g.id}>
+                      <div className="plan-section-head">
+                        <span className="plan-section-title">
+                          {g.nombre}
+                          {g.soloAdmin && <span className="plan-lock-tag" title="Solo el administrador">🔒</span>}
+                        </span>
+                        {!bloqueada && (
+                          <button className="btn btn-ghost btn-sm plan-add-sec" onClick={() => openAdd({ sectionId: g.id })}>
+                            + parte
+                          </button>
+                        )}
+                      </div>
+                      {g.items.length === 0 ? (
+                        <div className="plan-empty">— sin partes —</div>
+                      ) : (
+                        <div className="plan-tg main">
+                          {ordVida.map((r) =>
+                            esCancion(r.asignacion) ? (
+                              <StartRow key={r.id} rec={r} onCantico={(n) => saveCantico(r, n)} />
+                            ) : esRolNombrado(r.asignacion) ? (
+                              <InicioPersonaRow key={r.id} rec={r} fecha={fecha} nombrados={nombrados} onPersona={(id) => savePersona(r, id)} />
+                            ) : (
+                              <TesorosRow key={r.id} rec={r} personsById={personsById} dupIds={dupIds} onEdit={() => setEditing(r)} onDelete={() => onDelete(r)} />
+                            ),
                           )}
                         </div>
                       )}
