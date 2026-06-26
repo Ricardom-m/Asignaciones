@@ -10,7 +10,10 @@ import { AsignacionSuggest } from "@/components/AsignacionSuggest";
 import { HelperPicker } from "@/components/HelperPicker";
 import { agoShort } from "@/components/RosterPanel";
 import { createRecord, esLectura, eligibleLectura, fmtShort } from "@/lib/client";
+import { SECCION_TESOROS, norm } from "@/lib/sections";
 import type { Person, Section } from "@/lib/types";
+
+const soloNombrados = (ps: Person[]) => ps.filter((p) => p.roles.some((r) => r.nombre === "Nombrados"));
 
 const SALAS = ["Sala A", "Sala B", "Otro"];
 
@@ -46,11 +49,13 @@ export function PlannerPartModal({ fecha, sections, persons, defaultAsignadoId, 
 
   // Filtro del asignado según el caso.
   const lectura = esLectura(asignacion);
+  const esTesoros = norm(sections.find((s) => s.id === sectionId)?.nombre ?? "") === norm(SECCION_TESOROS);
   const asignadoPool = useMemo(() => {
-    if (nombrado) return activePersons.filter((p) => p.roles.some((r) => r.nombre === "Nombrados"));
+    if (nombrado) return soloNombrados(activePersons);
     if (lectura) return eligibleLectura(activePersons);
+    if (esTesoros) return soloNombrados(activePersons); // Discurso y Busquemos perlas → solo Nombrados
     return activePersons;
-  }, [nombrado, lectura, activePersons]);
+  }, [nombrado, lectura, esTesoros, activePersons]);
   const poolIds = useMemo(() => new Set(asignadoPool.map((p) => p.id)), [asignadoPool]);
 
   // Sugerencias de asignado: los más atrasados que NO estén ya ese día (y elegibles).

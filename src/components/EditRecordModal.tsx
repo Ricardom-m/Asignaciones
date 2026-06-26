@@ -10,7 +10,10 @@ import { AsignacionSuggest } from "@/components/AsignacionSuggest";
 import { HelperPicker } from "@/components/HelperPicker";
 import { DateChips } from "@/components/DateChips";
 import { updateRecord, esLectura, eligibleLectura } from "@/lib/client";
+import { SECCION_TESOROS, norm } from "@/lib/sections";
 import type { Person, RecordItem } from "@/lib/types";
+
+const soloNombrados = (ps: Person[]) => ps.filter((p) => p.roles.some((r) => r.nombre === "Nombrados"));
 
 const SALAS = ["Sala A", "Sala B", "Otro"];
 
@@ -56,15 +59,16 @@ export function EditRecordModal({ rec, persons, onClose, onSaved }: Props) {
     [persons, rec.asignadoId, rec.ayudanteId],
   );
   // En registros de tipo NOMBRADO el asignado debe ser un Nombrado.
+  const esTesoros = norm(sections.find((s) => s.id === form.sectionId)?.nombre ?? "") === norm(SECCION_TESOROS);
   const asignadoPersons = useMemo(() => {
-    if (isNombrado)
-      return formPersons.filter((p) => p.roles.some((r) => r.nombre === "Nombrados") || p.id === rec.asignadoId);
-    if (esLectura(form.asignacion)) {
-      const elig = eligibleLectura(formPersons);
-      return elig.some((p) => p.id === rec.asignadoId) ? elig : [...elig, ...formPersons.filter((p) => p.id === rec.asignadoId)];
-    }
+    // Conserva al asignado actual aunque no cumpla el filtro (para no perderlo al editar).
+    const conActual = (elig: Person[]) =>
+      elig.some((p) => p.id === rec.asignadoId) ? elig : [...elig, ...formPersons.filter((p) => p.id === rec.asignadoId)];
+    if (isNombrado) return conActual(soloNombrados(formPersons));
+    if (esLectura(form.asignacion)) return conActual(eligibleLectura(formPersons));
+    if (esTesoros) return conActual(soloNombrados(formPersons)); // Discurso y Busquemos perlas → solo Nombrados
     return formPersons;
-  }, [isNombrado, formPersons, rec.asignadoId, form.asignacion]);
+  }, [isNombrado, esTesoros, formPersons, rec.asignadoId, form.asignacion]);
   const { candidates } = useSuggest(isNombrado ? "" : form.asignadoId, form.fecha);
 
   // Datos de decisión por persona (equidad/carga/conflicto + recencia por sección).
