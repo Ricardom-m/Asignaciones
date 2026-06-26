@@ -29,7 +29,8 @@ import { useConfirm } from "@/components/Confirm";
 import { GenderIcon } from "@/components/GenderIcon";
 import { useIsAdmin } from "@/components/UserContext";
 import { addDaysYMD, arrangeRecords, deleteRecord, ensureInicio, esLectura, fmtShort, nextWeekdayDates, relativeLabel, todayYMD, updateRecord, weekdayLabel, weekdayOf } from "@/lib/client";
-import { SECCION_TESOROS, esCancion, norm, tesorosRank } from "@/lib/sections";
+import { PersonSelect } from "@/components/PersonSelect";
+import { SECCION_TESOROS, PARTE_PRESIDENTE, PARTE_CONSEJERO, PARTE_ORACION, esCancion, esParteSinPersona, inicioRank, norm, tesorosRank } from "@/lib/sections";
 import type { Person, RecordItem } from "@/lib/types";
 
 const SIN_SECCION = "__none__";
@@ -74,6 +75,7 @@ export default function PlanificarPage() {
 
   const { items: dayRecords, mutate: mutateDay } = useDateRecords(fecha || null);
   const personsById = useMemo(() => new Map(persons.map((p) => [p.id, p])), [persons]);
+  const nombrados = useMemo(() => persons.filter((p) => p.active && p.roles.some((r) => r.nombre === "Nombrados")), [persons]);
 
   // Al abrir una fecha, asegura las partes fijas de "Inicio" (Canción + Palabras).
   const ensuredRef = useRef<Set<string>>(new Set());
@@ -227,6 +229,28 @@ export default function PlanificarPage() {
     }
   };
 
+  // Asigna/limpia el Nombrado de una parte de Inicio (Presidente, Consejero, Oración).
+  const savePersona = async (rec: RecordItem, id: string) => {
+    const asignadoId = id || null;
+    mutateDay({ items: dayRecords.map((r) => (r.id === rec.id ? { ...r, asignadoId } : r)), nextCursor: null }, false);
+    try {
+      await updateRecord(rec.id, {
+        asignadoId,
+        ayudanteId: null,
+        fecha: rec.fecha,
+        sala: rec.sala,
+        asignacion: rec.asignacion,
+        sectionId: rec.sectionId,
+        minutos: rec.minutos,
+        cantico: null,
+      });
+      refresh();
+    } catch (e) {
+      mutateDay();
+      toast("❌ " + (e as Error).message, "error");
+    }
+  };
+
   // Fechas para elegir: próximos ~3 meses según la regla (días de reunión),
   // más cualquier reunión especial ya guardada dentro de ese rango.
   const planDates = useMemo(() => {
@@ -323,10 +347,14 @@ export default function PlanificarPage() {
                     <div className="plan-section plan-inicio" key={g.id}>
                       <div className="plan-tg main">
                         {[...g.items]
-                          .sort((a, b) => a.orden - b.orden)
-                          .map((r) => (
-                            <StartRow key={r.id} rec={r} onCantico={(n) => saveCantico(r, n)} />
-                          ))}
+                          .sort((a, b) => inicioRank(a.asignacion) - inicioRank(b.asignacion) || a.orden - b.orden)
+                          .map((r) =>
+                            esParteSinPersona(r.asignacion) ? (
+                              <StartRow key={r.id} rec={r} onCantico={(n) => saveCantico(r, n)} />
+                            ) : (
+                              <InicioPersonaRow key={r.id} rec={r} nombrados={nombrados} onPersona={(id) => savePersona(r, id)} />
+                            ),
+                          )}
                       </div>
                     </div>
                   );
@@ -569,8 +597,8 @@ function TesorosRow({
   );
 }
 
-// Parte fija de la sección "Inicio" (sin persona): Canción (con número de cántico)
-// o Palabras de instrucción (duración fija). No se arrastra ni se borra.
+// Parte fija de "Inicio" sin persona: Canción (con número de cántico) o
+// Palabras de introducción (duración fija). No se arrastra ni se borra.
 function StartRow({ rec, onCantico }: { rec: RecordItem; onCantico: (n: number | null) => void }) {
   const cancion = esCancion(rec.asignacion);
   const [val, setVal] = useState(rec.cantico != null ? String(rec.cantico) : "");
@@ -609,6 +637,22 @@ function StartRow({ rec, onCantico }: { rec: RecordItem; onCantico: (n: number |
       ) : (
         rec.minutos != null && <span className="plan-inicio-min">{rec.minutos} min</span>
       )}
+    </div>
+  );
+}
+
+// Parte fija de "Inicio" con un Nombrado (Presidente, Consejero de la sala
+// auxiliar, Oración): selector en línea filtrado a Nombrados.
+function InicioPersonaRow({ rec, nombrados, onPersona }: { rec: RecordItem; nombrados: Person[]; onPersona: (id: string) => void }) {
+  const a = norm(rec.asignacion);
+  const ico = a === norm(PARTE_PRESIDENTE) ? "🎤" : a === norm(PARTE_ORACION) ? "🙏" : a === norm(PARTE_CONSEJERO) ? "💬" : "👤";
+  return (
+    <div className="plan-inicio-row">
+      <span className="plan-inicio-ico">{ico}</span>
+      <span className="plan-inicio-asig">{rec.asignacion}</span>
+      <div className="plan-inicio-persona">
+        <PersonSelect persons={nombrados} value={rec.asignadoId ?? ""} onChange={onPersona} placeholder="Asignar nombrado…" />
+      </div>
     </div>
   );
 }

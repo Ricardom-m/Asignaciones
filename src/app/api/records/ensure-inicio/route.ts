@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { ok, fail, requireSession } from "@/lib/server";
-import { SECCION_INICIO, PARTE_CANCION, PARTE_PALABRAS, PALABRAS_MIN, norm } from "@/lib/sections";
+import { SECCION_INICIO, PARTES_INICIO, norm } from "@/lib/sections";
 import type { Prisma } from "@prisma/client";
 
 // POST /api/records/ensure-inicio { fecha } — crea (idempotente) la sección
@@ -35,10 +35,17 @@ export async function POST(req: Request) {
   const have = new Set(existing.map((r) => norm(r.asignacion)));
 
   const toCreate: Prisma.RecordCreateManyInput[] = [];
-  if (!have.has(norm(PARTE_CANCION)))
-    toCreate.push({ fecha: new Date(fecha), sectionId: sec.id, asignacion: PARTE_CANCION, orden: 0, minutos: null });
-  if (!have.has(norm(PARTE_PALABRAS)))
-    toCreate.push({ fecha: new Date(fecha), sectionId: sec.id, asignacion: PARTE_PALABRAS, orden: 1, minutos: PALABRAS_MIN });
+  PARTES_INICIO.forEach((p, i) => {
+    if (have.has(norm(p.value))) return;
+    toCreate.push({
+      fecha: new Date(fecha),
+      sectionId: sec.id,
+      asignacion: p.value,
+      orden: i,
+      minutos: p.minutos,
+      tipo: p.nombrado ? "NOMBRADO" : "ASIGNACION",
+    });
+  });
 
   let created = 0;
   if (toCreate.length) {

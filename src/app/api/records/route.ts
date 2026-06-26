@@ -96,14 +96,15 @@ export async function POST(req: Request) {
     if (dupLect) return fail(`Ya hay una Lectura de la Biblia en ${sala ?? "esa sala"} ese día`, 409);
   }
 
-  // La sección define si la parte lleva persona (Inicio = sin persona).
+  // La sección "Inicio" (sinPersona) tiene persona OPCIONAL: unas partes no
+  // llevan persona (Canción, Palabras) y otras un Nombrado (Presidente…).
   let sectionSoloAdmin = false;
-  let sinPersona = false;
+  let personaOpcional = false;
   if (sectionId) {
     const sec = await prisma.section.findUnique({ where: { id: sectionId } });
     if (!sec) return fail("Sección inexistente", 422);
     sectionSoloAdmin = sec.soloAdmin;
-    sinPersona = sec.sinPersona;
+    personaOpcional = sec.sinPersona;
     if (sec.soloAdmin && !isAdmin(session))
       return fail(`Solo el administrador puede agregar en "${sec.nombre}"`, 403);
     if (sec.unaPorSala) {
@@ -120,8 +121,8 @@ export async function POST(req: Request) {
   }
 
   // Validación de personas según el tipo de sección.
-  const finalAsignado = sinPersona ? null : asignadoId ?? null;
-  if (!sinPersona && !finalAsignado) return fail("Selecciona el asignado", 422);
+  const finalAsignado = asignadoId ?? null;
+  if (!personaOpcional && !finalAsignado) return fail("Selecciona el asignado", 422);
   const ids = [...(finalAsignado ? [finalAsignado] : []), ...(ayudanteId ? [ayudanteId] : [])];
   if (ids.length) {
     const count = await prisma.person.count({ where: { id: { in: ids } } });
@@ -139,7 +140,7 @@ export async function POST(req: Request) {
   const record = await prisma.record.create({
     data: {
       asignadoId: finalAsignado,
-      ayudanteId: sinPersona ? null : ayudanteId ?? null,
+      ayudanteId: personaOpcional ? null : ayudanteId ?? null,
       fecha: new Date(fecha),
       sala: sala ?? null,
       asignacion,

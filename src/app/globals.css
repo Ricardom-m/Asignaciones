@@ -766,6 +766,8 @@ input:focus, select:focus, .list-search-input:focus, .sel-search:focus, .cmd-inp
 .plan-inicio-ico { font-size:.95rem; flex-shrink:0; }
 .plan-inicio-asig { font-weight:600; font-size:.86rem; min-width:0; }
 .plan-inicio-min { margin-left:auto; font-size:.72rem; color:var(--text3); white-space:nowrap; }
+.plan-inicio-persona { margin-left:auto; width:230px; max-width:58%; flex-shrink:0; }
+.plan-inicio-persona .sel-trigger { padding:7px 10px; }
 .plan-inicio-cant { margin-left:auto; display:flex; align-items:center; gap:7px; }
 .plan-inicio-cant-lbl { font-size:.68rem; color:var(--text3); text-transform:uppercase; letter-spacing:.04em; }
 .plan-inicio-input { width:72px; text-align:center; padding:6px 8px !important; }

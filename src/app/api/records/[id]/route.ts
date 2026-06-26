@@ -36,11 +36,11 @@ export async function PATCH(req: Request, { params }: Params) {
     if (dupLect) return fail(`Ya hay una Lectura de la Biblia en ${sala ?? "esa sala"} ese día`, 409);
   }
 
-  let sinPersona = false;
+  let personaOpcional = false;
   if (sectionId) {
     const sec = await prisma.section.findUnique({ where: { id: sectionId } });
     if (!sec) return fail("Sección inexistente", 422);
-    sinPersona = sec.sinPersona;
+    personaOpcional = sec.sinPersona;
     if (sec.unaPorSala) {
       const dup = await prisma.record.findFirst({
         where: { fecha: new Date(fecha), sectionId, sala: sala ?? null, id: { not: id } },
@@ -55,8 +55,8 @@ export async function PATCH(req: Request, { params }: Params) {
     }
   }
 
-  const finalAsignado = sinPersona ? null : asignadoId ?? null;
-  if (!sinPersona && !finalAsignado) return fail("Selecciona el asignado", 422);
+  const finalAsignado = asignadoId ?? null;
+  if (!personaOpcional && !finalAsignado) return fail("Selecciona el asignado", 422);
   const ids = [...(finalAsignado ? [finalAsignado] : []), ...(ayudanteId ? [ayudanteId] : [])];
   if (ids.length) {
     const count = await prisma.person.count({ where: { id: { in: ids } } });
@@ -67,7 +67,7 @@ export async function PATCH(req: Request, { params }: Params) {
     where: { id },
     data: {
       asignadoId: finalAsignado,
-      ayudanteId: sinPersona ? null : ayudanteId ?? null,
+      ayudanteId: personaOpcional ? null : ayudanteId ?? null,
       fecha: new Date(fecha),
       sala: sala ?? null,
       asignacion,
