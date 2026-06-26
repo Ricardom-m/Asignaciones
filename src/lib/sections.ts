@@ -28,11 +28,12 @@ export const PARTE_ORACION = "Oración";
 export const PALABRAS_MIN = 1; // duración fija de "Palabras de introducción"
 
 // Orden y especificación de las partes de Inicio (sirve para sembrarlas y ordenarlas).
+// Solo pueden existir estas 5 partes (no más).
 export const PARTES_INICIO: { value: string; minutos: number | null; nombrado: boolean }[] = [
   { value: PARTE_PRESIDENTE, minutos: null, nombrado: true },
   { value: PARTE_CONSEJERO, minutos: null, nombrado: true },
-  { value: PARTE_CANCION, minutos: null, nombrado: false },
   { value: PARTE_ORACION, minutos: null, nombrado: true },
+  { value: PARTE_CANCION, minutos: null, nombrado: false },
   { value: PARTE_PALABRAS, minutos: PALABRAS_MIN, nombrado: false },
 ];
 
@@ -41,6 +42,8 @@ export const esParteSinPersona = (a: string) => {
   const n = norm(a);
   return n === norm(PARTE_CANCION) || n === norm(PARTE_PALABRAS);
 };
+// ¿Es una de las 5 partes válidas de Inicio?
+export const esParteInicio = (a: string) => PARTES_INICIO.some((p) => norm(p.value) === norm(a));
 // Posición canónica dentro de Inicio (para el render).
 export const inicioRank = (a: string) => {
   const i = PARTES_INICIO.findIndex((p) => norm(p.value) === norm(a));

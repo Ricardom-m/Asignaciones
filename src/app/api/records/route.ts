@@ -3,7 +3,7 @@ import { recordInput } from "@/lib/validation";
 import { serializeRecord, recordInclude } from "@/lib/serialize";
 import { ok, fail, requireSession, rateLimit, clientKey, isAdmin } from "@/lib/server";
 import { todayYMD } from "@/lib/date";
-import { SECCION_TESOROS, TESOROS_MAX, esLecturaNombre, norm } from "@/lib/sections";
+import { SECCION_TESOROS, TESOROS_MAX, esLecturaNombre, esParteInicio, esParteSinPersona, norm } from "@/lib/sections";
 import type { Prisma } from "@prisma/client";
 
 const insensitive = (q: string): Prisma.StringFilter => ({ contains: q, mode: "insensitive" });
@@ -127,6 +127,20 @@ export async function POST(req: Request) {
   if (ids.length) {
     const count = await prisma.person.count({ where: { id: { in: ids } } });
     if (count !== ids.length) return fail("Persona referida inexistente", 422);
+  }
+
+  // Inicio: solo sus 5 partes válidas, sin duplicar la parte ni repetir el
+  // mismo Nombrado entre los roles (Presidente/Consejero/Oración) ese día.
+  if (personaOpcional && sectionId) {
+    if (!esParteInicio(asignacion)) return fail("Parte no válida para la sección Inicio", 422);
+    const dupPart = await prisma.record.findFirst({
+      where: { fecha: new Date(fecha), sectionId, asignacion: { equals: asignacion.trim(), mode: "insensitive" } },
+    });
+    if (dupPart) return fail("Esa parte de Inicio ya existe ese día", 409);
+    if (finalAsignado && !esParteSinPersona(asignacion)) {
+      const dupRole = await prisma.record.findFirst({ where: { fecha: new Date(fecha), sectionId, asignadoId: finalAsignado } });
+      if (dupRole) return fail("Ese nombrado ya tiene otro rol en el inicio ese día", 409);
+    }
   }
 
   // El nuevo registro va al final de su grupo (fecha + sección + sala).

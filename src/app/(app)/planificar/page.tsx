@@ -76,6 +76,16 @@ export default function PlanificarPage() {
   const { items: dayRecords, mutate: mutateDay } = useDateRecords(fecha || null);
   const personsById = useMemo(() => new Map(persons.map((p) => [p.id, p])), [persons]);
   const nombrados = useMemo(() => persons.filter((p) => p.active && p.roles.some((r) => r.nombre === "Nombrados")), [persons]);
+  const inicioSectionId = useMemo(() => sections.find((s) => s.sinPersona)?.id, [sections]);
+  // Nombrados ya usados en los roles de Inicio (Presidente/Consejero/Oración):
+  // ninguno puede repetirse entre esas 3 partes el mismo día.
+  const inicioRolesTomados = useMemo(() => {
+    const s = new Set<string>();
+    for (const r of dayRecords) {
+      if (r.sectionId === inicioSectionId && r.asignadoId && !esParteSinPersona(r.asignacion)) s.add(r.asignadoId);
+    }
+    return s;
+  }, [dayRecords, inicioSectionId]);
 
   // Al abrir una fecha, asegura las partes fijas de "Inicio" (Canción + Palabras).
   const ensuredRef = useRef<Set<string>>(new Set());
@@ -352,7 +362,13 @@ export default function PlanificarPage() {
                             esParteSinPersona(r.asignacion) ? (
                               <StartRow key={r.id} rec={r} onCantico={(n) => saveCantico(r, n)} />
                             ) : (
-                              <InicioPersonaRow key={r.id} rec={r} nombrados={nombrados} onPersona={(id) => savePersona(r, id)} />
+                              <InicioPersonaRow
+                                key={r.id}
+                                rec={r}
+                                nombrados={nombrados}
+                                excludeIds={[...inicioRolesTomados].filter((id) => id !== r.asignadoId)}
+                                onPersona={(id) => savePersona(r, id)}
+                              />
                             ),
                           )}
                       </div>
@@ -643,7 +659,17 @@ function StartRow({ rec, onCantico }: { rec: RecordItem; onCantico: (n: number |
 
 // Parte fija de "Inicio" con un Nombrado (Presidente, Consejero de la sala
 // auxiliar, Oración): selector en línea filtrado a Nombrados.
-function InicioPersonaRow({ rec, nombrados, onPersona }: { rec: RecordItem; nombrados: Person[]; onPersona: (id: string) => void }) {
+function InicioPersonaRow({
+  rec,
+  nombrados,
+  excludeIds,
+  onPersona,
+}: {
+  rec: RecordItem;
+  nombrados: Person[];
+  excludeIds: string[];
+  onPersona: (id: string) => void;
+}) {
   const a = norm(rec.asignacion);
   const ico = a === norm(PARTE_PRESIDENTE) ? "🎤" : a === norm(PARTE_ORACION) ? "🙏" : a === norm(PARTE_CONSEJERO) ? "💬" : "👤";
   return (
@@ -651,7 +677,7 @@ function InicioPersonaRow({ rec, nombrados, onPersona }: { rec: RecordItem; nomb
       <span className="plan-inicio-ico">{ico}</span>
       <span className="plan-inicio-asig">{rec.asignacion}</span>
       <div className="plan-inicio-persona">
-        <PersonSelect persons={nombrados} value={rec.asignadoId ?? ""} onChange={onPersona} placeholder="Asignar nombrado…" />
+        <PersonSelect persons={nombrados} value={rec.asignadoId ?? ""} excludeIds={excludeIds} onChange={onPersona} placeholder="Asignar nombrado…" />
       </div>
     </div>
   );

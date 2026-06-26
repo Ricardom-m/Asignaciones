@@ -22,6 +22,7 @@ interface Props {
   value: string; // id seleccionado ("" = ninguno)
   onChange: (id: string) => void;
   excludeId?: string; // no mostrar esta persona (la del campo opuesto)
+  excludeIds?: string[]; // no mostrar estas personas (p. ej. ya usadas en otras partes)
   placeholder?: string;
   allowClear?: boolean;
   meta?: Map<string, PersonMeta>; // si se pasa, cada opción muestra rol/recencia/carga/conflicto
@@ -60,6 +61,7 @@ export function PersonSelect({
   value,
   onChange,
   excludeId,
+  excludeIds,
   placeholder = "Seleccionar…",
   allowClear = true,
   meta,
@@ -101,11 +103,13 @@ export function PersonSelect({
 
   const options = useMemo(() => {
     const q = query.toLowerCase().trim();
-    const base = persons.filter((p) => p.id !== excludeId).filter((p) => !q || fullName(p).toLowerCase().includes(q));
+    const base = persons
+      .filter((p) => p.id !== excludeId && !excludeIds?.includes(p.id))
+      .filter((p) => !q || fullName(p).toLowerCase().includes(q));
     if (!enriched || sort === "az") return base.sort(cmpAz);
     if (sort === "carga") return base.sort((a, b) => (meta!.get(a.id)?.countMonth ?? 0) - (meta!.get(b.id)?.countMonth ?? 0) || cmpAz(a, b));
     return base.sort(cmpToca);
-  }, [persons, excludeId, query, enriched, sort, cmpToca, meta]);
+  }, [persons, excludeId, excludeIds, query, enriched, sort, cmpToca, meta]);
 
   // Agrupar en "Sugeridos / Todos" solo en el orden por defecto y sin búsqueda.
   const grouped = enriched && sort === "toca" && !query.trim();
