@@ -29,7 +29,7 @@ import { useConfirm } from "@/components/Confirm";
 import { GenderIcon } from "@/components/GenderIcon";
 import { useIsAdmin } from "@/components/UserContext";
 import { addDaysYMD, arrangeRecords, deleteRecord, ensureInicio, esLectura, fmtShort, nextWeekdayDates, relativeLabel, todayYMD, updateRecord, weekdayLabel, weekdayOf } from "@/lib/client";
-import { SECCION_TESOROS, esCancion, norm } from "@/lib/sections";
+import { SECCION_TESOROS, esCancion, norm, tesorosRank } from "@/lib/sections";
 import type { Person, RecordItem } from "@/lib/types";
 
 const SIN_SECCION = "__none__";
@@ -330,8 +330,56 @@ export default function PlanificarPage() {
                   );
                 }
 
-                const faltaLectura =
-                  norm(g.nombre) === norm(SECCION_TESOROS) && g.items.length > 0 && !g.items.some((r) => esLectura(r.asignacion));
+                const esTesoros = norm(g.nombre) === norm(SECCION_TESOROS);
+                const faltaLectura = esTesoros && g.items.length > 0 && !g.items.some((r) => esLectura(r.asignacion));
+
+                // Tesoros: orden fijo (discurso → perlas → lectura). Las partes
+                // generales van full-width; la Lectura se divide por sala A/B.
+                if (esTesoros) {
+                  const ordenadas = [...g.items].sort((a, b) => tesorosRank(a.asignacion) - tesorosRank(b.asignacion) || a.orden - b.orden);
+                  const generales = ordenadas.filter((r) => !esLectura(r.asignacion));
+                  const lecturas = ordenadas.filter((r) => esLectura(r.asignacion));
+                  return (
+                    <div className="plan-section" key={g.id}>
+                      <div className="plan-section-head">
+                        <span className="plan-section-title">{g.nombre}</span>
+                        {!bloqueada && (
+                          <button className="btn btn-ghost btn-sm plan-add-sec" onClick={() => openAdd({ sectionId: g.id, sala: "Sala A" })}>
+                            + parte
+                          </button>
+                        )}
+                      </div>
+                      {faltaLectura && <div className="plan-warn-note">⚠ Falta la Lectura de la Biblia</div>}
+                      {g.items.length === 0 ? (
+                        <div className="plan-empty">— sin partes —</div>
+                      ) : (
+                        <>
+                          {generales.map((r) => (
+                            <FixedPartRow key={r.id} rec={r} personsById={personsById} dupIds={dupIds} onEdit={() => setEditing(r)} onDelete={() => onDelete(r)} />
+                          ))}
+                          {lecturas.length > 0 && (
+                            <div className="plan-tesoros-lectura">
+                              <div className="plan-sub-label">Lectura de la Biblia</div>
+                              <div className="plan-salas">
+                                {groupBySala(lecturas).map((sg) => (
+                                  <div className={`plan-sala-group ${salaClass(sg.sala)}`} key={sg.sala}>
+                                    <div className="plan-sala-head">
+                                      <span className={`plan-sala-tag ${salaClass(sg.sala)}`}>{sg.sala}</span>
+                                    </div>
+                                    {sg.items.map((r) => (
+                                      <FixedPartRow key={r.id} rec={r} personsById={personsById} dupIds={dupIds} onEdit={() => setEditing(r)} onDelete={() => onDelete(r)} />
+                                    ))}
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  );
+                }
+
                 return (
                 <div className="plan-section" key={g.id}>
                   <div className="plan-section-head">
@@ -478,6 +526,36 @@ function PartRow({
           <DotsSixVertical size={16} weight="bold" />
         </button>
       )}
+      <PartInner rec={rec} personsById={personsById} dupIds={dupIds} />
+      {!locked && (
+        <div className="plan-part-actions">
+          <button className="tl-act" onClick={onEdit} title="Editar" aria-label="Editar">✎</button>
+          <button className="tl-act danger" onClick={onDelete} title="Quitar" aria-label="Quitar">✕</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Fila de parte con orden fijo (Tesoros): sin agarradera para arrastrar.
+function FixedPartRow({
+  rec,
+  personsById,
+  dupIds,
+  onEdit,
+  onDelete,
+}: {
+  rec: RecordItem;
+  personsById: Map<string, Person>;
+  dupIds: Set<string>;
+  onEdit: () => void;
+  onDelete: () => void;
+}) {
+  const isAdmin = useIsAdmin();
+  const locked = rec.bloqueado && !isAdmin;
+  const conflict = (!!rec.asignadoId && dupIds.has(rec.asignadoId)) || (!!rec.ayudanteId && dupIds.has(rec.ayudanteId));
+  return (
+    <div className={`plan-part fixed${conflict ? " conflict" : ""}`}>
       <PartInner rec={rec} personsById={personsById} dupIds={dupIds} />
       {!locked && (
         <div className="plan-part-actions">
