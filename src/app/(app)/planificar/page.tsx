@@ -17,11 +17,11 @@ import {
 import { SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, arrayMove, useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { DotsSixVertical, CaretRight, GearSix } from "@phosphor-icons/react";
-import { usePersons, useSections, useRoles, useMeetings, useMeetingConfig, useDateRecords } from "@/lib/hooks";
+import { usePersons, useSections, useRoles, useMeetings, useMeetingConfig, useDateRecords, useRoster } from "@/lib/hooks";
 import { PageHeader } from "@/components/PageHeader";
 import { ConfigFechas } from "@/components/ConfigFechas";
 import { MeetingDatePicker } from "@/components/MeetingDatePicker";
-import { RosterPanel } from "@/components/RosterPanel";
+import { RosterPanel, agoShort } from "@/components/RosterPanel";
 import { PlannerPartModal } from "@/components/PlannerPartModal";
 import { EditRecordModal } from "@/components/EditRecordModal";
 import { useToast } from "@/components/Toast";
@@ -361,7 +361,7 @@ export default function PlanificarPage() {
                       {roles.length > 0 && (
                         <div className="plan-tg main">
                           {roles.map((r) => (
-                            <InicioPersonaRow key={r.id} rec={r} nombrados={nombrados} onPersona={(id) => savePersona(r, id)} />
+                            <InicioPersonaRow key={r.id} rec={r} fecha={fecha} nombrados={nombrados} onPersona={(id) => savePersona(r, id)} />
                           ))}
                         </div>
                       )}
@@ -657,14 +657,53 @@ function StartRow({ rec, onCantico }: { rec: RecordItem; onCantico: (n: number |
 }
 
 // Parte fija de "Inicio" con un Nombrado (Presidente, Consejero de la sala
-// auxiliar, Oración): selector en línea filtrado a Nombrados.
-function InicioPersonaRow({ rec, nombrados, onPersona }: { rec: RecordItem; nombrados: Person[]; onPersona: (id: string) => void }) {
+// auxiliar, Oración): selector en línea filtrado a Nombrados, con recencia
+// POR ROL ("última vez como Presidente") y chips de "le toca" si está vacío.
+function InicioPersonaRow({ rec, fecha, nombrados, onPersona }: { rec: RecordItem; fecha: string; nombrados: Person[]; onPersona: (id: string) => void }) {
+  const { roster } = useRoster(fecha || null, undefined, undefined, undefined, rec.asignacion);
+  // meta para el selector: la recencia por rol se mapea al slot de "sección".
+  const meta = useMemo(
+    () =>
+      new Map(
+        roster.map((r) => [
+          r.id,
+          { daysSince: r.daysSince, countMonth: r.countMonth, assignedOnTarget: r.assignedOnTarget, daysSinceSection: r.daysSinceAsignacion },
+        ]),
+      ),
+    [roster],
+  );
+  // Sugeridos "le toca ESTE rol": Nombrados no tomados ese día, por recencia del rol.
+  const sugs = useMemo(() => {
+    const nomIds = new Set(nombrados.map((p) => p.id));
+    return roster
+      .filter((r) => nomIds.has(r.id) && !r.assignedOnTarget)
+      .sort((a, b) => {
+        const da = a.daysSinceAsignacion ?? null;
+        const db = b.daysSinceAsignacion ?? null;
+        const na = da === null, nb = db === null;
+        if (na !== nb) return na ? -1 : 1; // nunca hizo el rol → primero
+        if (!na && !nb && da !== db) return db! - da!; // más tiempo sin el rol → primero
+        return a.countMonth - b.countMonth || a.nombre.localeCompare(b.nombre);
+      })
+      .slice(0, 4);
+  }, [roster, nombrados]);
+
   return (
     <div className="plan-inicio-row role">
       <span className="plan-inicio-asig">{rec.asignacion}</span>
       <div className="plan-inicio-sel">
-        <PersonSelect persons={nombrados} value={rec.asignadoId ?? ""} onChange={onPersona} placeholder="Asignar nombrado…" />
+        <PersonSelect persons={nombrados} value={rec.asignadoId ?? ""} onChange={onPersona} placeholder="Asignar nombrado…" meta={meta} sectionLabel={rec.asignacion} />
       </div>
+      {!rec.asignadoId && sugs.length > 0 && (
+        <div className="sug-row plan-inicio-sugs">
+          <span className="sug-tip">Le toca:</span>
+          {sugs.map((s) => (
+            <button key={s.id} type="button" className="sug-chip" onClick={() => onPersona(s.id)} title={`Como ${rec.asignacion}: ${s.countAsignacion ?? 0} ${(s.countAsignacion ?? 0) === 1 ? "vez" : "veces"}`}>
+              {s.nombre.split(" ")[0]} <span className="sug-ago">{agoShort(s.daysSinceAsignacion ?? null)}</span>
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

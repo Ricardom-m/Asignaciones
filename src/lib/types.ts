@@ -61,6 +61,8 @@ export interface RosterPerson {
   assignedOnTarget: boolean; // ya asignado(a) en la fecha objetivo
   daysSinceSection?: number | null; // última vez en la sección consultada (si se pidió ?section=)
   countSection?: number; // participaciones totales en esa sección
+  daysSinceAsignacion?: number | null; // última vez con esa asignación exacta (si se pidió ?asignacion=)
+  countAsignacion?: number; // veces que hizo esa asignación exacta
 }
 
 export type RecordTipo = "ASIGNACION" | "NOMBRADO";

@@ -20,6 +20,7 @@ export async function GET(req: Request) {
   const role = sp.get("role");
   const genero = sp.get("genero");
   const section = sp.get("section"); // recencia por sección (opcional)
+  const asignacion = sp.get("asignacion")?.trim().toLowerCase() || null; // recencia por rol/asignación exacta
 
   const where: Prisma.PersonWhereInput = {
     active: true,
@@ -28,21 +29,22 @@ export async function GET(req: Request) {
   };
   const persons = await prisma.person.findMany({ where, include: { roles: true } });
   const recs = await prisma.record.findMany({
-    select: { fecha: true, asignadoId: true, ayudanteId: true, sectionId: true },
+    select: { fecha: true, asignadoId: true, ayudanteId: true, sectionId: true, asignacion: true },
   });
 
   const targetT = new Date(target + "T00:00:00Z").getTime();
   const recentFrom = targetT - 60 * DAY;
   const targetMonth = target.slice(0, 7);
 
-  type Agg = { last: string | null; month: number; recent: number; onTarget: boolean; lastSec: string | null; countSec: number };
+  type Agg = { last: string | null; month: number; recent: number; onTarget: boolean; lastSec: string | null; countSec: number; lastAsig: string | null; countAsig: number };
   const agg = new Map<string, Agg>();
-  for (const p of persons) agg.set(p.id, { last: null, month: 0, recent: 0, onTarget: false, lastSec: null, countSec: 0 });
+  for (const p of persons) agg.set(p.id, { last: null, month: 0, recent: 0, onTarget: false, lastSec: null, countSec: 0, lastAsig: null, countAsig: 0 });
 
   for (const r of recs) {
     const f = toYMD(r.fecha);
     const ft = new Date(f + "T00:00:00Z").getTime();
     const inSection = !!section && r.sectionId === section;
+    const inAsig = !!asignacion && r.asignacion.trim().toLowerCase() === asignacion;
     for (const pid of [r.asignadoId, r.ayudanteId]) {
       if (!pid) continue;
       const a = agg.get(pid);
@@ -52,28 +54,29 @@ export async function GET(req: Request) {
         if (!a.last || f > a.last) a.last = f;
         if (ft >= recentFrom) a.recent++;
         if (inSection && (!a.lastSec || f > a.lastSec)) a.lastSec = f;
+        if (inAsig && (!a.lastAsig || f > a.lastAsig)) a.lastAsig = f;
       }
       if (f.slice(0, 7) === targetMonth) a.month++;
       if (inSection) a.countSec++;
+      if (inAsig) a.countAsig++;
     }
   }
 
+  const since = (d: string | null) => (d ? Math.round((targetT - new Date(d + "T00:00:00Z").getTime()) / DAY) : null);
   const list = persons.map((p) => {
     const a = agg.get(p.id)!;
-    const daysSince = a.last ? Math.round((targetT - new Date(a.last + "T00:00:00Z").getTime()) / DAY) : null;
     return {
       id: p.id,
       nombre: `${p.nombre} ${p.apellido}`,
       genero: p.genero,
       roles: p.roles.map(serializeRole),
       lastFecha: a.last,
-      daysSince,
+      daysSince: since(a.last),
       countMonth: a.month,
       countRecent: a.recent,
       assignedOnTarget: a.onTarget,
-      ...(section
-        ? { daysSinceSection: a.lastSec ? Math.round((targetT - new Date(a.lastSec + "T00:00:00Z").getTime()) / DAY) : null, countSection: a.countSec }
-        : {}),
+      ...(section ? { daysSinceSection: since(a.lastSec), countSection: a.countSec } : {}),
+      ...(asignacion ? { daysSinceAsignacion: since(a.lastAsig), countAsignacion: a.countAsig } : {}),
     };
   });
 
