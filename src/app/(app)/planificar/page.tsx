@@ -108,16 +108,25 @@ export default function PlanificarPage() {
   const refresh = () =>
     globalMutate((k) => typeof k === "string" && (k.includes("/api/records") || k.includes("/api/roster")));
 
+  // Las partes de Inicio (Presidente/Consejero/Oración) pueden tener a la misma
+  // persona, así que no cuentan para la detección de "repetido ese día".
+  const sinPersonaIds = useMemo(() => new Set(sections.filter((s) => s.sinPersona).map((s) => s.id)), [sections]);
+  const esInicio = (r: RecordItem) => !!r.sectionId && sinPersonaIds.has(r.sectionId);
+
   const dupIds = useMemo(() => {
     const count = new Map<string, number>();
     for (const r of dayRecords) {
+      if (esInicio(r)) continue;
       for (const id of [r.asignadoId, r.ayudanteId]) if (id) count.set(id, (count.get(id) ?? 0) + 1);
     }
     return new Set([...count].filter(([, n]) => n > 1).map(([id]) => id));
-  }, [dayRecords]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dayRecords, sinPersonaIds]);
   const conflictCount = useMemo(
-    () => dayRecords.filter((r) => (!!r.asignadoId && dupIds.has(r.asignadoId)) || (!!r.ayudanteId && dupIds.has(r.ayudanteId))).length,
-    [dayRecords, dupIds],
+    () =>
+      dayRecords.filter((r) => !esInicio(r) && ((!!r.asignadoId && dupIds.has(r.asignadoId)) || (!!r.ayudanteId && dupIds.has(r.ayudanteId)))).length,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [dayRecords, dupIds, sinPersonaIds],
   );
 
   const groups = useMemo(() => {
@@ -158,6 +167,7 @@ export default function PlanificarPage() {
     try {
       await arrangeRecords(updates);
       refresh();
+      toast("💾 Orden actualizado", "success");
     } catch (e) {
       mutateDay();
       toast("❌ " + (e as Error).message, "error");
@@ -223,6 +233,7 @@ export default function PlanificarPage() {
         minutos: rec.minutos,
         cantico,
       });
+      toast("💾 Cántico guardado", "success");
     } catch (e) {
       mutateDay();
       toast("❌ " + (e as Error).message, "error");
@@ -246,6 +257,7 @@ export default function PlanificarPage() {
         cantico: null,
       });
       refresh();
+      toast(asignadoId ? "💾 Asignación guardada" : "💾 Asignación quitada", "success");
     } catch (e) {
       mutateDay();
       toast("❌ " + (e as Error).message, "error");
