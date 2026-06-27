@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { useMeetingConfig, useMeetingDetail } from "@/lib/hooks";
 import { useIsAdmin } from "@/components/UserContext";
 import { useToast } from "@/components/Toast";
@@ -10,8 +10,9 @@ import { semanaRango, updateMeetingConfig, setMeetingRelato } from "@/lib/client
 const TITULO_PROGRAMA = "Programa para la reunión de entre semana";
 
 // Encabezado de la reunión: congregación (editable por admin), título fijo,
-// semana auto-calculada y relato a leer (editable).
-export function ReunionHeader({ fecha }: { fecha: string }) {
+// semana auto-calculada y relato a leer (editable). El `children` (selector de
+// fecha) va en la misma tarjeta para que quede compacto.
+export function ReunionHeader({ fecha, children }: { fecha: string; children?: ReactNode }) {
   const isAdmin = useIsAdmin();
   const { config, mutate: mutateConfig } = useMeetingConfig();
   const { relato, mutate: mutateRelato } = useMeetingDetail(fecha || null);
@@ -52,33 +53,36 @@ export function ReunionHeader({ fecha }: { fecha: string }) {
 
   return (
     <div className="content-card reunion-header">
-      {isAdmin ? (
-        <input
-          className="rh-cong rh-cong-input"
-          value={cong}
-          onChange={(e) => setCong(e.target.value)}
-          onBlur={saveCong}
-          onKeyDown={(e) => e.key === "Enter" && (e.target as HTMLInputElement).blur()}
-          placeholder="Nombre de la congregación"
-          aria-label="Nombre de la congregación"
-        />
-      ) : (
-        <div className="rh-cong">{config.congregacion || "Congregación"}</div>
-      )}
-      <div className="rh-titulo">{TITULO_PROGRAMA}</div>
-      <div className="rh-semana-row">
-        <span className="rh-semana">{fecha ? semanaRango(fecha) : ""}</span>
-        <span className="rh-sep" aria-hidden>|</span>
-        <input
-          className="rh-relato-input"
-          value={rel}
-          onChange={(e) => setRel(e.target.value)}
-          onBlur={saveRel}
-          onKeyDown={(e) => e.key === "Enter" && (e.target as HTMLInputElement).blur()}
-          placeholder="Relato a leer (ej. Jeremías 9, 10)"
-          aria-label="Relato a leer"
-        />
+      <div className="rh-detalles">
+        {isAdmin ? (
+          <input
+            className="rh-cong rh-cong-input"
+            value={cong}
+            onChange={(e) => setCong(e.target.value)}
+            onBlur={saveCong}
+            onKeyDown={(e) => e.key === "Enter" && (e.target as HTMLInputElement).blur()}
+            placeholder="Nombre de la congregación"
+            aria-label="Nombre de la congregación"
+          />
+        ) : (
+          <div className="rh-cong">{config.congregacion || "Congregación"}</div>
+        )}
+        <div className="rh-titulo">{TITULO_PROGRAMA}</div>
+        <div className="rh-semana-row">
+          <span className="rh-semana">{fecha ? semanaRango(fecha) : ""}</span>
+          <span className="rh-sep" aria-hidden>|</span>
+          <input
+            className="rh-relato-input"
+            value={rel}
+            onChange={(e) => setRel(e.target.value)}
+            onBlur={saveRel}
+            onKeyDown={(e) => e.key === "Enter" && (e.target as HTMLInputElement).blur()}
+            placeholder="Relato a leer (ej. Jeremías 9, 10)"
+            aria-label="Relato a leer"
+          />
+        </div>
       </div>
+      {children && <div className="rh-fecha">{children}</div>}
     </div>
   );
 }

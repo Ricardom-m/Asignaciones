@@ -304,12 +304,8 @@ export default function PlanificarPage() {
     <div className="page-inner page-inner-wide fade-up">
       <PageHeader title="Planificar" subtitle="Arma la reunión por fecha" />
 
-      {/* Encabezado: detalles de la reunión */}
-      <ReunionHeader fecha={fecha} />
-
-      {/* Selector de fecha */}
-      <div className="content-card">
-        <div className="section-label">Reunión</div>
+      {/* Encabezado + selector de fecha (compacto, en una sola tarjeta) */}
+      <ReunionHeader fecha={fecha}>
         <div className="plan-dates">
           {planDates.map((d) => (
             <button key={d} className={`reg-pill${fecha === d ? " active" : ""}`} onClick={() => setFecha(d)}>
@@ -323,32 +319,7 @@ export default function PlanificarPage() {
             {dow} · {fecha ? relativeLabel(fecha) : ""}
           </span>
         </div>
-      </div>
-
-      {/* Configuraciones y fechas (solo administrador) */}
-      {isAdmin && (
-        <div className="content-card cfg-panel">
-          <button
-            className={`cfg-toggle${showConfig ? " open" : ""}`}
-            onClick={() => setShowConfig((s) => !s)}
-            aria-expanded={showConfig}
-          >
-            <span className="cfg-toggle-main">
-              <GearSix size={17} weight="bold" />
-              <span>
-                <span className="cfg-toggle-title">Configuraciones y fechas</span>
-                <span className="cfg-toggle-sub">Secciones, regla automática y fechas de reunión</span>
-              </span>
-            </span>
-            <CaretRight className="cfg-toggle-caret" size={16} weight="bold" />
-          </button>
-          {showConfig && (
-            <div className="cfg-body fade-up">
-              <ConfigFechas />
-            </div>
-          )}
-        </div>
-      )}
+      </ReunionHeader>
 
       <div className="plan-grid">
         {/* Panorama de la reunión */}
@@ -568,6 +539,31 @@ export default function PlanificarPage() {
           {fecha && <RosterPanel fecha={fecha} roles={roles} onPick={(id) => openAdd({ asignadoId: id })} />}
         </aside>
       </div>
+
+      {/* Configuraciones y fechas (solo administrador) — al fondo, fuera del camino */}
+      {isAdmin && (
+        <div className="content-card cfg-panel">
+          <button
+            className={`cfg-toggle${showConfig ? " open" : ""}`}
+            onClick={() => setShowConfig((s) => !s)}
+            aria-expanded={showConfig}
+          >
+            <span className="cfg-toggle-main">
+              <GearSix size={17} weight="bold" />
+              <span>
+                <span className="cfg-toggle-title">Configuraciones y fechas</span>
+                <span className="cfg-toggle-sub">Secciones, regla automática y fechas de reunión</span>
+              </span>
+            </span>
+            <CaretRight className="cfg-toggle-caret" size={16} weight="bold" />
+          </button>
+          {showConfig && (
+            <div className="cfg-body fade-up">
+              <ConfigFechas />
+            </div>
+          )}
+        </div>
+      )}
 
       {adding && fecha && (
         <PlannerPartModal
