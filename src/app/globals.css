@@ -776,6 +776,16 @@ input:focus, select:focus, .list-search-input:focus, .sel-search:focus, .cmd-inp
 .plan-inicio-sel .sel-trigger:hover .sel-trigger-text { color:var(--accent); }
 .plan-inicio-sel .sel-chevron { min-width:11px; width:11px; }
 .plan-inicio-sugs { margin-top:3px; }
+
+/* Estudio bíblico: Conductor y Lector en líneas con barra propia */
+.plan-estudio { display:flex; flex-direction:column; gap:4px; padding:7px 8px; border-radius:8px; transition:background .14s; }
+.plan-estudio:hover { background:var(--surface2); }
+.plan-estudio-head { display:flex; align-items:center; gap:10px; }
+.plan-estudio-head .plan-part-asig { flex:1; min-width:0; }
+.plan-estudio-sub { display:flex; align-items:center; gap:7px; font-size:.74rem; color:var(--text); padding-left:10px; border-left:2px solid var(--border); margin-left:3px; }
+.plan-estudio-sub.cond { border-left-color:var(--accent); }
+.plan-estudio-sub.lect { border-left-color:var(--accent2); }
+.plan-estudio-lbl { font-size:.56rem; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--text3); min-width:62px; }
 .plan-inicio-cant { margin-left:auto; display:flex; align-items:center; gap:7px; }
 .plan-inicio-cant-lbl { font-size:.66rem; color:var(--text3); text-transform:uppercase; letter-spacing:.04em; }
 .plan-inicio-input { width:64px; text-align:center; padding:5px 8px !important; }

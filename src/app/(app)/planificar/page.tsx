@@ -30,7 +30,7 @@ import { GenderIcon } from "@/components/GenderIcon";
 import { useIsAdmin } from "@/components/UserContext";
 import { addDaysYMD, arrangeRecords, deleteRecord, ensureInicio, esLectura, fmtShort, nextWeekdayDates, relativeLabel, todayYMD, updateRecord, weekdayLabel, weekdayOf } from "@/lib/client";
 import { PersonSelect } from "@/components/PersonSelect";
-import { SECCION_TESOROS, SECCION_VIDA, esCancion, esParteSinPersona, esRolNombrado, inicioRank, norm, tesorosRank, vidaRank } from "@/lib/sections";
+import { SECCION_TESOROS, SECCION_VIDA, esCancion, esEstudio, esParteSinPersona, esRolNombrado, inicioRank, norm, tesorosRank, vidaRank } from "@/lib/sections";
 import type { Person, RecordItem } from "@/lib/types";
 
 const SIN_SECCION = "__none__";
@@ -451,6 +451,8 @@ export default function PlanificarPage() {
                               <StartRow key={r.id} rec={r} onCantico={(n) => saveCantico(r, n)} />
                             ) : esRolNombrado(r.asignacion) ? (
                               <InicioPersonaRow key={r.id} rec={r} fecha={fecha} nombrados={nombrados} onPersona={(id) => savePersona(r, id)} />
+                            ) : esEstudio(r.asignacion) ? (
+                              <EstudioRow key={r.id} rec={r} personsById={personsById} onEdit={() => setEditing(r)} onDelete={() => onDelete(r)} />
                             ) : (
                               <TesorosRow key={r.id} rec={r} personsById={personsById} dupIds={dupIds} onEdit={() => setEditing(r)} onDelete={() => onDelete(r)} />
                             ),
@@ -560,7 +562,6 @@ function PartInner({ rec, personsById, dupIds }: { rec: RecordItem; personsById:
     <div className="plan-part-main">
       <div className="plan-part-asig">
         {rec.asignacion}
-        {rec.tipo === "NOMBRADO" && <span className="plan-part-tag">nombrado</span>}
         {rec.minutos != null && <span className="plan-part-sala">{rec.minutos} min</span>}
         {conflict && <span className="plan-part-warn" title="Esta persona ya tiene otra parte ese día">⚠ repetido</span>}
       </div>
@@ -645,6 +646,51 @@ function TesorosRow({
           <button className="tl-act danger" onClick={onDelete} title="Quitar" aria-label="Quitar">✕</button>
         </div>
       )}
+    </div>
+  );
+}
+
+// Estudio bíblico de congregación: muestra claramente Conductor y Lector,
+// cada uno en su línea con su barra.
+function EstudioRow({
+  rec,
+  personsById,
+  onEdit,
+  onDelete,
+}: {
+  rec: RecordItem;
+  personsById: Map<string, Person>;
+  onEdit: () => void;
+  onDelete: () => void;
+}) {
+  const isAdmin = useIsAdmin();
+  const locked = rec.bloqueado && !isAdmin;
+  const cond = rec.asignadoId ? personsById.get(rec.asignadoId) : undefined;
+  const lect = rec.ayudanteId ? personsById.get(rec.ayudanteId) : undefined;
+  return (
+    <div className="plan-estudio">
+      <div className="plan-estudio-head">
+        <span className="plan-part-asig">
+          {rec.asignacion}
+          {rec.minutos != null && <span className="plan-part-sala">{rec.minutos} min</span>}
+        </span>
+        {!locked && (
+          <div className="plan-part-actions">
+            <button className="tl-act" onClick={onEdit} title="Editar" aria-label="Editar">✎</button>
+            <button className="tl-act danger" onClick={onDelete} title="Quitar" aria-label="Quitar">✕</button>
+          </div>
+        )}
+      </div>
+      <div className="plan-estudio-sub cond">
+        <span className="plan-estudio-lbl">Conductor</span>
+        {cond && <GenderIcon genero={cond.genero} />}
+        <span className="plan-part-name">{rec.asignado}</span>
+      </div>
+      <div className="plan-estudio-sub lect">
+        <span className="plan-estudio-lbl">Lector</span>
+        {lect && <GenderIcon genero={lect.genero} />}
+        <span className="plan-part-name">{rec.ayudante ?? "— sin lector —"}</span>
+      </div>
     </div>
   );
 }
