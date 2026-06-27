@@ -124,15 +124,17 @@ export default function PlanificarPage() {
   const refresh = () =>
     globalMutate((k) => typeof k === "string" && (k.includes("/api/records") || k.includes("/api/roster")));
 
-  // Las partes de Inicio (Presidente/Consejero/Oración) pueden tener a la misma
-  // persona, así que no cuentan para la detección de "repetido ese día".
+  // Las partes de Inicio (Presidente/Consejero/Oración) y la Oración de cierre
+  // las hace un Nombrado que a menudo tiene otra parte: no cuentan como
+  // "repetido ese día" (evita falsos conflictos legítimos).
   const sinPersonaIds = useMemo(() => new Set(sections.filter((s) => s.sinPersona).map((s) => s.id)), [sections]);
   const esInicio = (r: RecordItem) => !!r.sectionId && sinPersonaIds.has(r.sectionId);
+  const esExentoConflicto = (r: RecordItem) => esInicio(r) || esRolNombrado(r.asignacion);
 
   const dupIds = useMemo(() => {
     const count = new Map<string, number>();
     for (const r of dayRecords) {
-      if (esInicio(r)) continue;
+      if (esExentoConflicto(r)) continue;
       for (const id of [r.asignadoId, r.ayudanteId]) if (id) count.set(id, (count.get(id) ?? 0) + 1);
     }
     return new Set([...count].filter(([, n]) => n > 1).map(([id]) => id));
@@ -140,7 +142,7 @@ export default function PlanificarPage() {
   }, [dayRecords, sinPersonaIds]);
   const conflictCount = useMemo(
     () =>
-      dayRecords.filter((r) => !esInicio(r) && ((!!r.asignadoId && dupIds.has(r.asignadoId)) || (!!r.ayudanteId && dupIds.has(r.ayudanteId)))).length,
+      dayRecords.filter((r) => !esExentoConflicto(r) && ((!!r.asignadoId && dupIds.has(r.asignadoId)) || (!!r.ayudanteId && dupIds.has(r.ayudanteId)))).length,
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [dayRecords, dupIds, sinPersonaIds],
   );
