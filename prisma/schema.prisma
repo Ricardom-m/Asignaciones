@@ -83,6 +83,7 @@ model Meeting {
   id        String   @id @default(cuid())
   fecha     DateTime @unique @db.Date // una reunión por fecha
   nota      String?
+  relato    String? // relato/lectura de la semana (editable), p. ej. "Jeremías 9, 10"
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -91,11 +92,12 @@ model Meeting {
 
 // Configuración (regla) para generar reuniones. Fila única.
 model MeetingConfig {
-  id          String    @id @default("default")
-  weekdays    Int[]     @default([4, 6]) // 0=Dom … 6=Sáb
-  weeks       Int       @default(4)
-  lastEnsured DateTime? // última vez que se auto-rellenó la ventana
-  updatedAt   DateTime  @updatedAt
+  id           String    @id @default("default")
+  weekdays     Int[]     @default([4, 6]) // 0=Dom … 6=Sáb
+  weeks        Int       @default(4)
+  congregacion String? // nombre de la congregación (encabezado de la reunión)
+  lastEnsured  DateTime? // última vez que se auto-rellenó la ventana
+  updatedAt    DateTime  @updatedAt
 }
 
 model Record {

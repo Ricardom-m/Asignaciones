@@ -68,6 +68,10 @@ export const deleteMeeting = (id: string) =>
 export const updateMeetingConfig = (data: MeetingConfig) =>
   apiFetch<MeetingConfig>("/api/meetings/config", { method: "PUT", body: JSON.stringify(data) });
 
+// Relato/lectura de la semana para una fecha (crea la reunión si falta).
+export const setMeetingRelato = (fecha: string, relato: string | null) =>
+  apiFetch<{ relato: string | null }>("/api/meetings/detail", { method: "PUT", body: JSON.stringify({ fecha, relato }) });
+
 export const purgeMeetings = (body: { past?: boolean; ids?: string[] }) =>
   apiFetch<{ deleted: number }>("/api/meetings/purge", { method: "POST", body: JSON.stringify(body) });
 
@@ -149,6 +153,21 @@ export function addDaysYMD(ymd: string, n: number): string {
 const DIAS = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
 export const weekdayOf = (ymd: string) => new Date(ymd + "T00:00:00Z").getUTCDay();
 export const weekdayLabel = (n: number) => DIAS[n] ?? "";
+
+const MESES_LARGO = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
+// "22-28 de Junio" — semana (lunes a domingo) que contiene la fecha.
+export function semanaRango(ymd: string): string {
+  const d = new Date(ymd + "T00:00:00Z");
+  const mon = new Date(d);
+  mon.setUTCDate(d.getUTCDate() - ((d.getUTCDay() + 6) % 7));
+  const sun = new Date(mon);
+  sun.setUTCDate(mon.getUTCDate() + 6);
+  const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+  const mesMon = cap(MESES_LARGO[mon.getUTCMonth()]);
+  const mesSun = cap(MESES_LARGO[sun.getUTCMonth()]);
+  if (mon.getUTCMonth() === sun.getUTCMonth()) return `${mon.getUTCDate()}-${sun.getUTCDate()} de ${mesMon}`;
+  return `${mon.getUTCDate()} de ${mesMon} - ${sun.getUTCDate()} de ${mesSun}`;
+}
 
 // "Jue 19 jun" — etiqueta corta con día de la semana.
 export function fmtShort(ymd: string): string {

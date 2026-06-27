@@ -20,6 +20,7 @@ import { DotsSixVertical, CaretRight, GearSix } from "@phosphor-icons/react";
 import { usePersons, useSections, useRoles, useMeetings, useMeetingConfig, useDateRecords, useRoster } from "@/lib/hooks";
 import { PageHeader } from "@/components/PageHeader";
 import { ConfigFechas } from "@/components/ConfigFechas";
+import { ReunionHeader } from "@/components/ReunionHeader";
 import { MeetingDatePicker } from "@/components/MeetingDatePicker";
 import { RosterPanel, agoShort } from "@/components/RosterPanel";
 import { PlannerPartModal } from "@/components/PlannerPartModal";
@@ -302,6 +303,9 @@ export default function PlanificarPage() {
   return (
     <div className="page-inner page-inner-wide fade-up">
       <PageHeader title="Planificar" subtitle="Arma la reunión por fecha" />
+
+      {/* Encabezado: detalles de la reunión */}
+      <ReunionHeader fecha={fecha} />
 
       {/* Selector de fecha */}
       <div className="content-card">

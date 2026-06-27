@@ -48,6 +48,13 @@ export type MeetingBulkInput = z.infer<typeof meetingBulkInput>;
 export const meetingConfigInput = z.object({
   weekdays: z.array(z.number().int().min(0).max(6)).max(7),
   weeks: z.number().int().min(1).max(26),
+  congregacion: z.string().trim().max(120).nullish(),
+});
+
+// Detalle de una reunión (relato/lectura de la semana).
+export const meetingDetailInput = z.object({
+  fecha: fechaSchema,
+  relato: z.string().trim().max(160).nullish(),
 });
 export type MeetingConfigInput = z.infer<typeof meetingConfigInput>;
 

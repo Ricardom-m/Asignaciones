@@ -42,7 +42,13 @@ export function usePastMeetings(enabled: boolean, take = 30) {
 
 export function useMeetingConfig() {
   const { data, mutate } = useSWR<MeetingConfig>("/api/meetings/config", fetcher);
-  return { config: data ?? { weekdays: [4, 6], weeks: 4 }, mutate };
+  return { config: data ?? { weekdays: [4, 6], weeks: 4, congregacion: null }, mutate };
+}
+
+// Detalle de una reunión (relato/lectura de la semana) por fecha.
+export function useMeetingDetail(fecha: string | null) {
+  const { data, mutate } = useSWR<{ relato: string | null }>(fecha ? `/api/meetings/detail?fecha=${fecha}` : null, fetcher);
+  return { relato: data?.relato ?? null, mutate };
 }
 
 export function useUsers() {

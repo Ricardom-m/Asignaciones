@@ -674,6 +674,27 @@ input:focus, select:focus, .list-search-input:focus, .sel-search:focus, .cmd-inp
 ::-webkit-scrollbar-thumb { background:var(--border2); border-radius:3px; }
 
 /* ════ PLANIFICADOR ════ */
+/* Encabezado de la reunión (detalles) */
+.reunion-header { text-align:center; padding:18px; }
+.rh-cong { display:block; width:100%; font-family:var(--head); font-weight:800; font-size:1.45rem; line-height:1.2; letter-spacing:-.01em;
+  background:linear-gradient(135deg, var(--accent), var(--accent2)); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; }
+.rh-cong-input { border:none; outline:none; text-align:center; padding:2px 6px; border-radius:8px; caret-color:var(--accent);
+  box-shadow:inset 0 -1px 0 transparent; transition:box-shadow .15s, background .15s; }
+.rh-cong-input:hover { box-shadow:inset 0 -1px 0 var(--border2); }
+.rh-cong-input:focus { box-shadow:inset 0 -2px 0 var(--accent); background:var(--surface2); }
+.rh-cong-input::placeholder { -webkit-text-fill-color:var(--text3); }
+.rh-titulo { font-size:.84rem; color:var(--text2); margin-top:3px; }
+.rh-semana-row { display:flex; align-items:center; justify-content:center; gap:10px; flex-wrap:wrap; margin-top:14px; }
+.rh-semana { font-weight:600; font-size:.86rem; color:var(--accent); background:var(--accent-dim); border:1px solid color-mix(in srgb, var(--accent) 35%, var(--border)); border-radius:20px; padding:5px 14px; white-space:nowrap; }
+.rh-sep { color:var(--text3); }
+.rh-relato-input { flex:0 1 280px; min-width:170px; text-align:center; background:var(--surface2); border:1px solid var(--border); border-radius:9px; color:var(--text); padding:7px 12px; font-family:var(--head); font-size:.88rem; outline:none; transition:border-color .15s, box-shadow .15s; }
+.rh-relato-input:focus { border-color:var(--accent); box-shadow:0 0 0 3px color-mix(in srgb, var(--accent) 16%, transparent); }
+@media (max-width:520px) {
+  .rh-cong { font-size:1.2rem; }
+  .rh-sep { display:none; }
+  .rh-relato-input { flex-basis:100%; }
+}
+
 .plan-dates { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px; max-height:128px; overflow-y:auto; padding-right:2px; }
 .plan-dates .reg-pill { border:1px solid var(--border); background:var(--surface2); border-radius:20px; }
 .plan-dates .reg-pill.active { color:var(--accent); border-color:var(--accent); background:var(--accent-dim); }

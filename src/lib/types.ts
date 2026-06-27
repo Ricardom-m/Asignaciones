@@ -34,6 +34,7 @@ export interface AllowedUser {
 export interface MeetingConfig {
   weekdays: number[]; // 0=Dom … 6=Sáb
   weeks: number;
+  congregacion?: string | null; // nombre de la congregación (encabezado)
 }
 
 export type Genero = "H" | "M";
