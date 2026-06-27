@@ -10,7 +10,7 @@ import { AsignacionSuggest } from "@/components/AsignacionSuggest";
 import { HelperPicker } from "@/components/HelperPicker";
 import { agoShort } from "@/components/RosterPanel";
 import { createRecord, esLectura, eligibleLectura, fmtShort } from "@/lib/client";
-import { SECCION_TESOROS, esEstudio, norm } from "@/lib/sections";
+import { SECCION_TESOROS, esEstudio, esNecesidades, norm } from "@/lib/sections";
 import type { Person, Section } from "@/lib/types";
 
 const soloNombrados = (ps: Person[]) => ps.filter((p) => p.roles.some((r) => r.nombre === "Nombrados"));
@@ -44,23 +44,25 @@ export function PlannerPartModal({ fecha, sections, persons, defaultAsignadoId, 
   const nombrado = tipo === "NOMBRADO";
   const activePersons = useMemo(() => persons.filter((p) => p.active), [persons]);
   const { candidates } = useSuggest(nombrado ? "" : asignadoId, fecha);
-  // Estudio bíblico de congregación: asignado = Conductor (Nombrados), ayudante = Lector (Asignados).
+  // Estudio bíblico: asignado = Conductor (Nombrados), ayudante = Lector (Asignados).
+  // Necesidades de la congregación: solo Nombrados, sin ayudante.
   const estudio = esEstudio(asignacion);
-  // Recencia por rol/asignación en el Estudio; por sección en lo demás.
-  const { roster } = useRoster(fecha, undefined, undefined, estudio ? undefined : sectionId || undefined, estudio ? asignacion : undefined);
-  // Sin ayudante: en nombrados o en secciones marcadas así (pero el Estudio sí lleva Lector).
-  const noHelper = !estudio && (nombrado || !!sections.find((s) => s.id === sectionId)?.sinAyudante);
+  const necesidades = esNecesidades(asignacion);
+  const porAsignacion = estudio || necesidades; // recencia "por esa parte"
+  // Recencia por rol/asignación en Estudio/Necesidades; por sección en lo demás.
+  const { roster } = useRoster(fecha, undefined, undefined, porAsignacion ? undefined : sectionId || undefined, porAsignacion ? asignacion : undefined);
+  // Sin ayudante: Necesidades/Nombrados/secciones sinAyudante (pero el Estudio sí lleva Lector).
+  const noHelper = !estudio && (necesidades || nombrado || !!sections.find((s) => s.id === sectionId)?.sinAyudante);
 
   // Filtro del asignado según el caso.
   const lectura = esLectura(asignacion);
   const esTesoros = norm(sections.find((s) => s.id === sectionId)?.nombre ?? "") === norm(SECCION_TESOROS);
   const asignadoPool = useMemo(() => {
-    if (estudio) return soloNombrados(activePersons); // Conductor
-    if (nombrado) return soloNombrados(activePersons);
+    if (estudio || necesidades || nombrado) return soloNombrados(activePersons);
     if (lectura) return eligibleLectura(activePersons);
     if (esTesoros) return soloNombrados(activePersons); // Discurso y Busquemos perlas → solo Nombrados
     return activePersons;
-  }, [estudio, nombrado, lectura, esTesoros, activePersons]);
+  }, [estudio, necesidades, nombrado, lectura, esTesoros, activePersons]);
   const ayudantePool = useMemo(() => (estudio ? soloAsignados(activePersons) : activePersons), [estudio, activePersons]);
   const poolIds = useMemo(() => new Set(asignadoPool.map((p) => p.id)), [asignadoPool]);
 
@@ -76,10 +78,10 @@ export function PlannerPartModal({ fecha, sections, persons, defaultAsignadoId, 
       new Map(
         roster.map((r) => [
           r.id,
-          { daysSince: r.daysSince, countMonth: r.countMonth, assignedOnTarget: r.assignedOnTarget, daysSinceSection: estudio ? r.daysSinceAsignacion : r.daysSinceSection },
+          { daysSince: r.daysSince, countMonth: r.countMonth, assignedOnTarget: r.assignedOnTarget, daysSinceSection: porAsignacion ? r.daysSinceAsignacion : r.daysSinceSection },
         ]),
       ),
-    [roster, estudio],
+    [roster, porAsignacion],
   );
   const sectionLabel = useMemo(() => sections.find((s) => s.id === sectionId)?.nombre.split(" ")[0], [sections, sectionId]);
 
@@ -182,7 +184,7 @@ export function PlannerPartModal({ fecha, sections, persons, defaultAsignadoId, 
             onChange={setAsignadoId}
             placeholder="Seleccionar…"
             meta={rosterMeta}
-            sectionLabel={estudio ? asignacion : sectionId ? sectionLabel : undefined}
+            sectionLabel={porAsignacion ? asignacion : sectionId ? sectionLabel : undefined}
           />
           {asignadoSugs.length > 0 && (
             <div className="sug-row">

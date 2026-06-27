@@ -28,6 +28,7 @@ export const PARTE_CONSEJERO = "Consejero de la sala auxiliar";
 export const PARTE_ORACION = "Oración";
 export const PARTE_ESTUDIO = "Estudio bíblico de congregación";
 export const PARTE_PALABRAS_CONCLUSION = "Palabras de conclusión";
+export const PARTE_NECESIDADES = "Necesidades de la congregación";
 export const PALABRAS_MIN = 1; // duración fija de "Palabras de introducción"
 
 export interface ParteFija { value: string; minutos: number | null; orden: number; nombrado: boolean }
@@ -71,6 +72,7 @@ export const esRolNombrado = (a: string) => {
 };
 export const esCancion = (a: string) => norm(a) === norm(PARTE_CANCION);
 export const esEstudio = (a: string) => norm(a) === norm(PARTE_ESTUDIO);
+export const esNecesidades = (a: string) => norm(a) === norm(PARTE_NECESIDADES);
 export const esLecturaNombre = (a: string) => norm(a) === norm(LECTURA_NOMBRE);
 
 // Orden canónico dentro de "Nuestra vida cristiana":
@@ -93,6 +95,6 @@ export const SUGERENCIAS_CURADAS: Record<string, { value: string; minutos: numbe
   [SECCION_TESOROS]: [{ value: PARTE_PERLAS, minutos: 10 }],
   [SECCION_VIDA]: [
     { value: PARTE_ESTUDIO, minutos: 30 },
-    { value: PARTE_PALABRAS_CONCLUSION, minutos: 3 },
+    { value: PARTE_NECESIDADES, minutos: 15 },
   ],
 };

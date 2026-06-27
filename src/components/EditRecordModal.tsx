@@ -10,7 +10,7 @@ import { AsignacionSuggest } from "@/components/AsignacionSuggest";
 import { HelperPicker } from "@/components/HelperPicker";
 import { DateChips } from "@/components/DateChips";
 import { updateRecord, esLectura, eligibleLectura } from "@/lib/client";
-import { SECCION_TESOROS, esEstudio, norm } from "@/lib/sections";
+import { SECCION_TESOROS, esEstudio, esNecesidades, norm } from "@/lib/sections";
 import type { Person, RecordItem } from "@/lib/types";
 
 const soloNombrados = (ps: Person[]) => ps.filter((p) => p.roles.some((r) => r.nombre === "Nombrados"));
@@ -52,9 +52,11 @@ export function EditRecordModal({ rec, persons, onClose, onSaved }: Props) {
   const [saving, setSaving] = useState(false);
 
   const isNombrado = rec.tipo === "NOMBRADO";
-  // Estudio bíblico: asignado = Conductor (Nombrados), ayudante = Lector (Asignados).
+  // Estudio = Conductor (Nombrados) + Lector (Asignados). Necesidades = Nombrados, sin ayudante.
   const estudio = esEstudio(form.asignacion);
-  const noHelper = !estudio && !!sections.find((s) => s.id === form.sectionId)?.sinAyudante;
+  const necesidades = esNecesidades(form.asignacion);
+  const porAsignacion = estudio || necesidades;
+  const noHelper = !estudio && (necesidades || !!sections.find((s) => s.id === form.sectionId)?.sinAyudante);
 
   // Solo personas activas, conservando las ya referidas en este registro.
   const formPersons = useMemo(
@@ -66,13 +68,12 @@ export function EditRecordModal({ rec, persons, onClose, onSaved }: Props) {
   // En registros de tipo NOMBRADO el asignado debe ser un Nombrado.
   const esTesoros = norm(sections.find((s) => s.id === form.sectionId)?.nombre ?? "") === norm(SECCION_TESOROS);
   const asignadoPersons = useMemo(() => {
-    if (estudio) return conActual(soloNombrados(formPersons), rec.asignadoId); // Conductor
-    if (isNombrado) return conActual(soloNombrados(formPersons), rec.asignadoId);
+    if (estudio || necesidades || isNombrado) return conActual(soloNombrados(formPersons), rec.asignadoId);
     if (esLectura(form.asignacion)) return conActual(eligibleLectura(formPersons), rec.asignadoId);
     if (esTesoros) return conActual(soloNombrados(formPersons), rec.asignadoId); // Discurso y Busquemos perlas → solo Nombrados
     return formPersons;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [estudio, isNombrado, esTesoros, formPersons, rec.asignadoId, form.asignacion]);
+  }, [estudio, necesidades, isNombrado, esTesoros, formPersons, rec.asignadoId, form.asignacion]);
   const ayudantePersons = useMemo(
     () => (estudio ? conActual(soloAsignados(formPersons), rec.ayudanteId) : formPersons),
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -86,18 +87,18 @@ export function EditRecordModal({ rec, persons, onClose, onSaved }: Props) {
     form.fecha || null,
     undefined,
     undefined,
-    estudio ? undefined : form.sectionId || undefined,
-    estudio ? form.asignacion : undefined,
+    porAsignacion ? undefined : form.sectionId || undefined,
+    porAsignacion ? form.asignacion : undefined,
   );
   const rosterMeta = useMemo(
     () =>
       new Map(
         roster.map((r) => [
           r.id,
-          { daysSince: r.daysSince, countMonth: r.countMonth, assignedOnTarget: r.assignedOnTarget, daysSinceSection: estudio ? r.daysSinceAsignacion : r.daysSinceSection },
+          { daysSince: r.daysSince, countMonth: r.countMonth, assignedOnTarget: r.assignedOnTarget, daysSinceSection: porAsignacion ? r.daysSinceAsignacion : r.daysSinceSection },
         ]),
       ),
-    [roster, estudio],
+    [roster, porAsignacion],
   );
   const sectionLabel = useMemo(() => sections.find((s) => s.id === form.sectionId)?.nombre.split(" ")[0], [sections, form.sectionId]);
 
@@ -142,7 +143,7 @@ export function EditRecordModal({ rec, persons, onClose, onSaved }: Props) {
             excludeId={isNombrado ? undefined : form.ayudanteId}
             onChange={(id) => patch({ asignadoId: id })}
             meta={rosterMeta}
-            sectionLabel={estudio ? form.asignacion : form.sectionId ? sectionLabel : undefined}
+            sectionLabel={porAsignacion ? form.asignacion : form.sectionId ? sectionLabel : undefined}
           />
         </div>
 

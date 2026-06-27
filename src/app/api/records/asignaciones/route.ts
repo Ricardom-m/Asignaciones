@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { ok, requireSession } from "@/lib/server";
-import { SUGERENCIAS_CURADAS, norm } from "@/lib/sections";
+import { SUGERENCIAS_CURADAS, esParteSinPersona, esRolNombrado, norm } from "@/lib/sections";
 
 // GET /api/records/asignaciones?section=<id>
 // Devuelve los textos de asignación más usados (para sugerirlos al escribir),
@@ -37,6 +37,9 @@ export async function GET(req: Request) {
   }
 
   const out = [...map]
+    // Las partes fijas (Canción/Palabras/Presidente/Consejero/Oración) se auto-generan,
+    // no se sugieren para agregar a mano.
+    .filter(([value]) => !esParteSinPersona(value) && !esRolNombrado(value))
     .map(([value, m]) => {
       let minutos: number | null = null;
       let best = 0;
