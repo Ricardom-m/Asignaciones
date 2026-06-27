@@ -2,7 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { recordInput } from "@/lib/validation";
 import { serializeRecord, recordInclude } from "@/lib/serialize";
 import { ok, fail, requireSession, rateLimit, clientKey, isAdmin } from "@/lib/server";
-import { SECCION_TESOROS, TESOROS_MAX, esLecturaNombre, norm } from "@/lib/sections";
+import { SECCION_TESOROS, TESOROS_MAX, esLecturaNombre, esParteSinPersona, esRolNombrado, norm } from "@/lib/sections";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -36,11 +36,12 @@ export async function PATCH(req: Request, { params }: Params) {
     if (dupLect) return fail(`Ya hay una Lectura de la Biblia en ${sala ?? "esa sala"} ese día`, 409);
   }
 
-  let personaOpcional = false;
+  // Partes fijas (Canción/Palabras sin persona, o roles): persona opcional.
+  let personaOpcional = esParteSinPersona(asignacion) || esRolNombrado(asignacion);
   if (sectionId) {
     const sec = await prisma.section.findUnique({ where: { id: sectionId } });
     if (!sec) return fail("Sección inexistente", 422);
-    personaOpcional = sec.sinPersona;
+    personaOpcional = personaOpcional || sec.sinPersona;
     if (sec.unaPorSala) {
       const dup = await prisma.record.findFirst({
         where: { fecha: new Date(fecha), sectionId, sala: sala ?? null, id: { not: id } },

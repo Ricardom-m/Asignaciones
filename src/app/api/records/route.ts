@@ -3,7 +3,7 @@ import { recordInput } from "@/lib/validation";
 import { serializeRecord, recordInclude } from "@/lib/serialize";
 import { ok, fail, requireSession, rateLimit, clientKey, isAdmin } from "@/lib/server";
 import { todayYMD } from "@/lib/date";
-import { SECCION_TESOROS, TESOROS_MAX, PARTE_CANCION, PARTE_PALABRAS, esLecturaNombre, esParteInicio, norm } from "@/lib/sections";
+import { SECCION_TESOROS, TESOROS_MAX, PARTE_CANCION, PARTE_PALABRAS, esLecturaNombre, esParteInicio, esParteSinPersona, esRolNombrado, norm } from "@/lib/sections";
 import type { Prisma } from "@prisma/client";
 
 const insensitive = (q: string): Prisma.StringFilter => ({ contains: q, mode: "insensitive" });
@@ -99,15 +99,15 @@ export async function POST(req: Request) {
     if (dupLect) return fail(`Ya hay una Lectura de la Biblia en ${sala ?? "esa sala"} ese día`, 409);
   }
 
-  // La sección "Inicio" (sinPersona) tiene persona OPCIONAL: unas partes no
-  // llevan persona (Canción, Palabras) y otras un Nombrado (Presidente…).
+  // Partes fijas (Canción/Palabras sin persona, o roles Presidente/Consejero/
+  // Oración) tienen persona OPCIONAL, aunque su sección no sea "sinPersona".
   let sectionSoloAdmin = false;
-  let personaOpcional = false;
+  let personaOpcional = esParteSinPersona(asignacion) || esRolNombrado(asignacion);
   if (sectionId) {
     const sec = await prisma.section.findUnique({ where: { id: sectionId } });
     if (!sec) return fail("Sección inexistente", 422);
     sectionSoloAdmin = sec.soloAdmin;
-    personaOpcional = sec.sinPersona;
+    personaOpcional = personaOpcional || sec.sinPersona;
     if (sec.soloAdmin && !isAdmin(session))
       return fail(`Solo el administrador puede agregar en "${sec.nombre}"`, 403);
     if (sec.unaPorSala) {
