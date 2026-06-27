@@ -179,7 +179,7 @@ input[type=date]::-webkit-calendar-picker-indicator { filter:invert(.55); }
 .sel-chevron { flex-shrink:0; min-width:13px; color:var(--text3); transition:transform .2s; }
 .sel-trigger.open .sel-chevron { transform:rotate(180deg); }
 /* Se posiciona vía portal con position:fixed (left/width/top/maxHeight inline). */
-.sel-dropdown { z-index:900; min-width:288px; max-width:calc(100vw - 20px); background:var(--surface); border:1px solid var(--border2); border-radius:var(--r); box-shadow:0 16px 40px rgba(0,0,0,.5); overflow:hidden; display:flex; flex-direction:column; animation:fadeUp .14s ease; }
+.sel-dropdown { z-index:900; min-width:360px; max-width:calc(100vw - 20px); background:var(--surface); border:1px solid var(--border2); border-radius:var(--r); box-shadow:0 16px 40px rgba(0,0,0,.5); overflow:hidden; display:flex; flex-direction:column; animation:fadeUp .14s ease; }
 .sel-search-wrap { padding:9px; border-bottom:1px solid var(--border); }
 .sel-search { width:100%; background:var(--surface2); border:1px solid var(--border); border-radius:8px; color:var(--text); padding:9px 11px; font-family:var(--head); font-size:.8rem; outline:none; }
 .sel-search:focus { border-color:var(--border2); }
