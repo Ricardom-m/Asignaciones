@@ -10,7 +10,7 @@ import { AsignacionSuggest } from "@/components/AsignacionSuggest";
 import { HelperPicker } from "@/components/HelperPicker";
 import { DateChips } from "@/components/DateChips";
 import { updateRecord, esLectura, eligibleLectura } from "@/lib/client";
-import { SECCION_TESOROS, esEstudio, esNecesidades, norm } from "@/lib/sections";
+import { SECCION_TESOROS, SECCION_VIDA, esEstudio, esNecesidades, norm } from "@/lib/sections";
 import type { Person, RecordItem } from "@/lib/types";
 
 const soloNombrados = (ps: Person[]) => ps.filter((p) => p.roles.some((r) => r.nombre === "Nombrados"));
@@ -56,7 +56,14 @@ export function EditRecordModal({ rec, persons, onClose, onSaved }: Props) {
   const estudio = esEstudio(form.asignacion);
   const necesidades = esNecesidades(form.asignacion);
   const porAsignacion = estudio || necesidades;
-  const noHelper = !estudio && (necesidades || !!sections.find((s) => s.id === form.sectionId)?.sinAyudante);
+  const lectura = esLectura(form.asignacion);
+  const secNombre = norm(sections.find((s) => s.id === form.sectionId)?.nombre ?? "");
+  const esTesoros = secNombre === norm(SECCION_TESOROS);
+  const esVida = secNombre === norm(SECCION_VIDA);
+  // "Asignación de nombrados": toda Nuestra vida + discurso/perlas de Tesoros.
+  const forzarNombrado = esVida || (esTesoros && !lectura);
+  const esNombradoFinal = forzarNombrado || isNombrado || estudio || necesidades;
+  const noHelper = !estudio && (esNombradoFinal || !!sections.find((s) => s.id === form.sectionId)?.sinAyudante);
 
   // Solo personas activas, conservando las ya referidas en este registro.
   const formPersons = useMemo(
@@ -65,15 +72,12 @@ export function EditRecordModal({ rec, persons, onClose, onSaved }: Props) {
   );
   const conActual = (elig: Person[], keepId: string | null) =>
     elig.some((p) => p.id === keepId) ? elig : [...elig, ...formPersons.filter((p) => p.id === keepId)];
-  // En registros de tipo NOMBRADO el asignado debe ser un Nombrado.
-  const esTesoros = norm(sections.find((s) => s.id === form.sectionId)?.nombre ?? "") === norm(SECCION_TESOROS);
   const asignadoPersons = useMemo(() => {
-    if (estudio || necesidades || isNombrado) return conActual(soloNombrados(formPersons), rec.asignadoId);
-    if (esLectura(form.asignacion)) return conActual(eligibleLectura(formPersons), rec.asignadoId);
-    if (esTesoros) return conActual(soloNombrados(formPersons), rec.asignadoId); // Discurso y Busquemos perlas → solo Nombrados
+    if (lectura) return conActual(eligibleLectura(formPersons), rec.asignadoId);
+    if (esNombradoFinal) return conActual(soloNombrados(formPersons), rec.asignadoId);
     return formPersons;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [estudio, necesidades, isNombrado, esTesoros, formPersons, rec.asignadoId, form.asignacion]);
+  }, [lectura, esNombradoFinal, formPersons, rec.asignadoId]);
   const ayudantePersons = useMemo(
     () => (estudio ? conActual(soloAsignados(formPersons), rec.ayudanteId) : formPersons),
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -113,11 +117,11 @@ export function EditRecordModal({ rec, persons, onClose, onSaved }: Props) {
     try {
       await updateRecord(rec.id, {
         asignadoId: form.asignadoId,
-        ayudanteId: isNombrado || noHelper ? null : form.ayudanteId || null,
+        ayudanteId: noHelper ? null : form.ayudanteId || null,
         fecha: form.fecha,
         sala: form.sala || null,
         asignacion: form.asignacion.trim(),
-        tipo: rec.tipo,
+        tipo: esNombradoFinal ? "NOMBRADO" : "ASIGNACION",
         sectionId: form.sectionId || null,
         minutos: form.minutos ? Number(form.minutos) : null,
       });
@@ -135,19 +139,19 @@ export function EditRecordModal({ rec, persons, onClose, onSaved }: Props) {
       <div className="form-grid">
         <div className="field-group">
           <label className="field-label">
-            {estudio ? "Conductor" : isNombrado ? "Nombre del nombrado" : "Nombre del asignado"} <span className="req">*</span>
+            {estudio ? "Conductor" : esNombradoFinal ? "Nombre del nombrado" : "Nombre del asignado"} <span className="req">*</span>
           </label>
           <PersonSelect
             persons={asignadoPersons}
             value={form.asignadoId}
-            excludeId={isNombrado ? undefined : form.ayudanteId}
+            excludeId={noHelper ? undefined : form.ayudanteId}
             onChange={(id) => patch({ asignadoId: id })}
             meta={rosterMeta}
             sectionLabel={porAsignacion ? form.asignacion : form.sectionId ? sectionLabel : undefined}
           />
         </div>
 
-        {!isNombrado && !noHelper && (
+        {!noHelper && (
           <div className="field-group">
             <label className="field-label">{estudio ? "Lector" : "Ayudante del asignado"}</label>
             <PersonSelect

@@ -10,7 +10,7 @@ import { AsignacionSuggest } from "@/components/AsignacionSuggest";
 import { HelperPicker } from "@/components/HelperPicker";
 import { agoShort } from "@/components/RosterPanel";
 import { createRecord, esLectura, eligibleLectura, fmtShort } from "@/lib/client";
-import { SECCION_TESOROS, esEstudio, esNecesidades, norm } from "@/lib/sections";
+import { SECCION_TESOROS, SECCION_VIDA, esEstudio, esNecesidades, norm } from "@/lib/sections";
 import type { Person, Section } from "@/lib/types";
 
 const soloNombrados = (ps: Person[]) => ps.filter((p) => p.roles.some((r) => r.nombre === "Nombrados"));
@@ -51,18 +51,24 @@ export function PlannerPartModal({ fecha, sections, persons, defaultAsignadoId, 
   const porAsignacion = estudio || necesidades; // recencia "por esa parte"
   // Recencia por rol/asignación en Estudio/Necesidades; por sección en lo demás.
   const { roster } = useRoster(fecha, undefined, undefined, porAsignacion ? undefined : sectionId || undefined, porAsignacion ? asignacion : undefined);
-  // Sin ayudante: Necesidades/Nombrados/secciones sinAyudante (pero el Estudio sí lleva Lector).
-  const noHelper = !estudio && (necesidades || nombrado || !!sections.find((s) => s.id === sectionId)?.sinAyudante);
+
+  const lectura = esLectura(asignacion);
+  const secNombre = norm(sections.find((s) => s.id === sectionId)?.nombre ?? "");
+  const esTesoros = secNombre === norm(SECCION_TESOROS);
+  const esVida = secNombre === norm(SECCION_VIDA);
+  // "Asignación de nombrados": toda Nuestra vida + discurso/perlas de Tesoros.
+  // (El lector del Estudio y la Lectura de la Biblia son asignaciones normales.)
+  const forzarNombrado = esVida || (esTesoros && !lectura);
+  const esNombradoFinal = forzarNombrado || nombrado || estudio || necesidades;
+  // Sin ayudante salvo el Estudio (que lleva Lector).
+  const noHelper = !estudio && (esNombradoFinal || !!sections.find((s) => s.id === sectionId)?.sinAyudante);
 
   // Filtro del asignado según el caso.
-  const lectura = esLectura(asignacion);
-  const esTesoros = norm(sections.find((s) => s.id === sectionId)?.nombre ?? "") === norm(SECCION_TESOROS);
   const asignadoPool = useMemo(() => {
-    if (estudio || necesidades || nombrado) return soloNombrados(activePersons);
     if (lectura) return eligibleLectura(activePersons);
-    if (esTesoros) return soloNombrados(activePersons); // Discurso y Busquemos perlas → solo Nombrados
+    if (esNombradoFinal) return soloNombrados(activePersons);
     return activePersons;
-  }, [estudio, necesidades, nombrado, lectura, esTesoros, activePersons]);
+  }, [lectura, esNombradoFinal, activePersons]);
   const ayudantePool = useMemo(() => (estudio ? soloAsignados(activePersons) : activePersons), [estudio, activePersons]);
   const poolIds = useMemo(() => new Set(asignadoPool.map((p) => p.id)), [asignadoPool]);
 
@@ -96,7 +102,7 @@ export function PlannerPartModal({ fecha, sections, persons, defaultAsignadoId, 
         fecha,
         sala: sala || null,
         asignacion: asignacion.trim(),
-        tipo,
+        tipo: esNombradoFinal ? "NOMBRADO" : "ASIGNACION",
         sectionId: sectionId || null,
         minutos: minutos ? Number(minutos) : null,
       });
@@ -112,17 +118,20 @@ export function PlannerPartModal({ fecha, sections, persons, defaultAsignadoId, 
   return (
     <Modal title={`Agregar parte · ${fmtShort(fecha)}`} onClose={onClose}>
       <div className="form-grid">
-        <div className="view-toggle">
-          <button className={`vt-btn${!nombrado ? " active" : ""}`} onClick={() => setTipo("ASIGNACION")}>
-            Asignación
-          </button>
-          <button
-            className={`vt-btn${nombrado ? " active" : ""}`}
-            onClick={() => { setTipo("NOMBRADO"); setAyudanteId(""); }}
-          >
-            Nombrado
-          </button>
-        </div>
+        {/* En Nuestra vida y discurso/perlas de Tesoros el tipo es fijo (Nombrado). */}
+        {!forzarNombrado && (
+          <div className="view-toggle">
+            <button className={`vt-btn${!nombrado ? " active" : ""}`} onClick={() => setTipo("ASIGNACION")}>
+              Asignación
+            </button>
+            <button
+              className={`vt-btn${nombrado ? " active" : ""}`}
+              onClick={() => { setTipo("NOMBRADO"); setAyudanteId(""); }}
+            >
+              Nombrado
+            </button>
+          </div>
+        )}
 
         {sections.length > 0 && (
           <div className="field-group">
@@ -175,7 +184,7 @@ export function PlannerPartModal({ fecha, sections, persons, defaultAsignadoId, 
 
         <div className="field-group">
           <label className="field-label">
-            {estudio ? "Conductor" : nombrado ? "Nombrado" : "Asignado"} <span className="req">*</span>
+            {estudio ? "Conductor" : esNombradoFinal ? "Nombrado" : "Asignado"} <span className="req">*</span>
           </label>
           <PersonSelect
             persons={asignadoPool}
