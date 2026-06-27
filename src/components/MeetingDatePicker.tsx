@@ -115,12 +115,24 @@ export function MeetingDatePicker({
           <div className="mdp-grid">
             {cells.map((ymd, i) => {
               if (ymd === null) return <span key={i} className="mdp-day empty" />;
+              // Solo se pueden elegir los días de reunión de la regla. Si no hay
+              // regla configurada (set vacío), no se bloquea nada (fallback seguro).
+              const esReunion = mset.size === 0 || mset.has(wdOf(ymd));
               const cls = ["mdp-day"];
               if (mset.has(wdOf(ymd))) cls.push("meeting");
               if (ymd === today) cls.push("today");
               if (ymd === value) cls.push("selected");
+              if (!esReunion) cls.push("blocked");
               return (
-                <button key={i} type="button" className={cls.join(" ")} onClick={() => pick(ymd)}>
+                <button
+                  key={i}
+                  type="button"
+                  className={cls.join(" ")}
+                  disabled={!esReunion}
+                  aria-disabled={!esReunion}
+                  title={esReunion ? undefined : "No es día de reunión"}
+                  onClick={() => esReunion && pick(ymd)}
+                >
                   {Number(ymd.slice(8, 10))}
                 </button>
               );
@@ -128,8 +140,15 @@ export function MeetingDatePicker({
           </div>
 
           <div className="mdp-foot">
-            <span className="mdp-legend"><span className="mdp-legend-dot" /> Día de reunión</span>
-            <button type="button" className="mdp-hoy" onClick={() => pick(today)}>Hoy</button>
+            <span className="mdp-legend"><span className="mdp-legend-dot" /> Solo días de reunión</span>
+            <button
+              type="button"
+              className="mdp-hoy"
+              disabled={!(mset.size === 0 || mset.has(wdOf(today)))}
+              onClick={() => (mset.size === 0 || mset.has(wdOf(today))) && pick(today)}
+            >
+              Hoy
+            </button>
           </div>
         </div>
       )}

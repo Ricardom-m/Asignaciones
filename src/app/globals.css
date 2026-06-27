@@ -728,6 +728,9 @@ input:focus, select:focus, .list-search-input:focus, .sel-search:focus, .cmd-inp
 .mdp-day.today { border-color:var(--accent); }
 .mdp-day.selected { background:var(--accent); color:#fff; }
 .mdp-day.selected::after { background:#fff; }
+.mdp-day.blocked { color:var(--text3); opacity:.32; cursor:not-allowed; }
+.mdp-day.blocked:hover { background:transparent; }
+.mdp-hoy:disabled { color:var(--text3); opacity:.4; cursor:not-allowed; }
 .mdp-foot { display:flex; align-items:center; justify-content:space-between; margin-top:10px; padding-top:8px; border-top:1px solid var(--border); }
 .mdp-legend { display:flex; align-items:center; gap:6px; font-size:.7rem; color:var(--text3); }
 .mdp-legend-dot { width:6px; height:6px; border-radius:50%; background:var(--accent); }

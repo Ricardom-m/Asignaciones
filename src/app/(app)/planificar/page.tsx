@@ -93,6 +93,10 @@ export default function PlanificarPage() {
   const ensuredRef = useRef<Set<string>>(new Set());
   useEffect(() => {
     if (!fecha || ensuredRef.current.has(fecha)) return;
+    // Solo sembrar partes fijas en días de reunión (según la regla). Evita crear
+    // registros en fechas que no corresponden (p. ej. mientras se inicializa `fecha`).
+    const wds = config.weekdays;
+    if (wds && wds.length > 0 && !wds.includes(weekdayOf(fecha))) return;
     ensuredRef.current.add(fecha);
     ensureInicio(fecha)
       .then((res) => {
@@ -101,7 +105,7 @@ export default function PlanificarPage() {
       })
       .catch(() => ensuredRef.current.delete(fecha));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [fecha]);
+  }, [fecha, config.weekdays]);
 
   const [adding, setAdding] = useState(false);
   const [prefill, setPrefill] = useState<{ asignadoId?: string; sectionId?: string; sala?: string }>({});
