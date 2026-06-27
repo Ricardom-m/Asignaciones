@@ -14,7 +14,8 @@ import { SECCION_TESOROS, SECCION_VIDA, esEstudio, esNecesidades, norm } from "@
 import type { Person, RecordItem } from "@/lib/types";
 
 const soloNombrados = (ps: Person[]) => ps.filter((p) => p.roles.some((r) => r.nombre === "Nombrados"));
-const soloAsignados = (ps: Person[]) => ps.filter((p) => p.roles.some((r) => r.nombre === "Asignados"));
+// Lector del Estudio bíblico: Asignados o Nombrados.
+const lectorEstudio = (ps: Person[]) => ps.filter((p) => p.roles.some((r) => r.nombre === "Asignados" || r.nombre === "Nombrados"));
 
 const SALAS = ["Sala A", "Sala B", "Otro"];
 
@@ -79,7 +80,7 @@ export function EditRecordModal({ rec, persons, onClose, onSaved }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lectura, esNombradoFinal, formPersons, rec.asignadoId]);
   const ayudantePersons = useMemo(
-    () => (estudio ? conActual(soloAsignados(formPersons), rec.ayudanteId) : formPersons),
+    () => (estudio ? conActual(lectorEstudio(formPersons), rec.ayudanteId) : formPersons),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [estudio, formPersons, rec.ayudanteId],
   );

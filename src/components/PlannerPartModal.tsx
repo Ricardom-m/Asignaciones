@@ -14,7 +14,8 @@ import { SECCION_TESOROS, SECCION_VIDA, esEstudio, esNecesidades, norm } from "@
 import type { Person, Section } from "@/lib/types";
 
 const soloNombrados = (ps: Person[]) => ps.filter((p) => p.roles.some((r) => r.nombre === "Nombrados"));
-const soloAsignados = (ps: Person[]) => ps.filter((p) => p.roles.some((r) => r.nombre === "Asignados"));
+// Lector del Estudio bíblico: Asignados o Nombrados.
+const lectorEstudio = (ps: Person[]) => ps.filter((p) => p.roles.some((r) => r.nombre === "Asignados" || r.nombre === "Nombrados"));
 
 const SALAS = ["Sala A", "Sala B", "Otro"];
 
@@ -69,7 +70,7 @@ export function PlannerPartModal({ fecha, sections, persons, defaultAsignadoId, 
     if (esNombradoFinal) return soloNombrados(activePersons);
     return activePersons;
   }, [lectura, esNombradoFinal, activePersons]);
-  const ayudantePool = useMemo(() => (estudio ? soloAsignados(activePersons) : activePersons), [estudio, activePersons]);
+  const ayudantePool = useMemo(() => (estudio ? lectorEstudio(activePersons) : activePersons), [estudio, activePersons]);
   const poolIds = useMemo(() => new Set(asignadoPool.map((p) => p.id)), [asignadoPool]);
 
   // Sugerencias de asignado: los más atrasados que NO estén ya ese día (y elegibles).
