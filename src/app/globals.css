@@ -786,6 +786,12 @@ input:focus, select:focus, .list-search-input:focus, .sel-search:focus, .cmd-inp
 .plan-estudio-sub.cond { border-left-color:var(--accent); }
 .plan-estudio-sub.lect { border-left-color:var(--accent2); }
 .plan-estudio-lbl { font-size:.56rem; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--text3); min-width:62px; }
+
+/* Nuestra vida: discursos del medio reordenables (cada uno su tarjeta) */
+.plan-vida-medio { display:flex; flex-direction:column; gap:5px; padding:2px 0; }
+.plan-vida-medio .plan-part { margin:0; padding:8px 10px; border:1px solid var(--border); border-radius:9px; background:var(--surface2); }
+.plan-vida-medio .plan-part:hover { background:var(--surface); border-color:var(--border2); }
+.plan-vida-medio .plan-part.dragging { opacity:.4; }
 .plan-inicio-cant { margin-left:auto; display:flex; align-items:center; gap:7px; }
 .plan-inicio-cant-lbl { font-size:.66rem; color:var(--text3); text-transform:uppercase; letter-spacing:.04em; }
 .plan-inicio-input { width:64px; text-align:center; padding:5px 8px !important; }

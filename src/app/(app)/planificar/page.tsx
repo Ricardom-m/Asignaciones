@@ -30,10 +30,21 @@ import { GenderIcon } from "@/components/GenderIcon";
 import { useIsAdmin } from "@/components/UserContext";
 import { addDaysYMD, arrangeRecords, deleteRecord, ensureInicio, esLectura, fmtShort, nextWeekdayDates, relativeLabel, todayYMD, updateRecord, weekdayLabel, weekdayOf } from "@/lib/client";
 import { PersonSelect } from "@/components/PersonSelect";
-import { SECCION_TESOROS, SECCION_VIDA, esCancion, esEstudio, esParteSinPersona, esRolNombrado, inicioRank, norm, tesorosRank, vidaRank } from "@/lib/sections";
+import { SECCION_TESOROS, SECCION_VIDA, PARTE_PALABRAS_CONCLUSION, esCancion, esEstudio, esParteSinPersona, esRolNombrado, inicioRank, norm, tesorosRank, vidaRank } from "@/lib/sections";
 import type { Person, RecordItem } from "@/lib/types";
 
 const SIN_SECCION = "__none__";
+
+// Partes "del medio" de Nuestra vida (reordenables): las que no son fijas
+// (ni Canción, ni Oración, ni Estudio, ni Palabras de conclusión).
+function esMedioVida(r: RecordItem): boolean {
+  return (
+    !esCancion(r.asignacion) &&
+    !esRolNombrado(r.asignacion) &&
+    !esEstudio(r.asignacion) &&
+    norm(r.asignacion) !== norm(PARTE_PALABRAS_CONCLUSION)
+  );
+}
 
 function salaClass(sala: string): string {
   return sala === "Sala A" ? "a" : sala === "Sala B" ? "b" : "otro";
@@ -182,6 +193,18 @@ export default function PlanificarPage() {
     const b = dayRecords.find((r) => r.id === String(over.id));
     if (!a || !b) return;
     if ((a.sectionId ?? "") !== (b.sectionId ?? "")) return; // solo dentro de la misma sección
+
+    // Nuestra vida: solo se reordenan las partes del medio (ignora sala).
+    const secA = sections.find((s) => s.id === a.sectionId);
+    if (secA && norm(secA.nombre) === norm(SECCION_VIDA)) {
+      if (!esMedioVida(a) || !esMedioVida(b)) return;
+      const grp = dayRecords.filter((r) => r.sectionId === a.sectionId && esMedioVida(r)).sort((x, y) => x.orden - y.orden);
+      const oldIndex = grp.findIndex((r) => r.id === a.id);
+      const newIndex = grp.findIndex((r) => r.id === b.id);
+      applyArrange(arrayMove(grp, oldIndex, newIndex).map((r, i) => ({ id: r.id, orden: i })));
+      return;
+    }
+
     const sa = a.sala ?? "Otro";
     const sb = b.sala ?? "Otro";
     if (sa === sb) {
@@ -429,6 +452,11 @@ export default function PlanificarPage() {
                 // Canción al final) con las partes del usuario en medio, en orden.
                 if (norm(g.nombre) === norm(SECCION_VIDA)) {
                   const ordVida = [...g.items].sort((a, b) => vidaRank(a) - vidaRank(b));
+                  const canciones = ordVida.filter((r) => esCancion(r.asignacion));
+                  const medio = ordVida.filter(esMedioVida); // discursos reordenables
+                  const estudioRec = ordVida.find((r) => esEstudio(r.asignacion));
+                  const palabrasRec = ordVida.find((r) => norm(r.asignacion) === norm(PARTE_PALABRAS_CONCLUSION));
+                  const oracionRec = ordVida.find((r) => esRolNombrado(r.asignacion));
                   return (
                     <div className="plan-section" key={g.id}>
                       <div className="plan-section-head">
@@ -446,17 +474,26 @@ export default function PlanificarPage() {
                         <div className="plan-empty">— sin partes —</div>
                       ) : (
                         <div className="plan-tg main">
-                          {ordVida.map((r) =>
-                            esCancion(r.asignacion) ? (
-                              <StartRow key={r.id} rec={r} onCantico={(n) => saveCantico(r, n)} />
-                            ) : esRolNombrado(r.asignacion) ? (
-                              <InicioPersonaRow key={r.id} rec={r} fecha={fecha} nombrados={nombrados} onPersona={(id) => savePersona(r, id)} />
-                            ) : esEstudio(r.asignacion) ? (
-                              <EstudioRow key={r.id} rec={r} personsById={personsById} onEdit={() => setEditing(r)} onDelete={() => onDelete(r)} />
-                            ) : (
-                              <TesorosRow key={r.id} rec={r} personsById={personsById} dupIds={dupIds} onEdit={() => setEditing(r)} onDelete={() => onDelete(r)} />
-                            ),
+                          {canciones[0] && <StartRow key={canciones[0].id} rec={canciones[0]} onCantico={(n) => saveCantico(canciones[0], n)} />}
+                          {medio.length > 0 && (
+                            <div className="plan-vida-medio">
+                              <SortableContext items={medio.map((r) => r.id)} strategy={verticalListSortingStrategy}>
+                                {medio.map((r) => (
+                                  <PartRow key={r.id} rec={r} personsById={personsById} dupIds={dupIds} onEdit={() => setEditing(r)} onDelete={() => onDelete(r)} />
+                                ))}
+                              </SortableContext>
+                            </div>
                           )}
+                          {estudioRec && (
+                            <EstudioRow key={estudioRec.id} rec={estudioRec} personsById={personsById} onEdit={() => setEditing(estudioRec)} onDelete={() => onDelete(estudioRec)} />
+                          )}
+                          {palabrasRec && (
+                            <TesorosRow key={palabrasRec.id} rec={palabrasRec} personsById={personsById} dupIds={dupIds} onEdit={() => setEditing(palabrasRec)} onDelete={() => onDelete(palabrasRec)} />
+                          )}
+                          {oracionRec && (
+                            <InicioPersonaRow key={oracionRec.id} rec={oracionRec} fecha={fecha} nombrados={nombrados} onPersona={(id) => savePersona(oracionRec, id)} />
+                          )}
+                          {canciones[1] && <StartRow key={canciones[1].id} rec={canciones[1]} onCantico={(n) => saveCantico(canciones[1], n)} />}
                         </div>
                       )}
                     </div>
