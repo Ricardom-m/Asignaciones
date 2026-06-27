@@ -5,6 +5,14 @@ import useSWRInfinite from "swr/infinite";
 import { fetcher } from "@/lib/client";
 import type { Person, RecordItem, Role, Section, Meeting, AllowedUser, MeetingConfig, RosterPerson } from "@/lib/types";
 import type { ScoredCandidate } from "@/lib/suggest";
+import type { ProgramWeek } from "@/lib/export/program";
+
+// Programa (formato S-140) de las fechas seleccionadas, para la vista previa.
+export function useExportProgram(fechas: string[]) {
+  const key = fechas.length ? `/api/export?fechas=${fechas.join(",")}&format=json` : null;
+  const { data, isLoading } = useSWR<{ weeks: ProgramWeek[] }>(key, fetcher);
+  return { weeks: data?.weeks ?? [], isLoading };
+}
 
 export function usePersons() {
   const { data, error, isLoading, mutate } = useSWR<Person[]>("/api/persons", fetcher);
@@ -45,10 +53,13 @@ export function useMeetingConfig() {
   return { config: data ?? { weekdays: [4, 6], weeks: 4, congregacion: null }, mutate };
 }
 
-// Detalle de una reunión (relato/lectura de la semana) por fecha.
+// Detalle de una reunión (relato/lectura y nota/observación) por fecha.
 export function useMeetingDetail(fecha: string | null) {
-  const { data, mutate } = useSWR<{ relato: string | null }>(fecha ? `/api/meetings/detail?fecha=${fecha}` : null, fetcher);
-  return { relato: data?.relato ?? null, mutate };
+  const { data, mutate } = useSWR<{ relato: string | null; nota: string | null }>(
+    fecha ? `/api/meetings/detail?fecha=${fecha}` : null,
+    fetcher,
+  );
+  return { relato: data?.relato ?? null, nota: data?.nota ?? null, mutate };
 }
 
 export function useUsers() {

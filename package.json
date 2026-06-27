@@ -20,6 +20,7 @@
     "@dnd-kit/utilities": "^3.2.2",
     "@phosphor-icons/react": "^2.1.10",
     "@prisma/client": "^6.2.1",
+    "docx": "^9.7.1",
     "jspdf": "^2.5.2",
     "jspdf-autotable": "^3.8.4",
     "next": "^15.1.4",

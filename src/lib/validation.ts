@@ -51,10 +51,12 @@ export const meetingConfigInput = z.object({
   congregacion: z.string().trim().max(120).nullish(),
 });
 
-// Detalle de una reunión (relato/lectura de la semana).
+// Detalle de una reunión (relato/lectura y nota/observación de la semana).
+// Ambos campos son opcionales: se actualiza solo el que venga en el body.
 export const meetingDetailInput = z.object({
   fecha: fechaSchema,
   relato: z.string().trim().max(160).nullish(),
+  nota: z.string().trim().max(120).nullish(),
 });
 export type MeetingConfigInput = z.infer<typeof meetingConfigInput>;
 

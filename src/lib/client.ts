@@ -68,9 +68,12 @@ export const deleteMeeting = (id: string) =>
 export const updateMeetingConfig = (data: MeetingConfig) =>
   apiFetch<MeetingConfig>("/api/meetings/config", { method: "PUT", body: JSON.stringify(data) });
 
-// Relato/lectura de la semana para una fecha (crea la reunión si falta).
+// Detalle de la semana (relato/nota) para una fecha (crea la reunión si falta).
+type MeetingDetail = { relato: string | null; nota: string | null };
 export const setMeetingRelato = (fecha: string, relato: string | null) =>
-  apiFetch<{ relato: string | null }>("/api/meetings/detail", { method: "PUT", body: JSON.stringify({ fecha, relato }) });
+  apiFetch<MeetingDetail>("/api/meetings/detail", { method: "PUT", body: JSON.stringify({ fecha, relato }) });
+export const setMeetingNota = (fecha: string, nota: string | null) =>
+  apiFetch<MeetingDetail>("/api/meetings/detail", { method: "PUT", body: JSON.stringify({ fecha, nota }) });
 
 export const purgeMeetings = (body: { past?: boolean; ids?: string[] }) =>
   apiFetch<{ deleted: number }>("/api/meetings/purge", { method: "POST", body: JSON.stringify(body) });

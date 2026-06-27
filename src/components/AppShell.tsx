@@ -10,6 +10,7 @@ import {
   CalendarCheck,
   ClipboardText,
   MagnifyingGlass,
+  FileArrowDown,
   List as ListIcon,
 } from "@phosphor-icons/react";
 import { AccountMenu } from "@/components/AccountMenu";
@@ -27,6 +28,7 @@ const NAV = [
   { href: "/planificar", label: "Planificar", icon: CalendarCheck },
   { href: "/registros", label: "Registros", icon: ListBullets },
   { href: "/personas", label: "Personas", icon: UsersThree },
+  { href: "/exportar", label: "Exportar", icon: FileArrowDown },
 ];
 
 const openCmd = () => window.dispatchEvent(new Event("open-command-palette"));
