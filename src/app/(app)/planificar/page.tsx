@@ -473,7 +473,7 @@ export default function PlanificarPage() {
                       {g.items.length === 0 ? (
                         <div className="plan-empty">— sin partes —</div>
                       ) : (
-                        <div className="plan-tg main">
+                        <div className="plan-tg main vida">
                           {canciones[0] && <StartRow key={canciones[0].id} rec={canciones[0]} onCantico={(n) => saveCantico(canciones[0], n)} />}
                           {medio.length > 0 && (
                             <div className="plan-vida-medio">
@@ -487,12 +487,10 @@ export default function PlanificarPage() {
                           {estudioRec && (
                             <EstudioRow key={estudioRec.id} rec={estudioRec} personsById={personsById} onEdit={() => setEditing(estudioRec)} onDelete={() => onDelete(estudioRec)} />
                           )}
-                          {palabrasRec && (
-                            <TesorosRow key={palabrasRec.id} rec={palabrasRec} personsById={personsById} dupIds={dupIds} onEdit={() => setEditing(palabrasRec)} onDelete={() => onDelete(palabrasRec)} />
-                          )}
                           {oracionRec && (
                             <InicioPersonaRow key={oracionRec.id} rec={oracionRec} fecha={fecha} nombrados={nombrados} onPersona={(id) => savePersona(oracionRec, id)} />
                           )}
+                          {palabrasRec && <StartRow key={palabrasRec.id} rec={palabrasRec} onCantico={(n) => saveCantico(palabrasRec, n)} />}
                           {canciones[1] && <StartRow key={canciones[1].id} rec={canciones[1]} onCantico={(n) => saveCantico(canciones[1], n)} />}
                         </div>
                       )}

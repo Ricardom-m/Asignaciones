@@ -787,6 +787,10 @@ input:focus, select:focus, .list-search-input:focus, .sel-search:focus, .cmd-inp
 .plan-estudio-sub.lect { border-left-color:var(--accent2); }
 .plan-estudio-lbl { font-size:.56rem; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--text3); min-width:62px; }
 
+/* Nuestra vida: separación clara entre cada parte (Canción/Estudio/Oración/…) */
+.plan-tg.vida { gap:0; }
+.plan-tg.vida > * + * { border-top:1px solid var(--border); margin-top:8px; padding-top:8px; }
+
 /* Nuestra vida: discursos del medio reordenables (cada uno su tarjeta) */
 .plan-vida-medio { display:flex; flex-direction:column; gap:5px; padding:2px 0; }
 .plan-vida-medio .plan-part { margin:0; padding:8px 10px; border:1px solid var(--border); border-radius:9px; background:var(--surface2); }

@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { ok, requireSession } from "@/lib/server";
 import { todayYMD } from "@/lib/date";
-import { PARTE_CANCION, PARTE_PALABRAS } from "@/lib/sections";
+import { PARTES_SIN_PERSONA } from "@/lib/sections";
 import type { Prisma } from "@prisma/client";
 
 // Las partes "de programa" (sección Inicio + canciones/palabras sin persona) no
@@ -9,7 +9,7 @@ import type { Prisma } from "@prisma/client";
 const notInicio: Prisma.RecordWhereInput = {
   AND: [
     { OR: [{ sectionId: null }, { section: { is: { sinPersona: false } } }] },
-    { NOT: { asignacion: { in: [PARTE_CANCION, PARTE_PALABRAS] } } },
+    { NOT: { asignacion: { in: PARTES_SIN_PERSONA } } },
   ],
 };
 

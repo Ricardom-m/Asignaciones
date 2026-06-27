@@ -30,6 +30,7 @@ export const PARTE_ESTUDIO = "Estudio bíblico de congregación";
 export const PARTE_PALABRAS_CONCLUSION = "Palabras de conclusión";
 export const PARTE_NECESIDADES = "Necesidades de la congregación";
 export const PALABRAS_MIN = 1; // duración fija de "Palabras de introducción"
+export const PALABRAS_CONCLUSION_MIN = 3; // duración fija de "Palabras de conclusión"
 
 export interface ParteFija { value: string; minutos: number | null; orden: number; nombrado: boolean }
 
@@ -42,11 +43,12 @@ export const PARTES_FIJAS: Record<string, ParteFija[]> = {
     { value: PARTE_CANCION, minutos: null, orden: 3, nombrado: false },
     { value: PARTE_PALABRAS, minutos: PALABRAS_MIN, orden: 4, nombrado: false },
   ],
-  // Nuestra vida cristiana: Canción al inicio, Oración penúltima y Canción al
-  // final; en medio van las partes que agregue el usuario.
+  // Nuestra vida cristiana: Canción al inicio, luego (al final) Oración,
+  // Palabras de conclusión y Canción; en medio van las partes del usuario.
   [SECCION_VIDA]: [
     { value: PARTE_CANCION, minutos: null, orden: 0, nombrado: false },
     { value: PARTE_ORACION, minutos: null, orden: 900, nombrado: true },
+    { value: PARTE_PALABRAS_CONCLUSION, minutos: PALABRAS_CONCLUSION_MIN, orden: 950, nombrado: false },
     { value: PARTE_CANCION, minutos: null, orden: 1000, nombrado: false },
   ],
 };
@@ -60,11 +62,10 @@ export const inicioRank = (a: string) => {
   return i === -1 ? 99 : i;
 };
 
-// Partes que NO llevan persona (programa, no asignación a alguien).
-export const esParteSinPersona = (a: string) => {
-  const n = norm(a);
-  return n === norm(PARTE_CANCION) || n === norm(PARTE_PALABRAS);
-};
+// Partes que NO llevan persona (programa, no asignación a alguien). Se ocultan
+// de Registros/sugerencias y se muestran como texto informativo (con su duración).
+export const PARTES_SIN_PERSONA = [PARTE_CANCION, PARTE_PALABRAS, PARTE_PALABRAS_CONCLUSION];
+export const esParteSinPersona = (a: string) => PARTES_SIN_PERSONA.some((p) => norm(p) === norm(a));
 // Partes fijas con Nombrado en línea (Presidente/Consejero/Oración).
 export const esRolNombrado = (a: string) => {
   const n = norm(a);
@@ -76,12 +77,12 @@ export const esNecesidades = (a: string) => norm(a) === norm(PARTE_NECESIDADES);
 export const esLecturaNombre = (a: string) => norm(a) === norm(LECTURA_NOMBRE);
 
 // Orden canónico dentro de "Nuestra vida cristiana":
-// Canción(inicio) → [partes del usuario] → Estudio → Palabras de conclusión → Oración → Canción(final).
+// Canción(inicio) → [partes del usuario] → Estudio → Oración → Palabras de conclusión → Canción(final).
 export const vidaRank = (rec: { asignacion: string; orden: number }) => {
   const a = norm(rec.asignacion);
   if (esCancion(a)) return rec.orden < 500 ? 0 : 10000; // inicio vs final por su orden sembrado
+  if (a === norm(PARTE_PALABRAS_CONCLUSION)) return 9500; // entre Oración y Canción final
   if (a === norm(PARTE_ORACION)) return 9000;
-  if (a === norm(PARTE_PALABRAS_CONCLUSION)) return 8100;
   if (a === norm(PARTE_ESTUDIO)) return 8000;
   return 100 + rec.orden; // partes del usuario, en su propio orden
 };
