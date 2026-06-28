@@ -1,7 +1,7 @@
-// Vista previa del programa con el formato oficial S-140 (HTML/CSS). Mismo espec
-// exacto que el Word (src/lib/export/docx.ts): Calibri/Cambria, gris 575A5D en
-// etiquetas y partes fijas (color de sección), negro en el contenido, y solo
-// línea inferior por fila. Sirve de revisión en pantalla y para el PDF (imprimir).
+// Vista previa del programa con el formato oficial S-140 (HTML/CSS), calibrada
+// contra el render real del PDF. Mismo espec que el Word (src/lib/export/docx.ts):
+// cuerpo NEGRO normal en Calibri, título Cambria; etiquetas en gris pequeño; sin
+// rejilla (solo una regla gruesa bajo el encabezado); bullets de color.
 
 import { Fragment } from "react";
 import type { ProgramWeek, SeamosPart } from "@/lib/export/program";
@@ -10,27 +10,26 @@ import { consejeroTexto, minsLabel } from "@/lib/export/program";
 const GRIS = "#575A5D";
 const VINO = "#7E0024";
 
-// "N. titulo  (X mins.)" — número/título/min en negro; el título en color si es
-// una parte fija (perlas).
-function NumTitulo({ numero, titulo, minutos, color }: { numero: number; titulo: string; minutos: number | null; color?: string }) {
+// "N. titulo  (X mins.)" — todo negro.
+function NumTitulo({ numero, titulo, minutos }: { numero: number; titulo: string; minutos: number | null }) {
   const m = minsLabel(minutos);
   return (
     <>
-      <span>{numero}. </span>
-      <span style={color ? { color, fontWeight: 700 } : undefined}>{titulo}</span>
-      {m && <span>{"  " + m}</span>}
+      {numero}. {titulo}
+      {m && <span>{"   " + m}</span>}
     </>
   );
 }
 
-// Ítem fijo (Canción/Palabras) con bullet, todo en el color de su sección.
+// "• titulo  (X mins.)" — bullet de color, texto negro.
 function Bullet({ titulo, minutos, color }: { titulo: string; minutos?: number | null; color: string }) {
   const m = minsLabel(minutos ?? null);
   return (
-    <span style={{ color, fontWeight: 700 }}>
-      • {titulo}
-      {m && "  " + m}
-    </span>
+    <>
+      <span style={{ color, fontWeight: 700 }}>•&nbsp;&nbsp;</span>
+      {titulo}
+      {m && "   " + m}
+    </>
   );
 }
 
@@ -44,22 +43,28 @@ function Week({ w }: { w: ProgramWeek }) {
     <div className="ps-page">
       {/* Encabezado */}
       <div className="ps-head">
-        <div className="ps-head-l">
-          <div className="ps-cong">{w.congregacion}</div>
-          <div className="ps-semana">
-            {w.semana}
-            {w.relato ? ` | ${w.relato}` : ""}
-          </div>
+        <div className="ps-cong">{w.congregacion}</div>
+        <div className="ps-title">Programa para la reunión de entre semana</div>
+      </div>
+      <div className="ps-headinfo">
+        <div className="ps-semana">
+          {w.semana}
+          {w.relato ? ` | ${w.relato}` : ""}
         </div>
-        <div className="ps-head-r">
-          <div className="ps-title">Programa para la reunión de entre semana</div>
-          <div className="ps-gris">
-            <b>Presidente:</b> {w.presidente ?? ""}
-          </div>
-          <div className="ps-gris">
-            <b>Consejero de la sala auxiliar:</b> {consejeroTexto(w)}
-          </div>
-        </div>
+        <table className="ps-roles">
+          <tbody>
+            <tr>
+              <td className="ps-lbl">Presidente:</td>
+              <td className="ps-val">{w.presidente ?? ""}</td>
+            </tr>
+            <tr>
+              <td className="ps-lbl">Consejero de la sala auxiliar:</td>
+              <td className="ps-val" style={w.nota ? { fontStyle: "italic" } : undefined}>
+                {consejeroTexto(w)}
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
 
       {/* Cuerpo */}
@@ -78,9 +83,8 @@ function Week({ w }: { w: ProgramWeek }) {
             <td colSpan={2}>
               <Bullet titulo={`Canción ${w.cancionInicio ?? ""}`.trim()} color={GRIS} />
             </td>
-            <td colSpan={2} className="ps-gris">
-              <b>Oración:</b> {w.oracionInicio ?? ""}
-            </td>
+            <td className="ps-lbl ps-right">Oración:</td>
+            <td>{w.oracionInicio ?? ""}</td>
           </tr>
           <tr>
             <td className="ps-hora">0:00</td>
@@ -111,7 +115,7 @@ function Week({ w }: { w: ProgramWeek }) {
             <tr>
               <td className="ps-hora">0:00</td>
               <td colSpan={2}>
-                <NumTitulo numero={w.tesoros.perlas.numero} titulo="Busquemos perlas escondidas" minutos={w.tesoros.perlas.minutos} color={GRIS} />
+                <NumTitulo numero={w.tesoros.perlas.numero} titulo="Busquemos perlas escondidas" minutos={w.tesoros.perlas.minutos} />
               </td>
               <td />
               <td>{w.tesoros.perlas.nombre ?? ""}</td>
@@ -123,7 +127,7 @@ function Week({ w }: { w: ProgramWeek }) {
               <td>
                 <NumTitulo numero={w.tesoros.lectura.numero} titulo="Lectura de la Biblia" minutos={w.tesoros.lectura.minutos} />
               </td>
-              <td className="ps-rol">Estudiante:</td>
+              <td className="ps-lbl ps-right">Estudiante:</td>
               <td>{w.tesoros.lectura.aux ?? ""}</td>
               <td>{w.tesoros.lectura.prin ?? ""}</td>
             </tr>
@@ -143,7 +147,7 @@ function Week({ w }: { w: ProgramWeek }) {
               <td>
                 <NumTitulo numero={p.numero} titulo={p.titulo} minutos={p.minutos} />
               </td>
-              <td className="ps-rol">Estudiante/Ayudante:</td>
+              <td className="ps-lbl ps-right">Estudiante/Ayudante:</td>
               <td>{slot(p.aux)}</td>
               <td>{slot(p.prin)}</td>
             </tr>
@@ -177,7 +181,7 @@ function Week({ w }: { w: ProgramWeek }) {
               <td>
                 <NumTitulo numero={w.vida.estudio.numero} titulo="Estudio bíblico de la congregación" minutos={w.vida.estudio.minutos} />
               </td>
-              <td className="ps-rol">Conductor/Lector:</td>
+              <td className="ps-lbl ps-right">Conductor/Lector:</td>
               <td colSpan={2}>{[w.vida.estudio.conductor, w.vida.estudio.lector].filter(Boolean).join(" / ")}</td>
             </tr>
           )}
@@ -192,9 +196,8 @@ function Week({ w }: { w: ProgramWeek }) {
             <td colSpan={2}>
               <Bullet titulo={`Canción ${w.vida.cancionFinal ?? ""}`.trim()} color={VINO} />
             </td>
-            <td colSpan={2} className="ps-gris">
-              <b>Oración:</b> {w.vida.oracionFinal ?? ""}
-            </td>
+            <td className="ps-lbl ps-right">Oración:</td>
+            <td>{w.vida.oracionFinal ?? ""}</td>
           </tr>
         </tbody>
       </table>
