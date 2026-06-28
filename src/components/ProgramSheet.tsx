@@ -71,9 +71,9 @@ function Week({ w }: { w: ProgramWeek }) {
       <table className="ps-table">
         <colgroup>
           <col style={{ width: "6.2%" }} />
-          <col style={{ width: "31.2%" }} />
+          <col style={{ width: "29.8%" }} />
           <col style={{ width: "14.6%" }} />
-          <col style={{ width: "23.5%" }} />
+          <col style={{ width: "24.9%" }} />
           <col style={{ width: "24.5%" }} />
         </colgroup>
         <tbody>
@@ -94,6 +94,9 @@ function Week({ w }: { w: ProgramWeek }) {
           </tr>
 
           {/* TESOROS DE LA BIBLIA */}
+          <tr className="ps-sp">
+            <td colSpan={5} />
+          </tr>
           <tr>
             <td colSpan={3} className="ps-sec" style={{ background: GRIS }}>
               TESOROS DE LA BIBLIA
@@ -104,20 +107,18 @@ function Week({ w }: { w: ProgramWeek }) {
           {w.tesoros.discurso && (
             <tr>
               <td className="ps-hora">0:00</td>
-              <td colSpan={2}>
+              <td colSpan={3}>
                 <NumTitulo numero={w.tesoros.discurso.numero} titulo={w.tesoros.discurso.titulo} minutos={w.tesoros.discurso.minutos} />
               </td>
-              <td />
               <td>{w.tesoros.discurso.nombre ?? ""}</td>
             </tr>
           )}
           {w.tesoros.perlas && (
             <tr>
               <td className="ps-hora">0:00</td>
-              <td colSpan={2}>
+              <td colSpan={3}>
                 <NumTitulo numero={w.tesoros.perlas.numero} titulo="Busquemos perlas escondidas" minutos={w.tesoros.perlas.minutos} />
               </td>
-              <td />
               <td>{w.tesoros.perlas.nombre ?? ""}</td>
             </tr>
           )}
@@ -134,6 +135,9 @@ function Week({ w }: { w: ProgramWeek }) {
           )}
 
           {/* SEAMOS MEJORES MAESTROS */}
+          <tr className="ps-sp">
+            <td colSpan={5} />
+          </tr>
           <tr>
             <td colSpan={3} className="ps-sec" style={{ background: "#BE8900" }}>
               SEAMOS MEJORES MAESTROS
@@ -154,6 +158,9 @@ function Week({ w }: { w: ProgramWeek }) {
           ))}
 
           {/* NUESTRA VIDA CRISTIANA */}
+          <tr className="ps-sp">
+            <td colSpan={5} />
+          </tr>
           <tr>
             <td colSpan={5} className="ps-sec" style={{ background: VINO }}>
               NUESTRA VIDA CRISTIANA
@@ -168,10 +175,9 @@ function Week({ w }: { w: ProgramWeek }) {
           {w.vida.discursos.map((d) => (
             <tr key={d.numero}>
               <td className="ps-hora">0:00</td>
-              <td colSpan={2}>
+              <td colSpan={3}>
                 <NumTitulo numero={d.numero} titulo={d.titulo} minutos={d.minutos} />
               </td>
-              <td />
               <td>{d.nombre ?? ""}</td>
             </tr>
           ))}
@@ -201,6 +207,7 @@ function Week({ w }: { w: ProgramWeek }) {
           </tr>
         </tbody>
       </table>
+      <div className="ps-foot">S-140-S&nbsp;&nbsp;11/23</div>
     </div>
   );
 }
