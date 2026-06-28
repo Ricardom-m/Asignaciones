@@ -1,6 +1,7 @@
-// Vista previa del programa con el formato oficial S-140 (HTML/CSS). Sirve para
-// revisar en pantalla y para generar el PDF con la impresión del navegador.
-// Mismos datos y estructura que el Word (src/lib/export/docx.ts).
+// Vista previa del programa con el formato oficial S-140 (HTML/CSS). Mismo espec
+// exacto que el Word (src/lib/export/docx.ts): Calibri/Cambria, gris 575A5D en
+// etiquetas y partes fijas (color de sección), negro en el contenido, y solo
+// línea inferior por fila. Sirve de revisión en pantalla y para el PDF (imprimir).
 
 import { Fragment } from "react";
 import type { ProgramWeek, SeamosPart } from "@/lib/export/program";
@@ -9,25 +10,27 @@ import { consejeroTexto, minsLabel } from "@/lib/export/program";
 const GRIS = "#575A5D";
 const VINO = "#7E0024";
 
-function Marker({
-  numero,
-  bullet,
-  titulo,
-  minutos,
-}: {
-  numero?: number | null;
-  bullet?: "gris" | "vino" | null;
-  titulo: string;
-  minutos?: number | null;
-}) {
-  const m = minsLabel(minutos ?? null);
+// "N. titulo  (X mins.)" — número/título/min en negro; el título en color si es
+// una parte fija (perlas).
+function NumTitulo({ numero, titulo, minutos, color }: { numero: number; titulo: string; minutos: number | null; color?: string }) {
+  const m = minsLabel(minutos);
   return (
     <>
-      {numero != null && <b>{numero}. </b>}
-      {bullet && <span style={{ color: bullet === "gris" ? GRIS : VINO, fontWeight: 700 }}>• </span>}
-      {titulo}
-      {m && ` ${m}`}
+      <span>{numero}. </span>
+      <span style={color ? { color, fontWeight: 700 } : undefined}>{titulo}</span>
+      {m && <span>{"  " + m}</span>}
     </>
+  );
+}
+
+// Ítem fijo (Canción/Palabras) con bullet, todo en el color de su sección.
+function Bullet({ titulo, minutos, color }: { titulo: string; minutos?: number | null; color: string }) {
+  const m = minsLabel(minutos ?? null);
+  return (
+    <span style={{ color, fontWeight: 700 }}>
+      • {titulo}
+      {m && "  " + m}
+    </span>
   );
 }
 
@@ -50,10 +53,10 @@ function Week({ w }: { w: ProgramWeek }) {
         </div>
         <div className="ps-head-r">
           <div className="ps-title">Programa para la reunión de entre semana</div>
-          <div>
+          <div className="ps-gris">
             <b>Presidente:</b> {w.presidente ?? ""}
           </div>
-          <div>
+          <div className="ps-gris">
             <b>Consejero de la sala auxiliar:</b> {consejeroTexto(w)}
           </div>
         </div>
@@ -73,16 +76,16 @@ function Week({ w }: { w: ProgramWeek }) {
           <tr>
             <td className="ps-hora">0:00</td>
             <td colSpan={2}>
-              <Marker bullet="gris" titulo={`Canción ${w.cancionInicio ?? ""}`.trim()} />
+              <Bullet titulo={`Canción ${w.cancionInicio ?? ""}`.trim()} color={GRIS} />
             </td>
-            <td colSpan={2}>
+            <td colSpan={2} className="ps-gris">
               <b>Oración:</b> {w.oracionInicio ?? ""}
             </td>
           </tr>
           <tr>
             <td className="ps-hora">0:00</td>
             <td colSpan={4}>
-              <Marker bullet="gris" titulo="Palabras de introducción" minutos={1} />
+              <Bullet titulo="Palabras de introducción" minutos={1} color={GRIS} />
             </td>
           </tr>
 
@@ -98,7 +101,7 @@ function Week({ w }: { w: ProgramWeek }) {
             <tr>
               <td className="ps-hora">0:00</td>
               <td colSpan={2}>
-                <Marker numero={w.tesoros.discurso.numero} titulo={w.tesoros.discurso.titulo} minutos={w.tesoros.discurso.minutos} />
+                <NumTitulo numero={w.tesoros.discurso.numero} titulo={w.tesoros.discurso.titulo} minutos={w.tesoros.discurso.minutos} />
               </td>
               <td />
               <td>{w.tesoros.discurso.nombre ?? ""}</td>
@@ -108,7 +111,7 @@ function Week({ w }: { w: ProgramWeek }) {
             <tr>
               <td className="ps-hora">0:00</td>
               <td colSpan={2}>
-                <Marker numero={w.tesoros.perlas.numero} titulo="Busquemos perlas escondidas" minutos={w.tesoros.perlas.minutos} />
+                <NumTitulo numero={w.tesoros.perlas.numero} titulo="Busquemos perlas escondidas" minutos={w.tesoros.perlas.minutos} color={GRIS} />
               </td>
               <td />
               <td>{w.tesoros.perlas.nombre ?? ""}</td>
@@ -118,7 +121,7 @@ function Week({ w }: { w: ProgramWeek }) {
             <tr>
               <td className="ps-hora">0:00</td>
               <td>
-                <Marker numero={w.tesoros.lectura.numero} titulo="Lectura de la Biblia" minutos={w.tesoros.lectura.minutos} />
+                <NumTitulo numero={w.tesoros.lectura.numero} titulo="Lectura de la Biblia" minutos={w.tesoros.lectura.minutos} />
               </td>
               <td className="ps-rol">Estudiante:</td>
               <td>{w.tesoros.lectura.aux ?? ""}</td>
@@ -138,7 +141,7 @@ function Week({ w }: { w: ProgramWeek }) {
             <tr key={p.numero}>
               <td className="ps-hora">0:00</td>
               <td>
-                <Marker numero={p.numero} titulo={p.titulo} minutos={p.minutos} />
+                <NumTitulo numero={p.numero} titulo={p.titulo} minutos={p.minutos} />
               </td>
               <td className="ps-rol">Estudiante/Ayudante:</td>
               <td>{slot(p.aux)}</td>
@@ -155,14 +158,14 @@ function Week({ w }: { w: ProgramWeek }) {
           <tr>
             <td className="ps-hora">0:00</td>
             <td colSpan={4}>
-              <Marker bullet="vino" titulo={`Canción ${w.vida.cancion ?? ""}`.trim()} />
+              <Bullet titulo={`Canción ${w.vida.cancion ?? ""}`.trim()} color={VINO} />
             </td>
           </tr>
           {w.vida.discursos.map((d) => (
             <tr key={d.numero}>
               <td className="ps-hora">0:00</td>
               <td colSpan={2}>
-                <Marker numero={d.numero} titulo={d.titulo} minutos={d.minutos} />
+                <NumTitulo numero={d.numero} titulo={d.titulo} minutos={d.minutos} />
               </td>
               <td />
               <td>{d.nombre ?? ""}</td>
@@ -172,7 +175,7 @@ function Week({ w }: { w: ProgramWeek }) {
             <tr>
               <td className="ps-hora">0:00</td>
               <td>
-                <Marker numero={w.vida.estudio.numero} titulo="Estudio bíblico de la congregación" minutos={w.vida.estudio.minutos} />
+                <NumTitulo numero={w.vida.estudio.numero} titulo="Estudio bíblico de la congregación" minutos={w.vida.estudio.minutos} />
               </td>
               <td className="ps-rol">Conductor/Lector:</td>
               <td colSpan={2}>{[w.vida.estudio.conductor, w.vida.estudio.lector].filter(Boolean).join(" / ")}</td>
@@ -181,15 +184,15 @@ function Week({ w }: { w: ProgramWeek }) {
           <tr>
             <td className="ps-hora">0:00</td>
             <td colSpan={4}>
-              <Marker bullet="vino" titulo="Palabras de conclusión" minutos={3} />
+              <Bullet titulo="Palabras de conclusión" minutos={3} color={VINO} />
             </td>
           </tr>
           <tr>
             <td className="ps-hora">0:00</td>
             <td colSpan={2}>
-              <Marker bullet="vino" titulo={`Canción ${w.vida.cancionFinal ?? ""}`.trim()} />
+              <Bullet titulo={`Canción ${w.vida.cancionFinal ?? ""}`.trim()} color={VINO} />
             </td>
-            <td colSpan={2}>
+            <td colSpan={2} className="ps-gris">
               <b>Oración:</b> {w.vida.oracionFinal ?? ""}
             </td>
           </tr>
