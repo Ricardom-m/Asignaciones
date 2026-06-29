@@ -17,7 +17,10 @@ export function isEmailAllowed(email?: string | null): boolean {
 // Config base, sin Prisma → segura para el Edge runtime (middleware).
 export const authConfig: NextAuthConfig = {
   providers: [Google],
-  session: { strategy: "jwt" },
+  // Sesión de 14 días con renovación por actividad (el reloj se reinicia con el
+  // uso). Como el JWT no se puede revocar desde el servidor, esta ventana acota
+  // a usuarios removidos de la allowlist o cookies robadas.
+  session: { strategy: "jwt", maxAge: 60 * 60 * 24 * 14 },
   trustHost: true,
   pages: { signIn: "/login", error: "/login" },
   callbacks: {
