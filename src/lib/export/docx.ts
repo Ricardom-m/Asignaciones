@@ -40,12 +40,12 @@ const TITLE_FONT = "Cambria";
 const HEAD_COLS = [3124, 4397, 2443]; // valor (col3=2443) alinea con cuerpo col5
 const BODY_COLS = [617, 2952, 1475, 2477, 2443]; // barra = col1+2+3 = 5044
 const W_TOTAL = 9964;
-const SZ_ROL = 15; // etiqueta de rol del cuerpo (Estudiante/Ayudante): 7.5pt para que no se corte
+const SZ_ROL = 14; // etiqueta de rol del cuerpo (Estudiante/Ayudante): 7pt para que NO se corte el ":"
 
 const NIL = { style: BorderStyle.NONE, size: 0, color: "auto" } as const;
 const noBorders = { top: NIL, bottom: NIL, left: NIL, right: NIL };
 const tableBorders = { ...noBorders, insideHorizontal: NIL, insideVertical: NIL };
-const HEADER_RULE = { style: BorderStyle.THIN_THICK_SMALL_GAP, size: 8, color: GRIS_REGLA } as const;
+const HEADER_RULE = { style: BorderStyle.THIN_THICK_SMALL_GAP, size: 14, color: GRIS_REGLA } as const;
 
 type VAlign = "top" | "center" | "bottom";
 const gris = (text: string, size = 16) => new TextRun({ text, color: GRIS, size, bold: true, font: BODY });
@@ -55,8 +55,8 @@ const blanco = (text: string) => new TextRun({ text, bold: true, color: WHITE, s
 const bullet = (color: string) => new TextRun({ text: "•  ", color, size: 22, bold: true, font: BODY });
 const titulo = () => new TextRun({ text: "Programa para la reunión de entre semana", bold: true, size: 33, font: TITLE_FONT, characterSpacing: -4 });
 
-const para = (children: TextRun[], align?: (typeof AlignmentType)[keyof typeof AlignmentType]) =>
-  new Paragraph({ children, alignment: align, spacing: { before: 0, after: 0, line: 240 } });
+const para = (children: TextRun[], align?: (typeof AlignmentType)[keyof typeof AlignmentType], before = 0) =>
+  new Paragraph({ children, alignment: align, spacing: { before, after: 0, line: 240 } });
 
 interface CellOpts {
   span?: number;
@@ -64,15 +64,16 @@ interface CellOpts {
   valign?: VAlign;
   rule?: boolean;
   align?: (typeof AlignmentType)[keyof typeof AlignmentType];
+  padTop?: number; // baja la línea base (etiquetas chicas alineadas con nombres de 11pt)
 }
 const cell = (runs: TextRun[], o: CellOpts = {}) =>
   new TableCell({
-    children: [para(runs, o.align)],
+    children: [para(runs, o.align, o.padTop ?? 0)],
     columnSpan: o.span,
     shading: o.fill ? { type: ShadingType.CLEAR, fill: o.fill, color: "auto" } : undefined,
     verticalAlign: o.valign ?? VerticalAlign.TOP,
     borders: o.rule ? { ...noBorders, bottom: HEADER_RULE } : noBorders,
-    margins: { top: 0, bottom: 0, left: 60, right: 60 },
+    margins: { top: 0, bottom: 0, left: 40, right: 40 },
   });
 
 const contentRow = (children: TableCell[]) => new TableRow({ height: { value: 288, rule: HeightRule.ATLEAST }, children });
@@ -83,9 +84,10 @@ const spacer = (h: number, span = 5) =>
   });
 const gapPara = (after: number) => new Paragraph({ children: [new TextRun({ text: "", size: 2, font: BODY })], spacing: { before: 0, after, line: 40, lineRule: "exact" } });
 
-const HORA = () => cell([gris("0:00", 18)], { align: AlignmentType.LEFT });
+const HORA = () => cell([gris("0:00", 18)], { align: AlignmentType.LEFT, padTop: 30 });
 const slot = (s: { est: string | null; ay: string | null }): string => (s.est && s.ay ? `${s.est} / ${s.ay}` : s.est ?? s.ay ?? "");
 
+// Barra de sección con etiquetas de sala (Tesoros, Seamos).
 function sectionHeaderRow(t: string, fill: string): TableRow {
   return contentRow([
     cell([blanco(t)], { span: 3, fill, valign: VerticalAlign.CENTER }),
@@ -93,13 +95,17 @@ function sectionHeaderRow(t: string, fill: string): TableRow {
     cell([gris("Auditorio principal", 18)], { valign: VerticalAlign.BOTTOM }),
   ]);
 }
+// Barra a todo el ancho, sin etiquetas de sala (Nuestra vida cristiana no se divide).
+function fullBarRow(t: string, fill: string): TableRow {
+  return contentRow([cell([blanco(t)], { span: 5, fill, valign: VerticalAlign.CENTER })]);
+}
 
 function bulletRow(t: string, color: string, opts: { minutos?: number | null; oracion?: string | null } = {}): TableRow {
   const runs: TextRun[] = [bullet(color), negro(t)];
   const m = minsLabel(opts.minutos ?? null);
   if (m) runs.push(negro(` ${m}`));
   if (opts.oracion !== undefined) {
-    return contentRow([HORA(), cell(runs, { span: 2 }), cell([gris("Oración:")], { align: AlignmentType.RIGHT }), cell(opts.oracion ? [negro(opts.oracion)] : [negro("")])]);
+    return contentRow([HORA(), cell(runs, { span: 2 }), cell([gris("Oración:")], { align: AlignmentType.RIGHT, padTop: 45 }), cell(opts.oracion ? [negro(opts.oracion)] : [negro("")])]);
   }
   return contentRow([HORA(), cell(runs, { span: 4 })]);
 }
@@ -119,7 +125,7 @@ function dualRow(numero: number, t: string, minutos: number | null, label: strin
   return contentRow([
     HORA(),
     cell(tituloRuns(numero, t, minutos)),
-    cell([gris(label, SZ_ROL)], { align: AlignmentType.RIGHT }),
+    cell([gris(label, SZ_ROL)], { align: AlignmentType.RIGHT, padTop: 60 }),
     cell(aux ? [negro(aux)] : [negro("")]),
     cell(prin ? [negro(prin)] : [negro("")]),
   ]);
@@ -140,12 +146,12 @@ function headerTable(w: ProgramWeek): Table {
       spacer(144, 3),
       contentRow([
         cell([neg(`${w.semana}${w.relato ? ` | ${w.relato}` : ""}`, 22)], { valign: VerticalAlign.BOTTOM }),
-        cell([gris("Presidente:")], { align: AlignmentType.RIGHT }),
+        cell([gris("Presidente:")], { align: AlignmentType.RIGHT, padTop: 45 }),
         cell([negro(w.presidente ?? "")]),
       ]),
       contentRow([
         cell([negro("")]),
-        cell([gris("Consejero de la sala auxiliar:")], { align: AlignmentType.RIGHT }),
+        cell([gris("Consejero de la sala auxiliar:")], { align: AlignmentType.RIGHT, padTop: 45 }),
         cell([negro(consejeroTexto(w), 22, !!w.nota)]),
       ]),
     ],
@@ -168,12 +174,12 @@ function bodyTable(w: ProgramWeek): Table {
   for (const p of w.seamos) rows.push(dualRow(p.numero, p.titulo, p.minutos, "Estudiante/Ayudante:", slot(p.aux), slot(p.prin)));
 
   rows.push(spacer(126));
-  rows.push(sectionHeaderRow("NUESTRA VIDA CRISTIANA", VINO));
+  rows.push(fullBarRow("NUESTRA VIDA CRISTIANA", VINO));
   rows.push(bulletRow(`Canción ${w.vida.cancion ?? ""}`.trim(), VINO));
   for (const d of w.vida.discursos) rows.push(singleRow(d.numero, d.titulo, d.minutos, d.nombre));
   if (w.vida.estudio) {
     const cl = [w.vida.estudio.conductor, w.vida.estudio.lector].filter(Boolean).join(" / ");
-    rows.push(contentRow([HORA(), cell(tituloRuns(w.vida.estudio.numero, "Estudio bíblico de la congregación", w.vida.estudio.minutos), { span: 2 }), cell([gris("Conductor/Lector:")], { align: AlignmentType.RIGHT }), cell(cl ? [negro(cl)] : [negro("")])]));
+    rows.push(contentRow([HORA(), cell(tituloRuns(w.vida.estudio.numero, "Estudio bíblico de la congregación", w.vida.estudio.minutos), { span: 2 }), cell([gris("Conductor/Lector:")], { align: AlignmentType.RIGHT, padTop: 45 }), cell(cl ? [negro(cl)] : [negro("")])]));
   }
   rows.push(bulletRow("Palabras de conclusión", VINO, { minutos: 3 }));
   rows.push(bulletRow(`Canción ${w.vida.cancionFinal ?? ""}`.trim(), VINO, { oracion: w.vida.oracionFinal }));
