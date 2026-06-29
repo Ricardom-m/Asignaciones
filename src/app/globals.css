@@ -939,7 +939,7 @@ input:focus, select:focus, .list-search-input:focus, .sel-search:focus, .cmd-inp
 .ps-table, .ps-htable { width:100%; border-collapse:collapse; font-size:14.5px; line-height:1.15; table-layout:fixed; }
 .ps-table td, .ps-htable td { border:none; padding:1px 5px; vertical-align:top; overflow-wrap:break-word; }
 .ps-htable { margin-bottom:9px; }
-.ps-rule { border-bottom:3px solid #575A5D !important; }
+.ps-rule { border-bottom:3px solid #575A5D !important; padding-bottom:5px !important; }
 .ps-rol { color:#575A5D; font-weight:700; font-size:9px; }
 /* Bajar la línea base de las etiquetas chicas para que alineen con los nombres (11pt). */
 .ps-table td.ps-hora { padding-top:2px; }

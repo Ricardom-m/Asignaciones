@@ -65,6 +65,7 @@ interface CellOpts {
   rule?: boolean;
   align?: (typeof AlignmentType)[keyof typeof AlignmentType];
   padTop?: number; // baja la línea base (etiquetas chicas alineadas con nombres de 11pt)
+  padBottom?: number; // separa el texto del borde inferior (regla del encabezado)
 }
 const cell = (runs: TextRun[], o: CellOpts = {}) =>
   new TableCell({
@@ -73,7 +74,7 @@ const cell = (runs: TextRun[], o: CellOpts = {}) =>
     shading: o.fill ? { type: ShadingType.CLEAR, fill: o.fill, color: "auto" } : undefined,
     verticalAlign: o.valign ?? VerticalAlign.TOP,
     borders: o.rule ? { ...noBorders, bottom: HEADER_RULE } : noBorders,
-    margins: { top: 0, bottom: 0, left: 40, right: 40 },
+    margins: { top: 0, bottom: o.padBottom ?? 0, left: 40, right: 40 },
   });
 
 const contentRow = (children: TableCell[]) => new TableRow({ height: { value: 288, rule: HeightRule.ATLEAST }, children });
@@ -140,8 +141,8 @@ function headerTable(w: ProgramWeek): Table {
     borders: tableBorders,
     rows: [
       contentRow([
-        cell([neg(w.congregacion, 22)], { rule: true, valign: VerticalAlign.BOTTOM }),
-        cell([titulo()], { span: 2, rule: true, align: AlignmentType.RIGHT, valign: VerticalAlign.BOTTOM }),
+        cell([neg(w.congregacion, 22)], { rule: true, valign: VerticalAlign.BOTTOM, padBottom: 70 }),
+        cell([titulo()], { span: 2, rule: true, align: AlignmentType.RIGHT, valign: VerticalAlign.BOTTOM, padBottom: 70 }),
       ]),
       spacer(144, 3),
       contentRow([
