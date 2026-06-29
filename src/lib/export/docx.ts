@@ -1,11 +1,12 @@
-// Generador del Word (.docx) replicando el formato oficial S-140 (calibrado
-// contra el render del PDF y del .docx oficiales):
-//  - Encabezado en tabla propia (título Cambria ~16.5pt a ~70% para que NO se
-//    parta en 2 líneas) + cuerpo en tabla de 5 columnas (barra de sección = 5044).
-//  - Las semanas FLUYEN (sin salto de página por semana): ~2 por hoja como el oficial.
-//  - Alturas: contenido 288 (mín.), top-align; barras 288; espaciadores finos 126/144.
-//  - Pie "S-140-S  11/23" (10pt). Cuerpo negro normal (Calibri); etiquetas gris
-//    575A5D pequeñas a la derecha; bullet "•" de color; nota en cursiva.
+// Generador del Word (.docx) replicando el formato oficial S-140 con anchos
+// MEDIDOS (render Chrome, mismas fuentes que Word):
+//  - Encabezado en tabla propia [3124, 4397, 2443]: el título Cambria 16.5pt cabe
+//    en una línea (col2+col3 = 6840 ≈ 4.75") y la columna de VALOR (2443, la última)
+//    alinea con "Auditorio principal" del cuerpo (también la última, 2443).
+//  - Cuerpo [617, 2952, 1475, 2477, 2443]: barra = col1+2+3 = 5044; el título de
+//    asignación cabe (2952 ≈ 2.05") y la etiqueta de rol (col3) a 7.5pt no se corta.
+//  - Etiquetas en gris 575A5D NEGRITA; cuerpo negro normal; bullet de color; regla
+//    fina; las semanas fluyen (sin salto de página); pie "S-140-S  11/23".
 // Solo se usa en el servidor (ruta /api/export). Devuelve un Buffer.
 
 import {
@@ -28,7 +29,6 @@ import {
 import type { ProgramWeek } from "@/lib/export/program";
 import { consejeroTexto, minsLabel } from "@/lib/export/program";
 
-// ── Colores ───────────────────────────────────────────────
 const GRIS = "575A5D";
 const GRIS_REGLA = "A6A6A6";
 const DORADO = "BE8900";
@@ -37,20 +37,18 @@ const WHITE = "FFFFFF";
 const BODY = "Calibri";
 const TITLE_FONT = "Cambria";
 
-// ── Grids (twips) ─────────────────────────────────────────
-const HEAD_COLS = [3100, 3864, 3000]; // título = col2+col3 = 6864 (~69%)
-const BODY_COLS = [617, 2971, 1456, 2477, 2443]; // barra de sección = col1+2+3 = 5044
+const HEAD_COLS = [3124, 4397, 2443]; // valor (col3=2443) alinea con cuerpo col5
+const BODY_COLS = [617, 2952, 1475, 2477, 2443]; // barra = col1+2+3 = 5044
 const W_TOTAL = 9964;
+const SZ_ROL = 15; // etiqueta de rol del cuerpo (Estudiante/Ayudante): 7.5pt para que no se corte
 
-// ── Bordes ────────────────────────────────────────────────
 const NIL = { style: BorderStyle.NONE, size: 0, color: "auto" } as const;
 const noBorders = { top: NIL, bottom: NIL, left: NIL, right: NIL };
 const tableBorders = { ...noBorders, insideHorizontal: NIL, insideVertical: NIL };
-const HEADER_RULE = { style: BorderStyle.THIN_THICK_SMALL_GAP, size: 18, color: GRIS_REGLA } as const;
+const HEADER_RULE = { style: BorderStyle.THIN_THICK_SMALL_GAP, size: 8, color: GRIS_REGLA } as const;
 
 type VAlign = "top" | "center" | "bottom";
-// ── Runs ──────────────────────────────────────────────────
-const gris = (text: string, size = 16) => new TextRun({ text, color: GRIS, size, font: BODY });
+const gris = (text: string, size = 16) => new TextRun({ text, color: GRIS, size, bold: true, font: BODY });
 const negro = (text: string, size = 22, italics = false) => new TextRun({ text, size, italics, font: BODY });
 const neg = (text: string, size: number) => new TextRun({ text, bold: true, size, font: BODY });
 const blanco = (text: string) => new TextRun({ text, bold: true, color: WHITE, size: 20, font: BODY });
@@ -99,7 +97,7 @@ function sectionHeaderRow(t: string, fill: string): TableRow {
 function bulletRow(t: string, color: string, opts: { minutos?: number | null; oracion?: string | null } = {}): TableRow {
   const runs: TextRun[] = [bullet(color), negro(t)];
   const m = minsLabel(opts.minutos ?? null);
-  if (m) runs.push(negro(`   ${m}`));
+  if (m) runs.push(negro(` ${m}`));
   if (opts.oracion !== undefined) {
     return contentRow([HORA(), cell(runs, { span: 2 }), cell([gris("Oración:")], { align: AlignmentType.RIGHT }), cell(opts.oracion ? [negro(opts.oracion)] : [negro("")])]);
   }
@@ -109,11 +107,10 @@ function bulletRow(t: string, color: string, opts: { minutos?: number | null; or
 function tituloRuns(numero: number, t: string, minutos: number | null): TextRun[] {
   const runs: TextRun[] = [negro(`${numero}. ${t}`)];
   const m = minsLabel(minutos);
-  if (m) runs.push(negro(`   ${m}`));
+  if (m) runs.push(negro(` ${m}`));
   return runs;
 }
 
-// Discurso/perlas/discurso de Vida: título hasta Sala auxiliar; nombre en Auditorio principal.
 function singleRow(numero: number, t: string, minutos: number | null, nombre: string | null): TableRow {
   return contentRow([HORA(), cell(tituloRuns(numero, t, minutos), { span: 3 }), cell(nombre ? [negro(nombre)] : [negro("")])]);
 }
@@ -122,14 +119,13 @@ function dualRow(numero: number, t: string, minutos: number | null, label: strin
   return contentRow([
     HORA(),
     cell(tituloRuns(numero, t, minutos)),
-    cell([gris(label)], { align: AlignmentType.RIGHT }),
+    cell([gris(label, SZ_ROL)], { align: AlignmentType.RIGHT }),
     cell(aux ? [negro(aux)] : [negro("")]),
     cell(prin ? [negro(prin)] : [negro("")]),
   ]);
 }
 
-// Encabezado (tabla propia): congregación + título (regla gruesa), semana,
-// Presidente y Consejero (etiqueta gris a la derecha, valor negro).
+// Encabezado (tabla propia): la columna de valor (col3) alinea con Auditorio principal.
 function headerTable(w: ProgramWeek): Table {
   return new Table({
     width: { size: W_TOTAL, type: WidthType.DXA },
@@ -156,7 +152,6 @@ function headerTable(w: ProgramWeek): Table {
   });
 }
 
-// Cuerpo (tabla propia de 5 columnas).
 function bodyTable(w: ProgramWeek): Table {
   const rows: TableRow[] = [];
   rows.push(bulletRow(`Canción ${w.cancionInicio ?? ""}`.trim(), GRIS, { oracion: w.oracionInicio }));
@@ -178,7 +173,7 @@ function bodyTable(w: ProgramWeek): Table {
   for (const d of w.vida.discursos) rows.push(singleRow(d.numero, d.titulo, d.minutos, d.nombre));
   if (w.vida.estudio) {
     const cl = [w.vida.estudio.conductor, w.vida.estudio.lector].filter(Boolean).join(" / ");
-    rows.push(contentRow([HORA(), cell(tituloRuns(w.vida.estudio.numero, "Estudio bíblico de la congregación", w.vida.estudio.minutos)), cell([gris("Conductor/Lector:")], { align: AlignmentType.RIGHT }), cell(cl ? [negro(cl)] : [negro("")], { span: 2 })]));
+    rows.push(contentRow([HORA(), cell(tituloRuns(w.vida.estudio.numero, "Estudio bíblico de la congregación", w.vida.estudio.minutos), { span: 2 }), cell([gris("Conductor/Lector:")], { align: AlignmentType.RIGHT }), cell(cl ? [negro(cl)] : [negro("")])]));
   }
   rows.push(bulletRow("Palabras de conclusión", VINO, { minutos: 3 }));
   rows.push(bulletRow(`Canción ${w.vida.cancionFinal ?? ""}`.trim(), VINO, { oracion: w.vida.oracionFinal }));
@@ -189,7 +184,7 @@ function bodyTable(w: ProgramWeek): Table {
 export async function buildDocx(weeks: ProgramWeek[]): Promise<Buffer> {
   const children: (Table | Paragraph)[] = [];
   weeks.forEach((w, i) => {
-    if (i > 0) children.push(gapPara(300)); // separación entre semanas (fluyen, sin salto de página)
+    if (i > 0) children.push(gapPara(300)); // las semanas fluyen (sin salto de página)
     children.push(headerTable(w));
     children.push(gapPara(120)); // espacio encabezado → 1ª línea (separa las tablas)
     children.push(bodyTable(w));
