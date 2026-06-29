@@ -30,7 +30,6 @@ import type { ProgramWeek } from "@/lib/export/program";
 import { consejeroTexto, minsLabel } from "@/lib/export/program";
 
 const GRIS = "575A5D";
-const GRIS_REGLA = "A6A6A6";
 const DORADO = "BE8900";
 const VINO = "7E0024";
 const WHITE = "FFFFFF";
@@ -45,7 +44,8 @@ const SZ_ROL = 14; // etiqueta de rol del cuerpo (Estudiante/Ayudante): 7pt para
 const NIL = { style: BorderStyle.NONE, size: 0, color: "auto" } as const;
 const noBorders = { top: NIL, bottom: NIL, left: NIL, right: NIL };
 const tableBorders = { ...noBorders, insideHorizontal: NIL, insideVertical: NIL };
-const HEADER_RULE = { style: BorderStyle.THIN_THICK_SMALL_GAP, size: 14, color: GRIS_REGLA } as const;
+// Regla bajo el encabezado: gris OSCURO 575A5D (como el oficial), sz18 → se ve marcada.
+const HEADER_RULE = { style: BorderStyle.THIN_THICK_SMALL_GAP, size: 18, color: GRIS } as const;
 
 type VAlign = "top" | "center" | "bottom";
 const gris = (text: string, size = 16) => new TextRun({ text, color: GRIS, size, bold: true, font: BODY });
