@@ -68,9 +68,9 @@ function Week({ w }: { w: ProgramWeek }) {
       {/* Cuerpo (tabla propia) */}
       <table className="ps-table">
         <colgroup>
-          <col style={{ width: "6.2%" }} />
+          <col style={{ width: "4.8%" }} />
           <col style={{ width: "29.6%" }} />
-          <col style={{ width: "14.8%" }} />
+          <col style={{ width: "16.2%" }} />
           <col style={{ width: "24.9%" }} />
           <col style={{ width: "24.5%" }} />
         </colgroup>

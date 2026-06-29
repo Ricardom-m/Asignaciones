@@ -37,9 +37,9 @@ const BODY = "Calibri";
 const TITLE_FONT = "Cambria";
 
 const HEAD_COLS = [3124, 4397, 2443]; // valor (col3=2443) alinea con cuerpo col5
-const BODY_COLS = [617, 2952, 1475, 2477, 2443]; // barra = col1+2+3 = 5044
+const BODY_COLS = [480, 2952, 1612, 2477, 2443]; // barra = col1+2+3 = 5044 (col3 más ancha para "Estudiante/Ayudante:" a 8pt)
 const W_TOTAL = 9964;
-const SZ_ROL = 14; // etiqueta de rol del cuerpo (Estudiante/Ayudante): 7pt para que NO se corte el ":"
+const SZ_ROL = 16; // etiqueta de rol del cuerpo (Estudiante/Ayudante): 8pt (cabe en la columna)
 
 const NIL = { style: BorderStyle.NONE, size: 0, color: "auto" } as const;
 const noBorders = { top: NIL, bottom: NIL, left: NIL, right: NIL };
@@ -92,8 +92,8 @@ const slot = (s: { est: string | null; ay: string | null }): string => (s.est &&
 function sectionHeaderRow(t: string, fill: string): TableRow {
   return contentRow([
     cell([blanco(t)], { span: 3, fill, valign: VerticalAlign.CENTER }),
-    cell([gris("Sala auxiliar", 18)], { valign: VerticalAlign.BOTTOM }),
-    cell([gris("Auditorio principal", 18)], { valign: VerticalAlign.BOTTOM }),
+    cell([gris("Sala auxiliar", 16)], { valign: VerticalAlign.BOTTOM }),
+    cell([gris("Auditorio principal", 16)], { valign: VerticalAlign.BOTTOM }),
   ]);
 }
 // Barra del MISMO largo que las demás (span 3), pero SIN etiquetas de sala
@@ -131,7 +131,7 @@ function dualRow(numero: number, t: string, minutos: number | null, label: strin
   return contentRow([
     HORA(),
     cell(tituloRuns(numero, t, minutos)),
-    cell([gris(label, SZ_ROL)], { align: AlignmentType.RIGHT, padTop: 60 }),
+    cell([gris(label, SZ_ROL)], { align: AlignmentType.RIGHT, padTop: 45 }),
     cell(aux ? [negro(aux)] : [negro("")]),
     cell(prin ? [negro(prin)] : [negro("")]),
   ]);

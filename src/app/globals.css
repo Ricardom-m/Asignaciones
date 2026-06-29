@@ -940,10 +940,10 @@ input:focus, select:focus, .list-search-input:focus, .sel-search:focus, .cmd-inp
 .ps-table td, .ps-htable td { border:none; padding:1px 5px; vertical-align:top; overflow-wrap:break-word; }
 .ps-htable { margin-bottom:9px; }
 .ps-rule { border-bottom:3px solid #575A5D !important; padding-bottom:5px !important; }
-.ps-rol { color:#575A5D; font-weight:700; font-size:9px; }
+.ps-rol { color:#575A5D; font-weight:700; font-size:10.7px; }
 /* Bajar la línea base de las etiquetas chicas para que alineen con los nombres (11pt). */
 .ps-table td.ps-hora { padding-top:2px; }
-.ps-table td.ps-rol { padding-top:4px; }
+.ps-table td.ps-rol { padding-top:3px; }
 .ps-table td.ps-lbl, .ps-htable td.ps-lbl { padding-top:3px; }
 .ps-cong { font-weight:700; font-size:15px; letter-spacing:.2px; white-space:nowrap; vertical-align:bottom; }
 .ps-title { font-family:"Cambria","Caladea",Georgia,serif; font-weight:700; font-size:22px; line-height:1.05; text-align:right; vertical-align:bottom; }
@@ -957,7 +957,7 @@ input:focus, select:focus, .list-search-input:focus, .sel-search:focus, .cmd-inp
   color:#fff; font-weight:700; font-size:13px; letter-spacing:.2px; padding:2px 7px !important; vertical-align:middle;
   -webkit-print-color-adjust:exact; print-color-adjust:exact;
 }
-.ps-salalbl { color:#575A5D; font-weight:700; font-size:12px; vertical-align:bottom; }
+.ps-salalbl { color:#575A5D; font-weight:700; font-size:11px; vertical-align:bottom; }
 
 @media print {
   body * { visibility:hidden !important; }
