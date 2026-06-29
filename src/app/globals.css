@@ -965,11 +965,8 @@ input:focus, select:focus, .list-search-input:focus, .sel-search:focus, .cmd-inp
   body * { visibility:hidden !important; }
   .ps-root, .ps-root * { visibility:visible !important; }
   .ps-root { position:absolute; inset:0 auto auto 0; width:100%; gap:0; display:block; }
-  .ps-page {
-    box-shadow:none; border-radius:0; max-width:none; width:100%; padding:0; margin:0;
-    break-after:page; page-break-after:always;
-  }
-  .ps-page:last-child { break-after:auto; page-break-after:auto; }
+  /* Las semanas fluyen (≈2 por hoja, como el oficial); no se fuerza salto por semana. */
+  .ps-page { box-shadow:none; border-radius:0; max-width:none; width:100%; padding:0; margin:0 0 26px; }
 }
 @page { size: letter; margin: 0.7in 0.79in 0.5in 0.79in; }
 .rh-semana-muted { opacity:.6; }
