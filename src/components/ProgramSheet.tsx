@@ -135,10 +135,12 @@ function Week({ w }: { w: ProgramWeek }) {
             </tr>
           ))}
 
-          {/* NUESTRA VIDA CRISTIANA */}
+          {/* NUESTRA VIDA CRISTIANA (barra del mismo largo, sin etiquetas de sala) */}
           <tr className="ps-sp"><td colSpan={5} /></tr>
           <tr>
-            <td colSpan={5} className="ps-sec" style={{ background: VINO }}>NUESTRA VIDA CRISTIANA</td>
+            <td colSpan={3} className="ps-sec" style={{ background: VINO }}>NUESTRA VIDA CRISTIANA</td>
+            <td />
+            <td />
           </tr>
           <tr>
             <td className="ps-hora">0:00</td>

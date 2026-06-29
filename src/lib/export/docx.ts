@@ -96,9 +96,14 @@ function sectionHeaderRow(t: string, fill: string): TableRow {
     cell([gris("Auditorio principal", 18)], { valign: VerticalAlign.BOTTOM }),
   ]);
 }
-// Barra a todo el ancho, sin etiquetas de sala (Nuestra vida cristiana no se divide).
+// Barra del MISMO largo que las demás (span 3), pero SIN etiquetas de sala
+// (Nuestra vida cristiana no se divide por sala): las 2 columnas quedan vacías.
 function fullBarRow(t: string, fill: string): TableRow {
-  return contentRow([cell([blanco(t)], { span: 5, fill, valign: VerticalAlign.CENTER })]);
+  return contentRow([
+    cell([blanco(t)], { span: 3, fill, valign: VerticalAlign.CENTER }),
+    cell([negro("")]),
+    cell([negro("")]),
+  ]);
 }
 
 function bulletRow(t: string, color: string, opts: { minutos?: number | null; oracion?: string | null } = {}): TableRow {
