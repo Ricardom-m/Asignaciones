@@ -954,10 +954,12 @@ input:focus, select:focus, .list-search-input:focus, .sel-search:focus, .cmd-inp
 .ps-sp td { height:7px; padding:0; border:0; line-height:0; font-size:0; }
 .ps-foot { font-size:13px; color:#000; margin-top:36px; }
 .ps-sec {
-  color:#fff; font-weight:700; font-size:13px; letter-spacing:.2px; padding:2px 7px !important; vertical-align:middle;
+  color:#fff; font-weight:700; font-size:13px; letter-spacing:.2px; padding:2px 7px 2px 13px !important; vertical-align:middle;
   -webkit-print-color-adjust:exact; print-color-adjust:exact;
 }
 .ps-salalbl { color:#575A5D; font-weight:700; font-size:11px; vertical-align:bottom; }
+/* Sangría de la columna "Sala auxiliar" (separación de la barra). */
+.ps-table td.ps-aux { padding-left:13px; }
 
 @media print {
   body * { visibility:hidden !important; }

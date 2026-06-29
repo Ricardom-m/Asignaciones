@@ -91,7 +91,7 @@ function Week({ w }: { w: ProgramWeek }) {
           <tr className="ps-sp"><td colSpan={5} /></tr>
           <tr>
             <td colSpan={3} className="ps-sec" style={{ background: GRIS }}>TESOROS DE LA BIBLIA</td>
-            <td className="ps-salalbl">Sala auxiliar</td>
+            <td className="ps-salalbl ps-aux">Sala auxiliar</td>
             <td className="ps-salalbl">Auditorio principal</td>
           </tr>
           {w.tesoros.discurso && (
@@ -113,7 +113,7 @@ function Week({ w }: { w: ProgramWeek }) {
               <td className="ps-hora">0:00</td>
               <td><NumTitulo numero={w.tesoros.lectura.numero} titulo="Lectura de la Biblia" minutos={w.tesoros.lectura.minutos} /></td>
               <td className="ps-rol ps-right">Estudiante:</td>
-              <td>{w.tesoros.lectura.aux ?? ""}</td>
+              <td className="ps-aux">{w.tesoros.lectura.aux ?? ""}</td>
               <td>{w.tesoros.lectura.prin ?? ""}</td>
             </tr>
           )}
@@ -122,7 +122,7 @@ function Week({ w }: { w: ProgramWeek }) {
           <tr className="ps-sp"><td colSpan={5} /></tr>
           <tr>
             <td colSpan={3} className="ps-sec" style={{ background: "#BE8900" }}>SEAMOS MEJORES MAESTROS</td>
-            <td className="ps-salalbl">Sala auxiliar</td>
+            <td className="ps-salalbl ps-aux">Sala auxiliar</td>
             <td className="ps-salalbl">Auditorio principal</td>
           </tr>
           {w.seamos.map((p: SeamosPart) => (
@@ -130,7 +130,7 @@ function Week({ w }: { w: ProgramWeek }) {
               <td className="ps-hora">0:00</td>
               <td><NumTitulo numero={p.numero} titulo={p.titulo} minutos={p.minutos} /></td>
               <td className="ps-rol ps-right">Estudiante/Ayudante:</td>
-              <td>{slot(p.aux)}</td>
+              <td className="ps-aux">{slot(p.aux)}</td>
               <td>{slot(p.prin)}</td>
             </tr>
           ))}

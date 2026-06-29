@@ -66,6 +66,7 @@ interface CellOpts {
   align?: (typeof AlignmentType)[keyof typeof AlignmentType];
   padTop?: number; // baja la línea base (etiquetas chicas alineadas con nombres de 11pt)
   padBottom?: number; // separa el texto del borde inferior (regla del encabezado)
+  padLeft?: number; // sangría izquierda (barras de sección, columna Sala auxiliar)
 }
 const cell = (runs: TextRun[], o: CellOpts = {}) =>
   new TableCell({
@@ -74,7 +75,7 @@ const cell = (runs: TextRun[], o: CellOpts = {}) =>
     shading: o.fill ? { type: ShadingType.CLEAR, fill: o.fill, color: "auto" } : undefined,
     verticalAlign: o.valign ?? VerticalAlign.TOP,
     borders: o.rule ? { ...noBorders, bottom: HEADER_RULE } : noBorders,
-    margins: { top: 0, bottom: o.padBottom ?? 0, left: 40, right: 40 },
+    margins: { top: 0, bottom: o.padBottom ?? 0, left: o.padLeft ?? 40, right: 40 },
   });
 
 const contentRow = (children: TableCell[]) => new TableRow({ height: { value: 288, rule: HeightRule.ATLEAST }, children });
@@ -89,10 +90,11 @@ const HORA = () => cell([gris("0:00", 18)], { align: AlignmentType.LEFT, padTop:
 const slot = (s: { est: string | null; ay: string | null }): string => (s.est && s.ay ? `${s.est} / ${s.ay}` : s.est ?? s.ay ?? "");
 
 // Barra de sección con etiquetas de sala (Tesoros, Seamos).
+const BAR_PAD = 130; // sangría del texto dentro de la barra y separación antes de "Sala auxiliar"
 function sectionHeaderRow(t: string, fill: string): TableRow {
   return contentRow([
-    cell([blanco(t)], { span: 3, fill, valign: VerticalAlign.CENTER }),
-    cell([gris("Sala auxiliar", 16)], { valign: VerticalAlign.BOTTOM }),
+    cell([blanco(t)], { span: 3, fill, valign: VerticalAlign.CENTER, padLeft: BAR_PAD }),
+    cell([gris("Sala auxiliar", 16)], { valign: VerticalAlign.BOTTOM, padLeft: BAR_PAD }),
     cell([gris("Auditorio principal", 16)], { valign: VerticalAlign.BOTTOM }),
   ]);
 }
@@ -100,7 +102,7 @@ function sectionHeaderRow(t: string, fill: string): TableRow {
 // (Nuestra vida cristiana no se divide por sala): las 2 columnas quedan vacías.
 function fullBarRow(t: string, fill: string): TableRow {
   return contentRow([
-    cell([blanco(t)], { span: 3, fill, valign: VerticalAlign.CENTER }),
+    cell([blanco(t)], { span: 3, fill, valign: VerticalAlign.CENTER, padLeft: BAR_PAD }),
     cell([negro("")]),
     cell([negro("")]),
   ]);
@@ -132,7 +134,7 @@ function dualRow(numero: number, t: string, minutos: number | null, label: strin
     HORA(),
     cell(tituloRuns(numero, t, minutos)),
     cell([gris(label, SZ_ROL)], { align: AlignmentType.RIGHT, padTop: 45 }),
-    cell(aux ? [negro(aux)] : [negro("")]),
+    cell(aux ? [negro(aux)] : [negro("")], { padLeft: BAR_PAD }),
     cell(prin ? [negro(prin)] : [negro("")]),
   ]);
 }
