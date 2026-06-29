@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { FileArrowDown, FilePdf } from "@phosphor-icons/react";
+import { FileArrowDown } from "@phosphor-icons/react";
 import { PageHeader } from "@/components/PageHeader";
 import { useMeetings, usePastMeetings, useExportProgram } from "@/lib/hooks";
 import { ProgramSheet } from "@/components/ProgramSheet";
@@ -73,7 +73,7 @@ export default function ExportarPage() {
 
   return (
     <div className="page-inner fade-up">
-      <PageHeader title="Exportar" subtitle="Programa de la reunión (formato oficial) a Word o PDF" />
+      <PageHeader title="Exportar" subtitle="Programa de la reunión en formato oficial (Word)" />
 
       <div className="content-card exp-controls">
         <div>
@@ -112,20 +112,18 @@ export default function ExportarPage() {
               <FileArrowDown size={16} weight="bold" /> Descargar Word
             </button>
           )}
-          <button className="btn btn-ghost" onClick={() => window.print()} disabled={!weeks.length}>
-            <FilePdf size={16} weight="bold" /> Guardar como PDF
-          </button>
         </div>
         <p className="plan-hint">
-          Revisa la vista previa. Para el PDF: <b>Guardar como PDF</b> abre la impresión del navegador
-          (activa “Gráficos de fondo” para que salgan los colores).
+          Abajo está la previsualización del programa. Descarga el Word para revisarlo; si necesitas un PDF,
+          expórtalo desde Word (Archivo → Exportar / Guardar como PDF).
         </p>
       </div>
 
       {selectedList.length > 0 && (
         <div className="exp-preview-wrap">
+          <div className="section-label">Previsualización</div>
           {isLoading ? (
-            <p className="plan-hint">Cargando vista previa…</p>
+            <p className="plan-hint">Cargando previsualización…</p>
           ) : weeks.length ? (
             <ProgramSheet weeks={weeks} />
           ) : (
