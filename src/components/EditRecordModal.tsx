@@ -9,6 +9,7 @@ import { SectionSelect } from "@/components/SectionSelect";
 import { AsignacionSuggest } from "@/components/AsignacionSuggest";
 import { HelperPicker } from "@/components/HelperPicker";
 import { DateChips } from "@/components/DateChips";
+import { MinutesInput } from "@/components/MinutesInput";
 import { updateRecord, esLectura, eligibleLectura } from "@/lib/client";
 import { SECCION_TESOROS, SECCION_VIDA, esEstudio, esNecesidades, norm } from "@/lib/sections";
 import type { Person, RecordItem } from "@/lib/types";
@@ -190,14 +191,7 @@ export function EditRecordModal({ rec, persons, onClose, onSaved }: Props) {
           </div>
           <div className="field-group">
             <label className="field-label">Duración (min)</label>
-            <input
-              type="number"
-              min="1"
-              max="600"
-              value={form.minutos}
-              onChange={(e) => patch({ minutos: e.target.value })}
-              placeholder="—"
-            />
+            <MinutesInput value={form.minutos} onChange={(v) => patch({ minutos: v })} />
           </div>
         </div>
 

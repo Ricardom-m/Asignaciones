@@ -134,6 +134,15 @@ input:focus, select:focus { border-color:var(--border2); background:var(--surfac
 /* Sin flechitas de incremento (spinner) en los campos numéricos */
 input[type=number] { -moz-appearance:textfield; }
 input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance:none; margin:0; }
+/* Campo de minutos con - / + (MinutesInput). El contenedor hace de "input". */
+.stepper { display:flex; align-items:stretch; background:var(--surface2); border:1px solid var(--border); border-radius:var(--r2); overflow:hidden; transition:border-color .15s, background .15s; }
+.stepper:focus-within { border-color:var(--border2); background:var(--surface); }
+.stepper-input[type=number] { flex:1; min-width:0; background:transparent; border:0; border-radius:0; text-align:center; padding:11px 2px; }
+.stepper-input[type=number]:focus { background:transparent; }
+.stepper-btn { flex:none; width:40px; background:none; border:0; border-radius:0; color:var(--text2); font-family:var(--head); font-size:1.1rem; line-height:1; cursor:pointer; display:flex; align-items:center; justify-content:center; user-select:none; -webkit-user-select:none; touch-action:manipulation; transition:color .15s, background .15s; }
+.stepper-btn:hover:not(:disabled) { color:var(--text); background:var(--surface); }
+.stepper-btn:active:not(:disabled) { color:var(--accent); }
+.stepper-btn:disabled { opacity:.3; cursor:default; }
 select { background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%239696a1' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 13px center; padding-right:34px; }
 select option { background:var(--surface); color:var(--text); }
 input[type=date]::-webkit-calendar-picker-indicator { filter:invert(.55); }

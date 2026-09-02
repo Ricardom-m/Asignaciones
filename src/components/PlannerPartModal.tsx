@@ -8,6 +8,7 @@ import { PersonSelect } from "@/components/PersonSelect";
 import { SectionSelect } from "@/components/SectionSelect";
 import { AsignacionSuggest } from "@/components/AsignacionSuggest";
 import { HelperPicker } from "@/components/HelperPicker";
+import { MinutesInput } from "@/components/MinutesInput";
 import { agoShort } from "@/components/RosterPanel";
 import { createRecord, esLectura, eligibleLectura, fmtShort } from "@/lib/client";
 import { SECCION_TESOROS, SECCION_VIDA, esEstudio, esNecesidades, norm } from "@/lib/sections";
@@ -179,7 +180,7 @@ export function PlannerPartModal({ fecha, sections, persons, defaultAsignadoId, 
           </div>
           <div className="field-group">
             <label className="field-label">Duración (min)</label>
-            <input type="number" min="1" max="600" value={minutos} onChange={(e) => setMinutos(e.target.value)} placeholder="—" />
+            <MinutesInput value={minutos} onChange={setMinutos} />
           </div>
         </div>
 
