@@ -794,6 +794,7 @@ function InicioPersonaRow({ rec, fecha, nombrados, onPersona }: { rec: RecordIte
             daysSince: r.daysSince,
             meetingsSince: r.meetingsSince,
             countMonth: r.countMonth,
+            countTotal: r.countTotal,
             assignedOnTarget: r.assignedOnTarget,
             daysSinceSection: r.daysSinceAsignacion,
             meetingsSinceSection: r.meetingsSinceAsignacion,

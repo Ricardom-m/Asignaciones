@@ -59,9 +59,11 @@ export default function RegistrosPage() {
   // "Por persona": solo los registros de esa persona (consulta indexada).
   const { items: personRecords, mutate: mutatePersonRecords } = usePersonRecords(view === "spotlight" ? spotlightId : null);
 
-  // Llegada desde la paleta de comandos (⌘K → ver análisis de una persona).
+  // Llegada desde la paleta de comandos (⌘K → ver análisis de una persona) o desde
+  // el enlace "ver historial" del selector de personas, que abre ?persona= en una
+  // pestaña nueva (por eso va en la URL y no en sessionStorage, que es por pestaña).
   useEffect(() => {
-    const id = sessionStorage.getItem("asgn_spotlight");
+    const id = new URLSearchParams(window.location.search).get("persona") || sessionStorage.getItem("asgn_spotlight");
     if (id) {
       sessionStorage.removeItem("asgn_spotlight");
       setView("spotlight");

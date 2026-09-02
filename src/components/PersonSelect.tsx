@@ -5,7 +5,7 @@ import { createPortal } from "react-dom";
 import { GenderIcon } from "@/components/GenderIcon";
 import { RoleBadge } from "@/components/RoleBadge";
 import { agoMeetings, agoShort } from "@/components/RosterPanel";
-import type { Person, Role, RosterPerson } from "@/lib/types";
+import type { Genero, Person, Role, RosterPerson } from "@/lib/types";
 
 // Datos de decisión por persona (vienen del roster). Activan el modo enriquecido.
 export interface PersonMeta {
@@ -16,6 +16,7 @@ export interface PersonMeta {
   daysSinceSection?: number | null; // si hay sección seleccionada
   meetingsSinceSection?: number | null;
   asignacion?: AsignacionMeta; // presente solo si ya hizo ESTA misma asignación antes
+  countTotal?: number; // registros en cualquier fecha (0 = sin historial)
 }
 
 // "Ya hizo esta parte": veces anteriores a la fecha objetivo, cuándo fue la última
@@ -84,8 +85,10 @@ En cualquier parte: ${total}`
   );
 }
 
-function AsigNote({ a }: { a: AsignacionMeta }) {
-  const papel = a.como ? ` como ${a.como}` : "";
+function AsigNote({ a, genero }: { a: AsignacionMeta; genero: Genero | null }) {
+  // "asignado" concuerda con la persona; "ayudante" vale para ambos.
+  const papelTxt = a.como === "asignado" && genero === "M" ? "asignada" : a.como;
+  const papel = papelTxt ? ` como ${papelTxt}` : "";
   return (
     <div className="po-note">
       Ya hizo esta parte{a.veces > 1 ? ` ${a.veces} veces` : ""} ·{" "}
@@ -222,6 +225,8 @@ export function PersonSelect({
 
   const renderRow = (p: Person) => {
     const m = meta?.get(p.id);
+    // Solo se oculta cuando consta que no hay nada que ver; si no hay dato, se ofrece.
+    const conHistorial = m?.countTotal !== 0;
     return (
       <div key={p.id} className={`sel-opt${enriched ? " rich" : ""}${value === p.id ? " selected" : ""}`} onClick={() => pick(p.id)}>
         {enriched ? (
@@ -232,9 +237,29 @@ export function PersonSelect({
                 <span className="po-name">{fullName(p)}</span>
                 {p.roles[0] && <RoleBadge role={p.roles[0]} />}
               </span>
-              <span className="po-meta">{m && <MetaTags m={m} sectionLabel={sectionLabel} />}</span>
+              <span className="po-meta">
+                {m && <MetaTags m={m} sectionLabel={sectionLabel} />}
+                {conHistorial && (
+                  // Pestaña nueva a propósito: el selector vive dentro de un modal
+                  // y navegar aquí tiraría el formulario a medio llenar.
+                  <a
+                    className="po-hist"
+                    href={`/registros?persona=${p.id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    title={`Ver el historial de ${fullName(p)}`}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    ↗
+                  </a>
+                )}
+              </span>
             </div>
-            {m?.asignacion && <AsigNote a={m.asignacion} />}
+            {m && m.countTotal === 0 ? (
+              <div className="po-note vacio">Sin historial todavía</div>
+            ) : (
+              m?.asignacion && <AsigNote a={m.asignacion} genero={p.genero} />
+            )}
           </>
         ) : (
           <>{fullName(p)}</>

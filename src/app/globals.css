@@ -220,6 +220,10 @@ input[type=date]::-webkit-calendar-picker-indicator { filter:invert(.55); }
 /* "Ya hizo esta parte…" — alineada bajo el nombre, no bajo el icono. */
 .po-note { font-size:.66rem; color:var(--text3); padding-left:22px; }
 .po-note b { color:var(--amber); font-weight:600; }
+.po-note.vacio { color:var(--text3); font-style:italic; }
+/* Enlace al historial (abre /registros en pestaña nueva). */
+.po-hist { flex-shrink:0; font-size:.8rem; line-height:1; color:var(--text3); text-decoration:none; padding:2px 4px; border-radius:5px; transition:color .15s, background .15s; }
+.po-hist:hover { color:var(--accent); background:var(--accent-dim); }
 .po-id { display:flex; align-items:center; gap:7px; min-width:0; }
 .po-name { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .po-meta { display:flex; align-items:center; gap:8px; flex-shrink:0; }

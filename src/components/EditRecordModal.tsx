@@ -102,6 +102,7 @@ export function EditRecordModal({ rec, persons, onClose, onSaved }: Props) {
             daysSince: r.daysSince,
             meetingsSince: r.meetingsSince,
             countMonth: r.countMonth,
+            countTotal: r.countTotal,
             assignedOnTarget: r.assignedOnTarget,
             daysSinceSection: porAsignacion ? r.daysSinceAsignacion : r.daysSinceSection,
             meetingsSinceSection: porAsignacion ? r.meetingsSinceAsignacion : r.meetingsSinceSection,

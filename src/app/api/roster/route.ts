@@ -46,10 +46,11 @@ export async function GET(req: Request) {
     // Solo lo anterior a la fecha objetivo: "ya hizo esta parte" no debe contar
     // una vez que aún no ha ocurrido (ya planificada más adelante).
     countAsigPrev: number; lastAsigComo: Papel | null;
+    total: number; // registros en cualquier fecha: 0 = sin historial
   };
   const agg = new Map<string, Agg>();
   for (const p of persons)
-    agg.set(p.id, { last: null, month: 0, recent: 0, onTarget: false, lastSec: null, countSec: 0, lastAsig: null, countAsig: 0, countAsigPrev: 0, lastAsigComo: null });
+    agg.set(p.id, { last: null, month: 0, recent: 0, onTarget: false, lastSec: null, countSec: 0, lastAsig: null, countAsig: 0, countAsigPrev: 0, lastAsigComo: null, total: 0 });
 
   for (const r of recs) {
     const f = toYMD(r.fecha);
@@ -61,6 +62,7 @@ export async function GET(req: Request) {
       const a = agg.get(pid);
       if (!a) continue;
       const papel: Papel = i === 0 ? "asignado" : "ayudante";
+      a.total++;
       if (f === target) a.onTarget = true;
       if (ft < targetT) {
         if (!a.last || f > a.last) a.last = f;
@@ -105,6 +107,7 @@ export async function GET(req: Request) {
       meetingsSince: meetingsSince(a.last),
       countMonth: a.month,
       countRecent: a.recent,
+      countTotal: a.total,
       assignedOnTarget: a.onTarget,
       ...(section ? { daysSinceSection: since(a.lastSec), meetingsSinceSection: meetingsSince(a.lastSec), countSection: a.countSec } : {}),
       ...(asignacion
