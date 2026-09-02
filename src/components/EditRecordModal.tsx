@@ -1,10 +1,10 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useMeetings, useRoles, useSuggest, useSections, useRoster } from "@/lib/hooks";
+import { useDebounced, useMeetings, useRoles, useSuggest, useSections, useRoster } from "@/lib/hooks";
 import { useToast } from "@/components/Toast";
 import { Modal } from "@/components/Modal";
-import { PersonSelect } from "@/components/PersonSelect";
+import { PersonSelect, asigMeta } from "@/components/PersonSelect";
 import { SectionSelect } from "@/components/SectionSelect";
 import { AsignacionSuggest } from "@/components/AsignacionSuggest";
 import { HelperPicker } from "@/components/HelperPicker";
@@ -89,13 +89,10 @@ export function EditRecordModal({ rec, persons, onClose, onSaved }: Props) {
 
   // Datos de decisión por persona. En el Estudio la recencia es por rol/asignación
   // ("última vez en el Estudio"); en lo demás, por sección.
-  const { roster } = useRoster(
-    form.fecha || null,
-    undefined,
-    undefined,
-    porAsignacion ? undefined : form.sectionId || undefined,
-    porAsignacion ? form.asignacion : undefined,
-  );
+  // Ambos ámbitos: sección para la recencia principal, asignación exacta para
+  // avisar de que ya hizo esta misma parte.
+  const asigQuery = useDebounced(form.asignacion.trim());
+  const { roster } = useRoster(form.fecha || null, undefined, undefined, form.sectionId || undefined, asigQuery || undefined);
   const rosterMeta = useMemo(
     () =>
       new Map(
@@ -108,6 +105,7 @@ export function EditRecordModal({ rec, persons, onClose, onSaved }: Props) {
             assignedOnTarget: r.assignedOnTarget,
             daysSinceSection: porAsignacion ? r.daysSinceAsignacion : r.daysSinceSection,
             meetingsSinceSection: porAsignacion ? r.meetingsSinceAsignacion : r.meetingsSinceSection,
+            asignacion: porAsignacion ? undefined : asigMeta(r),
           },
         ]),
       ),

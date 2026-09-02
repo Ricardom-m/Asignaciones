@@ -5,7 +5,7 @@ import { createPortal } from "react-dom";
 import { GenderIcon } from "@/components/GenderIcon";
 import { RoleBadge } from "@/components/RoleBadge";
 import { agoMeetings, agoShort } from "@/components/RosterPanel";
-import type { Person, Role } from "@/lib/types";
+import type { Person, Role, RosterPerson } from "@/lib/types";
 
 // Datos de decisión por persona (vienen del roster). Activan el modo enriquecido.
 export interface PersonMeta {
@@ -15,6 +15,23 @@ export interface PersonMeta {
   assignedOnTarget: boolean;
   daysSinceSection?: number | null; // si hay sección seleccionada
   meetingsSinceSection?: number | null;
+  asignacion?: AsignacionMeta; // presente solo si ya hizo ESTA misma asignación antes
+}
+
+// "Ya hizo esta parte": veces anteriores a la fecha objetivo, cuándo fue la última
+// y en qué papel. Cuenta tanto de asignado como de ayudante.
+export interface AsignacionMeta {
+  veces: number;
+  meetings: number | null;
+  days: number | null;
+  como: "asignado" | "ayudante" | null;
+}
+
+// Devuelve undefined si nunca la hizo: la fila entonces no lleva nota.
+export function asigMeta(r: RosterPerson): AsignacionMeta | undefined {
+  const veces = r.countAsignacionPrev ?? 0;
+  if (!veces) return undefined;
+  return { veces, meetings: r.meetingsSinceAsignacion ?? null, days: r.daysSinceAsignacion ?? null, como: r.lastAsignacionComo ?? null };
 }
 
 type SortMode = "toca" | "az" | "carga";
@@ -64,6 +81,18 @@ En cualquier parte: ${total}`
       </span>
       <span className="po-load">{m.countMonth}/mes</span>
     </>
+  );
+}
+
+function AsigNote({ a }: { a: AsignacionMeta }) {
+  const papel = a.como ? ` como ${a.como}` : "";
+  return (
+    <div className="po-note">
+      Ya hizo esta parte{a.veces > 1 ? ` ${a.veces} veces` : ""} ·{" "}
+      {a.veces > 1 ? "la última " : ""}
+      <b>{agoMeetings(a.meetings, a.days)}</b>
+      {papel}
+    </div>
   );
 }
 
@@ -197,12 +226,15 @@ export function PersonSelect({
       <div key={p.id} className={`sel-opt${enriched ? " rich" : ""}${value === p.id ? " selected" : ""}`} onClick={() => pick(p.id)}>
         {enriched ? (
           <>
-            <span className="po-id">
-              <GenderIcon genero={p.genero} />
-              <span className="po-name">{fullName(p)}</span>
-              {p.roles[0] && <RoleBadge role={p.roles[0]} />}
-            </span>
-            <span className="po-meta">{m && <MetaTags m={m} sectionLabel={sectionLabel} />}</span>
+            <div className="po-row">
+              <span className="po-id">
+                <GenderIcon genero={p.genero} />
+                <span className="po-name">{fullName(p)}</span>
+                {p.roles[0] && <RoleBadge role={p.roles[0]} />}
+              </span>
+              <span className="po-meta">{m && <MetaTags m={m} sectionLabel={sectionLabel} />}</span>
+            </div>
+            {m?.asignacion && <AsigNote a={m.asignacion} />}
           </>
         ) : (
           <>{fullName(p)}</>

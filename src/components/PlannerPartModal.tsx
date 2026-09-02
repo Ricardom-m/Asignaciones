@@ -1,10 +1,10 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useRoles, useRoster, useSuggest } from "@/lib/hooks";
+import { useDebounced, useRoles, useRoster, useSuggest } from "@/lib/hooks";
 import { useToast } from "@/components/Toast";
 import { Modal } from "@/components/Modal";
-import { PersonSelect } from "@/components/PersonSelect";
+import { PersonSelect, asigMeta } from "@/components/PersonSelect";
 import { SectionSelect } from "@/components/SectionSelect";
 import { AsignacionSuggest } from "@/components/AsignacionSuggest";
 import { HelperPicker } from "@/components/HelperPicker";
@@ -51,8 +51,10 @@ export function PlannerPartModal({ fecha, sections, persons, defaultAsignadoId, 
   const estudio = esEstudio(asignacion);
   const necesidades = esNecesidades(asignacion);
   const porAsignacion = estudio || necesidades; // recencia "por esa parte"
-  // Recencia por rol/asignación en Estudio/Necesidades; por sección en lo demás.
-  const { roster } = useRoster(fecha, undefined, undefined, porAsignacion ? undefined : sectionId || undefined, porAsignacion ? asignacion : undefined);
+  // Se piden AMBOS ámbitos: el de sección (o asignación en Estudio/Necesidades) para
+  // la recencia principal, y el de la asignación exacta para avisar de repeticiones.
+  const asigQuery = useDebounced(asignacion.trim());
+  const { roster } = useRoster(fecha, undefined, undefined, sectionId || undefined, asigQuery || undefined);
 
   const lectura = esLectura(asignacion);
   const secNombre = norm(sections.find((s) => s.id === sectionId)?.nombre ?? "");
@@ -93,6 +95,7 @@ export function PlannerPartModal({ fecha, sections, persons, defaultAsignadoId, 
             assignedOnTarget: r.assignedOnTarget,
             daysSinceSection: porAsignacion ? r.daysSinceAsignacion : r.daysSinceSection,
             meetingsSinceSection: porAsignacion ? r.meetingsSinceAsignacion : r.meetingsSinceSection,
+            asignacion: porAsignacion ? undefined : asigMeta(r),
           },
         ]),
       ),

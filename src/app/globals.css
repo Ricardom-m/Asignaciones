@@ -215,7 +215,11 @@ input[type=date]::-webkit-calendar-picker-indicator { filter:invert(.55); }
 .sel-scope { padding:7px 13px; font-size:.67rem; color:var(--text3); background:var(--surface2); border-bottom:1px solid var(--border); }
 .sel-scope b { color:var(--text2); font-weight:600; }
 .sel-group { padding:8px 13px 4px; font-size:.64rem; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--text3); position:sticky; top:0; background:var(--surface); }
-.sel-opt.rich { display:flex; align-items:center; justify-content:space-between; gap:10px; }
+.sel-opt.rich { display:flex; flex-direction:column; align-items:stretch; gap:3px; }
+.po-row { display:flex; align-items:center; justify-content:space-between; gap:10px; }
+/* "Ya hizo esta parte…" — alineada bajo el nombre, no bajo el icono. */
+.po-note { font-size:.66rem; color:var(--text3); padding-left:22px; }
+.po-note b { color:var(--amber); font-weight:600; }
 .po-id { display:flex; align-items:center; gap:7px; min-width:0; }
 .po-name { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .po-meta { display:flex; align-items:center; gap:8px; flex-shrink:0; }

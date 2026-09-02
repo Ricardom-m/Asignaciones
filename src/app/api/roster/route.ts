@@ -38,25 +38,41 @@ export async function GET(req: Request) {
   const recentFrom = targetT - 60 * DAY;
   const targetMonth = target.slice(0, 7);
 
-  type Agg = { last: string | null; month: number; recent: number; onTarget: boolean; lastSec: string | null; countSec: number; lastAsig: string | null; countAsig: number };
+  type Papel = "asignado" | "ayudante";
+  type Agg = {
+    last: string | null; month: number; recent: number; onTarget: boolean;
+    lastSec: string | null; countSec: number;
+    lastAsig: string | null; countAsig: number;
+    // Solo lo anterior a la fecha objetivo: "ya hizo esta parte" no debe contar
+    // una vez que aún no ha ocurrido (ya planificada más adelante).
+    countAsigPrev: number; lastAsigComo: Papel | null;
+  };
   const agg = new Map<string, Agg>();
-  for (const p of persons) agg.set(p.id, { last: null, month: 0, recent: 0, onTarget: false, lastSec: null, countSec: 0, lastAsig: null, countAsig: 0 });
+  for (const p of persons)
+    agg.set(p.id, { last: null, month: 0, recent: 0, onTarget: false, lastSec: null, countSec: 0, lastAsig: null, countAsig: 0, countAsigPrev: 0, lastAsigComo: null });
 
   for (const r of recs) {
     const f = toYMD(r.fecha);
     const ft = new Date(f + "T00:00:00Z").getTime();
     const inSection = !!section && r.sectionId === section;
     const inAsig = !!asignacion && r.asignacion.trim().toLowerCase() === asignacion;
-    for (const pid of [r.asignadoId, r.ayudanteId]) {
+    for (const [i, pid] of [r.asignadoId, r.ayudanteId].entries()) {
       if (!pid) continue;
       const a = agg.get(pid);
       if (!a) continue;
+      const papel: Papel = i === 0 ? "asignado" : "ayudante";
       if (f === target) a.onTarget = true;
       if (ft < targetT) {
         if (!a.last || f > a.last) a.last = f;
         if (ft >= recentFrom) a.recent++;
         if (inSection && (!a.lastSec || f > a.lastSec)) a.lastSec = f;
-        if (inAsig && (!a.lastAsig || f > a.lastAsig)) a.lastAsig = f;
+        if (inAsig) {
+          a.countAsigPrev++;
+          if (!a.lastAsig || f > a.lastAsig) {
+            a.lastAsig = f;
+            a.lastAsigComo = papel;
+          }
+        }
       }
       if (f.slice(0, 7) === targetMonth) a.month++;
       if (inSection) a.countSec++;
@@ -91,7 +107,15 @@ export async function GET(req: Request) {
       countRecent: a.recent,
       assignedOnTarget: a.onTarget,
       ...(section ? { daysSinceSection: since(a.lastSec), meetingsSinceSection: meetingsSince(a.lastSec), countSection: a.countSec } : {}),
-      ...(asignacion ? { daysSinceAsignacion: since(a.lastAsig), meetingsSinceAsignacion: meetingsSince(a.lastAsig), countAsignacion: a.countAsig } : {}),
+      ...(asignacion
+        ? {
+            daysSinceAsignacion: since(a.lastAsig),
+            meetingsSinceAsignacion: meetingsSince(a.lastAsig),
+            countAsignacion: a.countAsig,
+            countAsignacionPrev: a.countAsigPrev,
+            lastAsignacionComo: a.lastAsigComo,
+          }
+        : {}),
     };
   });
 

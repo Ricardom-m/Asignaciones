@@ -66,7 +66,9 @@ export interface RosterPerson {
   countSection?: number; // participaciones totales en esa sección
   daysSinceAsignacion?: number | null; // última vez con esa asignación exacta (si se pidió ?asignacion=)
   meetingsSinceAsignacion?: number | null;
-  countAsignacion?: number; // veces que hizo esa asignación exacta
+  countAsignacion?: number; // veces que hizo esa asignación exacta (incluye lo ya planificado más adelante)
+  countAsignacionPrev?: number; // solo las veces anteriores a la fecha objetivo
+  lastAsignacionComo?: "asignado" | "ayudante" | null; // en qué papel fue la última vez
 }
 
 export type RecordTipo = "ASIGNACION" | "NOMBRADO";

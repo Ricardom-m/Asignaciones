@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import useSWR from "swr";
 import useSWRInfinite from "swr/infinite";
 import { fetcher } from "@/lib/client";
@@ -128,6 +129,17 @@ export function useDateRecords(fecha: string | null) {
 }
 
 // Roster ordenado por "a quién le toca" para una fecha (equidad / sugerencia).
+// Retrasa un valor que cambia al teclear. El roster agrega todos los registros en
+// cada llamada, asi que no conviene pedirlo por cada pulsacion.
+export function useDebounced<T>(value: T, ms = 350) {
+  const [v, setV] = useState(value);
+  useEffect(() => {
+    const t = setTimeout(() => setV(value), ms);
+    return () => clearTimeout(t);
+  }, [value, ms]);
+  return v;
+}
+
 export function useRoster(fecha: string | null, role?: string, genero?: string, section?: string, asignacion?: string) {
   const sp = new URLSearchParams();
   if (fecha) sp.set("fecha", fecha);
