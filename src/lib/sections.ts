@@ -4,11 +4,13 @@ export const norm = (s: string) => s.trim().toLowerCase();
 
 export const SECCION_INICIO = "Inicio";
 export const SECCION_TESOROS = "Tesoros de la Biblia";
+export const SECCION_MAESTROS = "Seamos mejores maestros";
 export const SECCION_VIDA = "Nuestra vida cristiana";
 
 // "Lectura de la Biblia": como mucho una por sala (regla por nombre, no por sección).
 export const LECTURA_NOMBRE = "Lectura de la Biblia";
 export const PARTE_PERLAS = "Busquemos perlas escondidas";
+export const PARTE_QUE_DIRIA = "¿Qué diría?";
 
 // Orden canónico dentro de Tesoros: discurso (0) → perlas (1) → lectura (2).
 export const tesorosRank = (asignacion: string) => {
@@ -94,6 +96,7 @@ export const TESOROS_MAX = 3;
 // registros previos, con su duración típica (editable al usarlas).
 export const SUGERENCIAS_CURADAS: Record<string, { value: string; minutos: number }[]> = {
   [SECCION_TESOROS]: [{ value: PARTE_PERLAS, minutos: 10 }],
+  [SECCION_MAESTROS]: [{ value: PARTE_QUE_DIRIA, minutos: 6 }],
   [SECCION_VIDA]: [
     { value: PARTE_ESTUDIO, minutos: 30 },
     { value: PARTE_NECESIDADES, minutos: 15 },
