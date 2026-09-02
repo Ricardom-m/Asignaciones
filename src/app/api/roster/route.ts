@@ -31,6 +31,8 @@ export async function GET(req: Request) {
   const recs = await prisma.record.findMany({
     select: { fecha: true, asignadoId: true, ayudanteId: true, sectionId: true, asignacion: true },
   });
+  // Fechas de reunión, para poder medir la recencia en reuniones y no solo en días.
+  const meetingDays = (await prisma.meeting.findMany({ select: { fecha: true }, orderBy: { fecha: "asc" } })).map((m) => toYMD(m.fecha));
 
   const targetT = new Date(target + "T00:00:00Z").getTime();
   const recentFrom = targetT - 60 * DAY;
@@ -63,6 +65,18 @@ export async function GET(req: Request) {
   }
 
   const since = (d: string | null) => (d ? Math.round((targetT - new Date(d + "T00:00:00Z").getTime()) / DAY) : null);
+
+  // Reuniones transcurridas desde la última participación, contando la reunión objetivo:
+  // si participó en la reunión anterior a esta, es "hace 1 reunión".
+  // Devuelve null cuando no se puede afirmar: nunca participó, o su última vez es
+  // anterior a la reunión más antigua registrada (la tabla no llega tan atrás).
+  const oldestMeeting = meetingDays[0] ?? null;
+  const meetingsSince = (d: string | null) => {
+    if (!d || !oldestMeeting || d < oldestMeeting) return null;
+    let n = 0;
+    for (const m of meetingDays) if (m > d && m <= target) n++;
+    return n;
+  };
   const list = persons.map((p) => {
     const a = agg.get(p.id)!;
     return {
@@ -72,11 +86,12 @@ export async function GET(req: Request) {
       roles: p.roles.map(serializeRole),
       lastFecha: a.last,
       daysSince: since(a.last),
+      meetingsSince: meetingsSince(a.last),
       countMonth: a.month,
       countRecent: a.recent,
       assignedOnTarget: a.onTarget,
-      ...(section ? { daysSinceSection: since(a.lastSec), countSection: a.countSec } : {}),
-      ...(asignacion ? { daysSinceAsignacion: since(a.lastAsig), countAsignacion: a.countAsig } : {}),
+      ...(section ? { daysSinceSection: since(a.lastSec), meetingsSinceSection: meetingsSince(a.lastSec), countSection: a.countSec } : {}),
+      ...(asignacion ? { daysSinceAsignacion: since(a.lastAsig), meetingsSinceAsignacion: meetingsSince(a.lastAsig), countAsignacion: a.countAsig } : {}),
     };
   });
 

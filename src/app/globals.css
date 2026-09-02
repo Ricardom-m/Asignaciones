@@ -205,6 +205,12 @@ input[type=date]::-webkit-calendar-picker-indicator { filter:invert(.55); }
 .sel-sort-btn { flex:1; font-size:.72rem; font-weight:600; padding:6px 4px; border:1px solid var(--border); border-radius:7px; background:var(--surface2); color:var(--text3); cursor:pointer; }
 .sel-sort-btn:hover { color:var(--text2); }
 .sel-sort-btn.active { color:var(--accent); border-color:var(--accent); background:var(--accent-dim); }
+/* Filtro por rol (Asignados / Asignadas / Nombrados…). Va bajo el orden, sin doble linea. */
+.sel-sort:has(+ .sel-roles) { border-bottom:0; padding-bottom:4px; }
+.sel-roles { display:flex; flex-wrap:wrap; gap:4px; padding:0 9px 8px; border-bottom:1px solid var(--border); }
+.sel-role-btn { font-size:.68rem; font-weight:600; padding:5px 10px; border:1px solid var(--border); border-radius:999px; background:var(--surface2); color:var(--text3); cursor:pointer; white-space:nowrap; transition:color .15s, border-color .15s, background .15s; }
+.sel-role-btn:hover { color:var(--text2); }
+.sel-role-btn.active { color:var(--accent); border-color:var(--accent); background:var(--accent-dim); }
 .sel-group { padding:8px 13px 4px; font-size:.64rem; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--text3); position:sticky; top:0; background:var(--surface); }
 .sel-opt.rich { display:flex; align-items:center; justify-content:space-between; gap:10px; }
 .po-id { display:flex; align-items:center; gap:7px; min-width:0; }

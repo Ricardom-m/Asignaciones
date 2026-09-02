@@ -22,7 +22,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { ConfigFechas } from "@/components/ConfigFechas";
 import { ReunionHeader } from "@/components/ReunionHeader";
 import { MeetingDatePicker } from "@/components/MeetingDatePicker";
-import { RosterPanel, agoShort } from "@/components/RosterPanel";
+import { RosterPanel, agoMeetings, agoShort } from "@/components/RosterPanel";
 import { PlannerPartModal } from "@/components/PlannerPartModal";
 import { EditRecordModal } from "@/components/EditRecordModal";
 import { useToast } from "@/components/Toast";
@@ -790,7 +790,14 @@ function InicioPersonaRow({ rec, fecha, nombrados, onPersona }: { rec: RecordIte
       new Map(
         roster.map((r) => [
           r.id,
-          { daysSince: r.daysSince, countMonth: r.countMonth, assignedOnTarget: r.assignedOnTarget, daysSinceSection: r.daysSinceAsignacion },
+          {
+            daysSince: r.daysSince,
+            meetingsSince: r.meetingsSince,
+            countMonth: r.countMonth,
+            assignedOnTarget: r.assignedOnTarget,
+            daysSinceSection: r.daysSinceAsignacion,
+            meetingsSinceSection: r.meetingsSinceAsignacion,
+          },
         ]),
       ),
     [roster],
@@ -822,7 +829,7 @@ function InicioPersonaRow({ rec, fecha, nombrados, onPersona }: { rec: RecordIte
           <span className="sug-tip">Le toca:</span>
           {sugs.map((s) => (
             <button key={s.id} type="button" className="sug-chip" onClick={() => onPersona(s.id)} title={`Como ${rec.asignacion}: ${s.countAsignacion ?? 0} ${(s.countAsignacion ?? 0) === 1 ? "vez" : "veces"}`}>
-              {s.nombre.split(" ")[0]} <span className="sug-ago">{agoShort(s.daysSinceAsignacion ?? null)}</span>
+              {s.nombre.split(" ")[0]} <span className="sug-ago" title={`Última vez: ${agoShort(s.daysSinceAsignacion ?? null)}`}>{agoMeetings(s.meetingsSinceAsignacion ?? null, s.daysSinceAsignacion ?? null)}</span>
             </button>
           ))}
         </div>

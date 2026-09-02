@@ -17,6 +17,18 @@ export function agoShort(days: number | null): string {
   return `hace ${y} año${y !== 1 ? "s" : ""}`;
 }
 
+// Recencia contada en reuniones, que es como se planifica de verdad ("hace 2 reuniones"
+// dice más que "hace 12d" cuando entre medias hubo una sola reunión).
+// Cae a la versión por días cuando no hay dato: nunca participó, o su última vez es
+// anterior a las reuniones registradas.
+export function agoMeetings(meetings: number | null, days: number | null): string {
+  if (meetings === null) return agoShort(days);
+  // 0 = no ha pasado ninguna reunión entre medias (la fecha objetivo no es reunión);
+  // ahí los días dicen más que "hace 0 reuniones".
+  if (meetings <= 0) return agoShort(days);
+  return meetings === 1 ? "hace 1 reunión" : `hace ${meetings} reuniones`;
+}
+
 interface Props {
   fecha: string;
   roles: Role[];
@@ -87,7 +99,7 @@ export function RosterPanel({ fecha, roles, onPick, title = "¿A quién le toca?
                     <span className="roster-taken-tag">ya ese día</span>
                   ) : (
                     <>
-                      <span className={`roster-ago${overdue ? " over" : ""}`}>{agoShort(p.daysSince)}</span>
+                      <span className={`roster-ago${overdue ? " over" : ""}`} title={`Última asignación: ${agoShort(p.daysSince)}`}>{agoMeetings(p.meetingsSince, p.daysSince)}</span>
                       <span className="roster-load">{p.countMonth} este mes</span>
                     </>
                   )}

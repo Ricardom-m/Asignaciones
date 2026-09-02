@@ -9,7 +9,7 @@ import { SectionSelect } from "@/components/SectionSelect";
 import { AsignacionSuggest } from "@/components/AsignacionSuggest";
 import { HelperPicker } from "@/components/HelperPicker";
 import { MinutesInput } from "@/components/MinutesInput";
-import { agoShort } from "@/components/RosterPanel";
+import { agoMeetings, agoShort } from "@/components/RosterPanel";
 import { createRecord, esLectura, eligibleLectura, fmtShort } from "@/lib/client";
 import { SECCION_TESOROS, SECCION_VIDA, esEstudio, esNecesidades, norm } from "@/lib/sections";
 import type { Person, Section } from "@/lib/types";
@@ -86,7 +86,14 @@ export function PlannerPartModal({ fecha, sections, persons, defaultAsignadoId, 
       new Map(
         roster.map((r) => [
           r.id,
-          { daysSince: r.daysSince, countMonth: r.countMonth, assignedOnTarget: r.assignedOnTarget, daysSinceSection: porAsignacion ? r.daysSinceAsignacion : r.daysSinceSection },
+          {
+            daysSince: r.daysSince,
+            meetingsSince: r.meetingsSince,
+            countMonth: r.countMonth,
+            assignedOnTarget: r.assignedOnTarget,
+            daysSinceSection: porAsignacion ? r.daysSinceAsignacion : r.daysSinceSection,
+            meetingsSinceSection: porAsignacion ? r.meetingsSinceAsignacion : r.meetingsSinceSection,
+          },
         ]),
       ),
     [roster, porAsignacion],
@@ -202,7 +209,7 @@ export function PlannerPartModal({ fecha, sections, persons, defaultAsignadoId, 
               <span className="sug-tip">Le toca:</span>
               {asignadoSugs.map((s) => (
                 <button key={s.id} type="button" className="sug-chip" onClick={() => setAsignadoId(s.id)} title={`${s.countMonth} este mes`}>
-                  {s.nombre.split(" ")[0]} <span className="sug-ago">{agoShort(s.daysSince)}</span>
+                  {s.nombre.split(" ")[0]} <span className="sug-ago" title={`Última asignación: ${agoShort(s.daysSince)}`}>{agoMeetings(s.meetingsSince, s.daysSince)}</span>
                 </button>
               ))}
             </div>

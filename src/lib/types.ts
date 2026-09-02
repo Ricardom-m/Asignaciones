@@ -57,12 +57,15 @@ export interface RosterPerson {
   roles: Role[];
   lastFecha: string | null; // última participación antes de la fecha objetivo
   daysSince: number | null;
+  meetingsSince: number | null; // reuniones transcurridas desde entonces (null = nunca o fuera de la ventana registrada)
   countMonth: number; // participaciones en el mes de la fecha objetivo
   countRecent: number; // participaciones en los últimos 60 días
   assignedOnTarget: boolean; // ya asignado(a) en la fecha objetivo
   daysSinceSection?: number | null; // última vez en la sección consultada (si se pidió ?section=)
+  meetingsSinceSection?: number | null;
   countSection?: number; // participaciones totales en esa sección
   daysSinceAsignacion?: number | null; // última vez con esa asignación exacta (si se pidió ?asignacion=)
+  meetingsSinceAsignacion?: number | null;
   countAsignacion?: number; // veces que hizo esa asignación exacta
 }
 

@@ -4,15 +4,17 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { GenderIcon } from "@/components/GenderIcon";
 import { RoleBadge } from "@/components/RoleBadge";
-import { agoShort } from "@/components/RosterPanel";
-import type { Person } from "@/lib/types";
+import { agoMeetings, agoShort } from "@/components/RosterPanel";
+import type { Person, Role } from "@/lib/types";
 
 // Datos de decisión por persona (vienen del roster). Activan el modo enriquecido.
 export interface PersonMeta {
   daysSince: number | null;
+  meetingsSince: number | null; // recencia en reuniones (null = nunca o fuera de la ventana registrada)
   countMonth: number;
   assignedOnTarget: boolean;
   daysSinceSection?: number | null; // si hay sección seleccionada
+  meetingsSinceSection?: number | null;
 }
 
 type SortMode = "toca" | "az" | "carga";
@@ -45,11 +47,13 @@ function MetaTags({ m, sectionLabel }: { m: PersonMeta; sectionLabel?: string })
   if (m.assignedOnTarget) return <span className="po-tag taken">⚠ ya ese día</span>;
   const hasSec = sectionLabel != null && m.daysSinceSection !== undefined;
   const days = hasSec ? m.daysSinceSection ?? null : m.daysSince;
+  const reuniones = hasSec ? m.meetingsSinceSection ?? null : m.meetingsSince;
   const over = days === null || days > 60;
+  const que = hasSec ? `Última vez en ${sectionLabel}` : "Última asignación";
   return (
     <>
-      <span className={`po-ago${over ? " over" : ""}${hasSec ? " sec" : ""}`} title={hasSec ? `Última vez en ${sectionLabel}` : "Última asignación"}>
-        {agoShort(days)}
+      <span className={`po-ago${over ? " over" : ""}${hasSec ? " sec" : ""}`} title={`${que}: ${agoShort(days)}`}>
+        {agoMeetings(reuniones, days)}
       </span>
       <span className="po-load">{m.countMonth}/mes</span>
     </>
@@ -70,6 +74,7 @@ export function PersonSelect({
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState<SortMode>("toca");
+  const [roleFilter, setRoleFilter] = useState(""); // "" = todos los roles
   const [pos, setPos] = useState<Pos | null>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const dropRef = useRef<HTMLDivElement>(null);
@@ -101,15 +106,29 @@ export function PersonSelect({
     };
   }, [meta, sectionLabel]);
 
+  // Roles realmente presentes en esta lista (Asignados, Asignadas, Nombrados…).
+  // Se derivan de las personas para no ofrecer un filtro que no dejaría a nadie.
+  const roleOptions = useMemo(() => {
+    const seen = new Map<string, Role>();
+    for (const p of persons) for (const r of p.roles) if (!seen.has(r.id)) seen.set(r.id, r);
+    return [...seen.values()].sort((a, b) => a.nombre.localeCompare(b.nombre));
+  }, [persons]);
+
+  // Si el rol filtrado deja de existir en la lista (cambió la sección, p. ej.), se suelta.
+  useEffect(() => {
+    if (roleFilter && !roleOptions.some((r) => r.id === roleFilter)) setRoleFilter("");
+  }, [roleFilter, roleOptions]);
+
   const options = useMemo(() => {
     const q = query.toLowerCase().trim();
     const base = persons
       .filter((p) => p.id !== excludeId && !excludeIds?.includes(p.id))
+      .filter((p) => !roleFilter || p.roles.some((r) => r.id === roleFilter))
       .filter((p) => !q || fullName(p).toLowerCase().includes(q));
     if (!enriched || sort === "az") return base.sort(cmpAz);
     if (sort === "carga") return base.sort((a, b) => (meta!.get(a.id)?.countMonth ?? 0) - (meta!.get(b.id)?.countMonth ?? 0) || cmpAz(a, b));
     return base.sort(cmpToca);
-  }, [persons, excludeId, excludeIds, query, enriched, sort, cmpToca, meta]);
+  }, [persons, excludeId, excludeIds, query, roleFilter, enriched, sort, cmpToca, meta]);
 
   // Agrupar en "Sugeridos / Todos" solo en el orden por defecto y sin búsqueda.
   const grouped = enriched && sort === "toca" && !query.trim();
@@ -156,6 +175,7 @@ export function PersonSelect({
     onChange(id);
     setOpen(false);
     setQuery("");
+    setRoleFilter("");
   };
 
   const renderRow = (p: Person) => {
@@ -214,6 +234,32 @@ export function PersonSelect({
                     {lbl}
                   </button>
                 ))}
+              </div>
+            )}
+
+            {roleOptions.length > 1 && (
+              <div className="sel-roles">
+                <button
+                  type="button"
+                  className={`sel-role-btn${roleFilter === "" ? " active" : ""}`}
+                  onClick={() => setRoleFilter("")}
+                >
+                  Todos
+                </button>
+                {roleOptions.map((r) => {
+                  const on = roleFilter === r.id;
+                  return (
+                    <button
+                      key={r.id}
+                      type="button"
+                      className={`sel-role-btn${on ? " active" : ""}`}
+                      style={on ? { color: r.color, borderColor: r.color, background: r.color + "22" } : undefined}
+                      onClick={() => setRoleFilter(on ? "" : r.id)}
+                    >
+                      {r.nombre}
+                    </button>
+                  );
+                })}
               </div>
             )}
 

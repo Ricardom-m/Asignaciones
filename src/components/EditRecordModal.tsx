@@ -101,7 +101,14 @@ export function EditRecordModal({ rec, persons, onClose, onSaved }: Props) {
       new Map(
         roster.map((r) => [
           r.id,
-          { daysSince: r.daysSince, countMonth: r.countMonth, assignedOnTarget: r.assignedOnTarget, daysSinceSection: porAsignacion ? r.daysSinceAsignacion : r.daysSinceSection },
+          {
+            daysSince: r.daysSince,
+            meetingsSince: r.meetingsSince,
+            countMonth: r.countMonth,
+            assignedOnTarget: r.assignedOnTarget,
+            daysSinceSection: porAsignacion ? r.daysSinceAsignacion : r.daysSinceSection,
+            meetingsSinceSection: porAsignacion ? r.meetingsSinceAsignacion : r.meetingsSinceSection,
+          },
         ]),
       ),
     [roster, porAsignacion],
