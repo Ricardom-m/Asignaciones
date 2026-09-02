@@ -135,59 +135,17 @@ export function EditRecordModal({ rec, persons, onClose, onSaved }: Props) {
     }
   };
 
+  // El orden de los campos replica el de PlannerPartModal ("Agregar parte") para que
+  // registrar y editar se sientan igual. La fecha va primero porque alli es contexto
+  // fijo del titulo ("Agregar parte · Jue 10 sep") y aqui si es editable.
   return (
     <Modal title={isNombrado ? "Editar nombrado" : "Editar registro"} onClose={onClose}>
       <div className="form-grid">
         <div className="field-group">
           <label className="field-label">
-            {estudio ? "Conductor" : esNombradoFinal ? "Nombre del nombrado" : "Nombre del asignado"} <span className="req">*</span>
-          </label>
-          <PersonSelect
-            persons={asignadoPersons}
-            value={form.asignadoId}
-            excludeId={noHelper ? undefined : form.ayudanteId}
-            onChange={(id) => patch({ asignadoId: id })}
-            meta={rosterMeta}
-            sectionLabel={porAsignacion ? form.asignacion : form.sectionId ? sectionLabel : undefined}
-          />
-        </div>
-
-        {!noHelper && (
-          <div className="field-group">
-            <label className="field-label">{estudio ? "Lector" : "Ayudante del asignado"}</label>
-            <PersonSelect
-              persons={ayudantePersons}
-              value={form.ayudanteId}
-              excludeId={form.asignadoId}
-              onChange={(id) => patch({ ayudanteId: id })}
-              meta={rosterMeta}
-              sectionLabel={estudio ? form.asignacion : form.sectionId ? sectionLabel : undefined}
-            />
-            {!estudio && (
-              <HelperPicker
-                candidates={candidates}
-                roles={roles}
-                value={form.ayudanteId}
-                onChange={(id) => patch({ ayudanteId: id })}
-              />
-            )}
-          </div>
-        )}
-
-        <div className="field-group">
-          <label className="field-label">
             Fecha <span className="req">*</span>
           </label>
           <DateChips value={form.fecha} onChange={(ymd) => patch({ fecha: ymd })} meetings={meetings} />
-        </div>
-
-        <div className="field-group">
-          <label className="field-label">Sala</label>
-          <select value={form.sala} onChange={(e) => patch({ sala: e.target.value })}>
-            {SALAS.map((s) => (
-              <option key={s} value={s}>{s}</option>
-            ))}
-          </select>
         </div>
 
         {sections.length > 0 && (
@@ -221,17 +179,64 @@ export function EditRecordModal({ rec, persons, onClose, onSaved }: Props) {
           />
         </div>
 
+        <div className="row-2">
+          <div className="field-group">
+            <label className="field-label">Sala</label>
+            <select value={form.sala} onChange={(e) => patch({ sala: e.target.value })}>
+              {SALAS.map((s) => (
+                <option key={s} value={s}>{s}</option>
+              ))}
+            </select>
+          </div>
+          <div className="field-group">
+            <label className="field-label">Duración (min)</label>
+            <input
+              type="number"
+              min="1"
+              max="600"
+              value={form.minutos}
+              onChange={(e) => patch({ minutos: e.target.value })}
+              placeholder="—"
+            />
+          </div>
+        </div>
+
         <div className="field-group">
-          <label className="field-label">Duración (min)</label>
-          <input
-            type="number"
-            min="1"
-            max="600"
-            value={form.minutos}
-            onChange={(e) => patch({ minutos: e.target.value })}
-            placeholder="—"
+          <label className="field-label">
+            {estudio ? "Conductor" : esNombradoFinal ? "Nombrado" : "Asignado"} <span className="req">*</span>
+          </label>
+          <PersonSelect
+            persons={asignadoPersons}
+            value={form.asignadoId}
+            excludeId={noHelper ? undefined : form.ayudanteId}
+            onChange={(id) => patch({ asignadoId: id })}
+            placeholder="Seleccionar…"
+            meta={rosterMeta}
+            sectionLabel={porAsignacion ? form.asignacion : form.sectionId ? sectionLabel : undefined}
           />
         </div>
+
+        {!noHelper && (
+          <div className="field-group">
+            <label className="field-label">{estudio ? "Lector" : "Ayudante (opcional)"}</label>
+            <PersonSelect
+              persons={ayudantePersons}
+              value={form.ayudanteId}
+              excludeId={form.asignadoId}
+              onChange={(id) => patch({ ayudanteId: id })}
+              meta={rosterMeta}
+              sectionLabel={estudio ? form.asignacion : form.sectionId ? sectionLabel : undefined}
+            />
+            {!estudio && (
+              <HelperPicker
+                candidates={candidates}
+                roles={roles}
+                value={form.ayudanteId}
+                onChange={(id) => patch({ ayudanteId: id })}
+              />
+            )}
+          </div>
+        )}
 
         <div className="divider" />
         <div className="form-actions">
