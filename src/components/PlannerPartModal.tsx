@@ -100,6 +100,21 @@ export function PlannerPartModal({ fecha, sections, persons, defaultAsignadoId, 
   );
   const sectionLabel = useMemo(() => sections.find((s) => s.id === sectionId)?.nombre.split(" ")[0], [sections, sectionId]);
 
+  // Los chips miden lo mismo que el desplegable; si no, la misma persona sale con
+  // dos numeros distintos en el mismo modal.
+  const sugAgo = (s: (typeof roster)[number]) => {
+    const [reuniones, dias, que] = porAsignacion
+      ? [s.meetingsSinceAsignacion ?? null, s.daysSinceAsignacion ?? null, `Última vez en ${asignacion}`]
+      : sectionId
+        ? [s.meetingsSinceSection ?? null, s.daysSinceSection ?? null, `Última vez en ${sectionLabel}`]
+        : [s.meetingsSince, s.daysSince, "Última asignación"];
+    return {
+      txt: agoMeetings(reuniones, dias),
+      title: `${que}: ${agoShort(dias)}
+En cualquier parte: ${agoShort(s.daysSince)}`,
+    };
+  };
+
   const save = async () => {
     if (!asignadoId) return toast("⚠️ Selecciona el asignado", "error");
     if (!asignacion.trim()) return toast("⚠️ Escribe la asignación", "error");
@@ -209,7 +224,7 @@ export function PlannerPartModal({ fecha, sections, persons, defaultAsignadoId, 
               <span className="sug-tip">Le toca:</span>
               {asignadoSugs.map((s) => (
                 <button key={s.id} type="button" className="sug-chip" onClick={() => setAsignadoId(s.id)} title={`${s.countMonth} este mes`}>
-                  {s.nombre.split(" ")[0]} <span className="sug-ago" title={`Última asignación: ${agoShort(s.daysSince)}`}>{agoMeetings(s.meetingsSince, s.daysSince)}</span>
+                  {s.nombre.split(" ")[0]} <span className="sug-ago" title={sugAgo(s).title}>{sugAgo(s).txt}</span>
                 </button>
               ))}
             </div>

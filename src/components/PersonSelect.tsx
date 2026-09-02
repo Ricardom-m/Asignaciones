@@ -49,10 +49,17 @@ function MetaTags({ m, sectionLabel }: { m: PersonMeta; sectionLabel?: string })
   const days = hasSec ? m.daysSinceSection ?? null : m.daysSince;
   const reuniones = hasSec ? m.meetingsSinceSection ?? null : m.meetingsSince;
   const over = days === null || days > 60;
-  const que = hasSec ? `Última vez en ${sectionLabel}` : "Última asignación";
+  // El numero visible es el del ambito activo (seccion si la hay). El tooltip da
+  // los dos, que es justo la confusion: "lleva 9 reuniones sin Tesoros" no se
+  // contradice con "participo la reunion pasada".
+  const total = `${agoMeetings(m.meetingsSince, m.daysSince)} (${agoShort(m.daysSince)})`;
+  const title = hasSec
+    ? `Última vez en ${sectionLabel}: ${agoMeetings(reuniones, days)} (${agoShort(days)})
+En cualquier parte: ${total}`
+    : `Última asignación: ${total}`;
   return (
     <>
-      <span className={`po-ago${over ? " over" : ""}${hasSec ? " sec" : ""}`} title={`${que}: ${agoShort(days)}`}>
+      <span className={`po-ago${over ? " over" : ""}${hasSec ? " sec" : ""}`} title={title}>
         {agoMeetings(reuniones, days)}
       </span>
       <span className="po-load">{m.countMonth}/mes</span>
@@ -81,6 +88,12 @@ export function PersonSelect({
   const searchRef = useRef<HTMLInputElement>(null);
 
   const enriched = !!meta;
+  // ¿La recencia mostrada es la de la sección/asignación en vez de la global?
+  const scoped = useMemo(() => {
+    if (!enriched || sectionLabel == null) return false;
+    for (const m of meta!.values()) if (m.daysSinceSection !== undefined) return true;
+    return false;
+  }, [enriched, meta, sectionLabel]);
   const selected = persons.find((p) => p.id === value);
   const label = selected ? fullName(selected) : "";
 
@@ -260,6 +273,12 @@ export function PersonSelect({
                     </button>
                   );
                 })}
+              </div>
+            )}
+
+            {scoped && (
+              <div className="sel-scope">
+                Recencia: última vez en <b>{sectionLabel}</b>
               </div>
             )}
 
