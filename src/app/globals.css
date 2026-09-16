@@ -892,6 +892,13 @@ input:focus, select:focus, .list-search-input:focus, .sel-search:focus, .cmd-inp
 .plan-part.conflict { background:color-mix(in srgb, var(--amber) 10%, transparent); }
 .plan-part-main { flex:1; min-width:0; }
 .plan-part-asig { font-size:.82rem; font-weight:500; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+/* Número de parte (S-140). Sobrio cuando es automático, marcado cuando se fijó a mano. */
+.plan-num { flex:none; min-width:23px; height:20px; padding:0 5px; border:1px solid var(--border); border-radius:6px; background:var(--surface2); color:var(--text2); font-family:var(--head); font-size:.68rem; font-weight:700; line-height:1; cursor:pointer; transition:color .15s, border-color .15s, background .15s; }
+.plan-num:hover:not(:disabled) { color:var(--accent); border-color:var(--accent); }
+.plan-num.manual { color:var(--accent); border-color:var(--accent); background:var(--accent-dim); }
+.plan-num.dup { color:var(--red); border-color:var(--red); background:var(--red-dim); }
+.plan-num:disabled { cursor:default; opacity:.55; }
+.plan-num-input[type=number] { flex:none; width:52px; padding:2px 4px; text-align:center; font-size:.7rem; border-radius:6px; }
 .plan-part-sala { font-size:.6rem; color:var(--text3); background:var(--surface2); border-radius:6px; padding:2px 7px; }
 .plan-part.conflict .plan-part-sala { background:var(--surface); }
 .plan-part-warn { font-size:.56rem; color:var(--amber); border:1px solid var(--amber); border-radius:20px; padding:1px 7px; white-space:nowrap; }

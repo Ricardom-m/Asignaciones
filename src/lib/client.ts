@@ -122,6 +122,11 @@ export const ensureInicio = (fecha: string) =>
 export const arrangeRecords = (updates: { id: string; orden: number; sala?: string | null }[]) =>
   apiFetch<{ updated: number }>("/api/records/arrange", { method: "POST", body: JSON.stringify({ updates }) });
 
+// Fija el número de una parte a mano; null lo suelta y vuelve a derivarse.
+// El servidor lo aplica a las dos salas de esa parte.
+export const setNumeroParte = (id: string, numero: number | null) =>
+  apiFetch<{ updated: number }>("/api/records/numero", { method: "POST", body: JSON.stringify({ id, numero }) });
+
 // ── Lectura de la Biblia ──────────────────────────────────
 // La lectura la hace un varón: Nombrados, Asignados o Precursores (hombre).
 const LECTURA_ROLES = new Set(["Nombrados", "Asignados", "Precursores"]);

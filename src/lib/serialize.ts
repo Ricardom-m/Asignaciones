@@ -62,6 +62,7 @@ export function serializeRecord(r: RecordWithPeople): RecordItem {
     minutos: r.minutos ?? null,
     cantico: r.cantico ?? null,
     orden: r.orden,
+    numero: r.numero ?? null,
     bloqueado: r.soloAdmin || (r.section?.soloAdmin ?? false),
     sectionId: r.sectionId ?? null,
     section: r.section ? r.section.nombre : null,

@@ -91,6 +91,12 @@ export const recordInput = z.object({
 });
 export type RecordInput = z.infer<typeof recordInput>;
 
+// Fijar a mano el número de una parte (o soltarlo con null).
+export const numeroInput = z.object({
+  id: z.string().min(1),
+  numero: z.number().int().min(1).max(99).nullable(),
+});
+
 // Reordenar / cambiar de sala (planificador): lote de {id, orden, sala}.
 export const arrangeInput = z.object({
   updates: z

@@ -12,6 +12,7 @@
 
 import type { RecordItem } from "@/lib/types";
 import { semanaRango } from "@/lib/client";
+import { numerar } from "@/lib/numeracion";
 import {
   SECCION_INICIO,
   SECCION_TESOROS,
@@ -98,9 +99,13 @@ export function buildProgram(
   const seamosRecs = inSection(SECCION_SEAMOS);
   const vidaRecs = inSection(SECCION_VIDA);
 
-  // Contador continuo para la numeración.
-  let n = 0;
-  const next = () => ++n;
+  // Numeración compartida con el planificador (lib/numeracion.ts): slots fijos en
+  // Tesoros (la Lectura es siempre la 3 aunque falten el discurso y las perlas),
+  // Sala A y Sala B de una misma parte con el mismo número, y el número fijado a
+  // mano cuando lo hay. Antes se contaba aquí con un contador propio, que numeraba
+  // la Lectura como 1 en las semanas en que aún no se han agregado las partes 1 y 2.
+  const { porId } = numerar(records);
+  const numDe = (r: RecordItem | undefined) => (r ? porId.get(r.id) ?? 0 : 0);
 
   // ── Inicio ──────────────────────────────────────────────
   const presidente = nombreAsignado(findByAsig(inicio, PARTE_PRESIDENTE));
@@ -116,12 +121,12 @@ export function buildProgram(
   const lecturaPrin = lecturaRecs.find((r) => r.sala === SALA_PRIN) ?? lecturaRecs.find((r) => r.sala !== SALA_AUX);
 
   const discurso = discursoRec
-    ? { numero: next(), titulo: discursoRec.asignacion, minutos: discursoRec.minutos, nombre: nombreAsignado(discursoRec) }
+    ? { numero: numDe(discursoRec), titulo: discursoRec.asignacion, minutos: discursoRec.minutos, nombre: nombreAsignado(discursoRec) }
     : null;
-  const perlas = perlasRec ? { numero: next(), minutos: perlasRec.minutos, nombre: nombreAsignado(perlasRec) } : null;
+  const perlas = perlasRec ? { numero: numDe(perlasRec), minutos: perlasRec.minutos, nombre: nombreAsignado(perlasRec) } : null;
   const lectura = lecturaRecs.length
     ? {
-        numero: next(),
+        numero: numDe(lecturaPrin ?? lecturaAux ?? lecturaRecs[0]),
         minutos: (lecturaPrin ?? lecturaAux ?? lecturaRecs[0]).minutos,
         aux: nombreAsignado(lecturaAux),
         prin: nombreAsignado(lecturaPrin),
@@ -143,7 +148,7 @@ export function buildProgram(
       const prin = grp.find((r) => r.sala === SALA_PRIN) ?? grp.find((r) => r.sala !== SALA_AUX);
       const any = prin ?? aux ?? grp[0];
       return {
-        numero: next(),
+        numero: numDe(any),
         titulo: any.asignacion,
         minutos: any.minutos,
         aux: { est: nombreAsignado(aux), ay: nombreAyudante(aux) },
@@ -170,14 +175,14 @@ export function buildProgram(
     )
     .sort((a, b) => vidaRank(a) - vidaRank(b));
   const discursos: VidaDiscurso[] = middle.map((r) => ({
-    numero: next(),
+    numero: numDe(r),
     titulo: r.asignacion,
     minutos: r.minutos,
     nombre: nombreAsignado(r),
   }));
   // El Estudio bíblico siempre lleva el ÚLTIMO número.
   const estudio = estudioRec
-    ? { numero: next(), minutos: estudioRec.minutos, conductor: nombreAsignado(estudioRec), lector: nombreAyudante(estudioRec) }
+    ? { numero: numDe(estudioRec), minutos: estudioRec.minutos, conductor: nombreAsignado(estudioRec), lector: nombreAyudante(estudioRec) }
     : null;
 
   return {

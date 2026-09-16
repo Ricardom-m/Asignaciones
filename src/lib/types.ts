@@ -89,6 +89,7 @@ export interface RecordItem {
   minutos: number | null; // duración en minutos
   cantico: number | null; // número de cántico (parte "Canción" de Inicio)
   orden: number; // posición en el planificador
+  numero: number | null; // número de parte fijado a mano (null = se deriva; ver lib/numeracion.ts)
   bloqueado: boolean; // true = solo el admin puede editar/borrar
   sectionId: string | null;
   section: string | null; // nombre de la sección (derivado) o null

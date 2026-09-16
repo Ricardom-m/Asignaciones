@@ -113,6 +113,7 @@ model Record {
   minutos    Int? // duración en minutos (p. ej. Lectura de la Biblia = 4)
   cantico    Int? // número de cántico (solo para la parte "Canción" de Inicio)
   orden      Int        @default(0) // posición dentro de su grupo (fecha+sección+sala) en el planificador
+  numero     Int? // número de parte FIJADO A MANO; si es null se deriva (ver lib/numeracion.ts)
   soloAdmin  Boolean    @default(false) // true = solo el admin puede editar/borrar este registro
   tipo       RecordTipo @default(ASIGNACION)
 

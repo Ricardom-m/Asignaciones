@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useSWRConfig } from "swr";
 import {
@@ -29,7 +29,8 @@ import { useToast } from "@/components/Toast";
 import { useConfirm } from "@/components/Confirm";
 import { GenderIcon } from "@/components/GenderIcon";
 import { useIsAdmin } from "@/components/UserContext";
-import { addDaysYMD, arrangeRecords, deleteRecord, ensureInicio, esLectura, fmtShort, nextWeekdayDates, relativeLabel, todayYMD, updateRecord, weekdayLabel, weekdayOf } from "@/lib/client";
+import { addDaysYMD, arrangeRecords, deleteRecord, ensureInicio, esLectura, fmtShort, nextWeekdayDates, relativeLabel, setNumeroParte, todayYMD, updateRecord, weekdayLabel, weekdayOf } from "@/lib/client";
+import { llevaNumero, numerar, type Numeracion } from "@/lib/numeracion";
 import { PersonSelect } from "@/components/PersonSelect";
 import { SECCION_TESOROS, SECCION_VIDA, PARTE_PALABRAS_CONCLUSION, esCancion, esEstudio, esParteSinPersona, esRolNombrado, inicioRank, norm, tesorosRank, vidaRank } from "@/lib/sections";
 import type { Person, RecordItem } from "@/lib/types";
@@ -65,6 +66,10 @@ function groupBySala(items: RecordItem[]): { sala: string; items: RecordItem[] }
     .sort((a, b) => ord(a.sala) - ord(b.sala) || a.sala.localeCompare(b.sala));
 }
 
+// La numeración de la fecha abierta se comparte por contexto: la pintan filas muy
+// distintas (parte normal, Tesoros, Estudio) y el overlay del drag.
+const NumCtx = createContext<{ num: Numeracion; onSet: (rec: RecordItem, n: number | null) => void } | null>(null);
+
 export default function PlanificarPage() {
   const { meetings } = useMeetings();
   const { config } = useMeetingConfig();
@@ -87,6 +92,7 @@ export default function PlanificarPage() {
 
   const { items: dayRecords, mutate: mutateDay } = useDateRecords(fecha || null);
   const personsById = useMemo(() => new Map(persons.map((p) => [p.id, p])), [persons]);
+  const numeracion = useMemo(() => numerar(dayRecords), [dayRecords]);
   const nombrados = useMemo(() => persons.filter((p) => p.active && p.roles.some((r) => r.nombre === "Nombrados")), [persons]);
 
   // Al abrir una fecha, asegura las partes fijas de "Inicio" (Canción + Palabras).
@@ -306,7 +312,20 @@ export default function PlanificarPage() {
   const dow = fecha ? weekdayLabel(weekdayOf(fecha)) : "";
   const activeRec = activeId ? dayRecords.find((r) => r.id === activeId) ?? null : null;
 
+  // Fija o suelta el número de una parte. El servidor lo aplica a las dos salas.
+  const saveNumero = async (rec: RecordItem, n: number | null) => {
+    if (n === (rec.numero ?? null)) return;
+    try {
+      await setNumeroParte(rec.id, n);
+      mutateDay();
+      toast(n == null ? "🔢 Número automático" : `🔢 Número ${n} fijado`, "success");
+    } catch (e) {
+      toast("❌ " + (e as Error).message, "error");
+    }
+  };
+
   return (
+   <NumCtx.Provider value={{ num: numeracion, onSet: saveNumero }}>
     <div className="page-inner page-inner-wide fade-up">
       <PageHeader title="Planificar" subtitle="Arma la reunión por fecha" />
 
@@ -592,6 +611,71 @@ export default function PlanificarPage() {
         />
       )}
     </div>
+   </NumCtx.Provider>
+  );
+}
+
+// Número de la parte: se deriva solo, y un clic permite fijarlo a mano
+// (vacío = volver al automático).
+function NumeroBadge({ rec }: { rec: RecordItem }) {
+  const ctx = useContext(NumCtx);
+  const isAdmin = useIsAdmin();
+  const [editando, setEditando] = useState(false);
+  const [txt, setTxt] = useState("");
+
+  const n = ctx?.num.porId.get(rec.id);
+  if (!ctx || !llevaNumero(rec) || n == null) return null;
+
+  const manual = rec.numero != null;
+  const dup = ctx.num.duplicados.has(n);
+  const locked = rec.bloqueado && !isAdmin;
+
+  if (editando) {
+    const guardar = () => {
+      const v = txt.trim();
+      const val = v === "" ? null : Number(v);
+      if (val === null || (Number.isInteger(val) && val >= 1 && val <= 99)) ctx.onSet(rec, val);
+      setEditando(false);
+    };
+    return (
+      <input
+        className="plan-num-input"
+        type="number"
+        min={1}
+        max={99}
+        autoFocus
+        value={txt}
+        placeholder="auto"
+        title="Vacío = volver a numerar solo"
+        onChange={(e) => setTxt(e.target.value)}
+        onBlur={guardar}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") guardar();
+          if (e.key === "Escape") setEditando(false);
+        }}
+      />
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      className={`plan-num${manual ? " manual" : ""}${dup ? " dup" : ""}`}
+      disabled={locked}
+      title={
+        dup
+          ? `El número ${n} está repetido en otra parte`
+          : manual
+            ? "Número fijado a mano · clic para cambiarlo (vacío = automático)"
+            : "Número automático · clic para fijarlo a mano"
+      }
+      onClick={() => {
+        setTxt(manual ? String(rec.numero) : "");
+        setEditando(true);
+      }}
+    >
+      {n}
+    </button>
   );
 }
 
@@ -602,6 +686,7 @@ function PartInner({ rec, personsById, dupIds }: { rec: RecordItem; personsById:
   return (
     <div className="plan-part-main">
       <div className="plan-part-asig">
+        <NumeroBadge rec={rec} />
         {rec.asignacion}
         {rec.minutos != null && <span className="plan-part-sala">{rec.minutos} min</span>}
         {conflict && <span className="plan-part-warn" title="Esta persona ya tiene otra parte ese día">⚠ repetido</span>}
@@ -712,6 +797,7 @@ function EstudioRow({
     <div className="plan-estudio">
       <div className="plan-estudio-head">
         <span className="plan-part-asig">
+          <NumeroBadge rec={rec} />
           {rec.asignacion}
           {rec.minutos != null && <span className="plan-part-sala">{rec.minutos} min</span>}
         </span>
