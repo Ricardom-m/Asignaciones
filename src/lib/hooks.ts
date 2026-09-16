@@ -140,13 +140,14 @@ export function useDebounced<T>(value: T, ms = 350) {
   return v;
 }
 
-export function useRoster(fecha: string | null, role?: string, genero?: string, section?: string, asignacion?: string) {
+export function useRoster(fecha: string | null, role?: string, genero?: string, section?: string, asignacion?: string, ambito?: string) {
   const sp = new URLSearchParams();
   if (fecha) sp.set("fecha", fecha);
   if (role) sp.set("role", role);
   if (genero) sp.set("genero", genero);
   if (section) sp.set("section", section);
   if (asignacion) sp.set("asignacion", asignacion);
+  if (ambito) sp.set("ambito", ambito);
   const { data, mutate, isLoading } = useSWR<RosterPerson[]>(fecha ? `/api/roster?${sp.toString()}` : null, fetcher);
   return { roster: data ?? [], mutate, isLoading };
 }

@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { ok, requireSession } from "@/lib/server";
 import { todayYMD } from "@/lib/date";
 import { serializeRole } from "@/lib/serialize";
+import { AMBITO_ESTUDIANTE, esAsignacionEstudiante } from "@/lib/sections";
 import type { Prisma } from "@prisma/client";
 
 const toYMD = (d: Date) => d.toISOString().slice(0, 10);
@@ -21,6 +22,9 @@ export async function GET(req: Request) {
   const genero = sp.get("genero");
   const section = sp.get("section"); // recencia por sección (opcional)
   const asignacion = sp.get("asignacion")?.trim().toLowerCase() || null; // recencia por rol/asignación exacta
+  // ?ambito=estudiante: la recencia solo mira las asignaciones de estudiante
+  // (Seamos mejores maestros + Lectura de la Biblia). Ver lib/sections.ts.
+  const ambito = sp.get("ambito") === AMBITO_ESTUDIANTE ? AMBITO_ESTUDIANTE : null;
 
   const where: Prisma.PersonWhereInput = {
     active: true,
@@ -31,6 +35,8 @@ export async function GET(req: Request) {
   const recs = await prisma.record.findMany({
     select: { fecha: true, asignadoId: true, ayudanteId: true, sectionId: true, asignacion: true },
   });
+  // Nombre de sección por id: hace falta para resolver el ámbito de estudiante.
+  const secNombre = new Map((await prisma.section.findMany({ select: { id: true, nombre: true } })).map((x) => [x.id, x.nombre]));
   // Fechas de reunión, para poder medir la recencia en reuniones y no solo en días.
   const meetingDays = (await prisma.meeting.findMany({ select: { fecha: true }, orderBy: { fecha: "asc" } })).map((m) => toYMD(m.fecha));
 
@@ -47,16 +53,18 @@ export async function GET(req: Request) {
     // una vez que aún no ha ocurrido (ya planificada más adelante).
     countAsigPrev: number; lastAsigComo: Papel | null;
     total: number; // registros en cualquier fecha: 0 = sin historial
+    lastAmb: string | null; // última dentro del ámbito pedido (si se pidió)
   };
   const agg = new Map<string, Agg>();
   for (const p of persons)
-    agg.set(p.id, { last: null, month: 0, recent: 0, onTarget: false, lastSec: null, countSec: 0, lastAsig: null, countAsig: 0, countAsigPrev: 0, lastAsigComo: null, total: 0 });
+    agg.set(p.id, { last: null, month: 0, recent: 0, onTarget: false, lastSec: null, countSec: 0, lastAsig: null, countAsig: 0, countAsigPrev: 0, lastAsigComo: null, total: 0, lastAmb: null });
 
   for (const r of recs) {
     const f = toYMD(r.fecha);
     const ft = new Date(f + "T00:00:00Z").getTime();
     const inSection = !!section && r.sectionId === section;
     const inAsig = !!asignacion && r.asignacion.trim().toLowerCase() === asignacion;
+    const inAmb = !!ambito && esAsignacionEstudiante(secNombre.get(r.sectionId ?? ""), r.asignacion);
     for (const [i, pid] of [r.asignadoId, r.ayudanteId].entries()) {
       if (!pid) continue;
       const a = agg.get(pid);
@@ -68,6 +76,7 @@ export async function GET(req: Request) {
         if (!a.last || f > a.last) a.last = f;
         if (ft >= recentFrom) a.recent++;
         if (inSection && (!a.lastSec || f > a.lastSec)) a.lastSec = f;
+        if (inAmb && (!a.lastAmb || f > a.lastAmb)) a.lastAmb = f;
         if (inAsig) {
           a.countAsigPrev++;
           if (!a.lastAsig || f > a.lastAsig) {
@@ -109,6 +118,7 @@ export async function GET(req: Request) {
       countRecent: a.recent,
       countTotal: a.total,
       assignedOnTarget: a.onTarget,
+      ...(ambito ? { daysSinceAmbito: since(a.lastAmb), meetingsSinceAmbito: meetingsSince(a.lastAmb) } : {}),
       ...(section ? { daysSinceSection: since(a.lastSec), meetingsSinceSection: meetingsSince(a.lastSec), countSection: a.countSec } : {}),
       ...(asignacion
         ? {
@@ -122,12 +132,16 @@ export async function GET(req: Request) {
     };
   });
 
+  // "A quién le toca" se mide en el ámbito pedido: con ?ambito=estudiante, haber
+  // hecho una parte de Nombrados no cuenta como haber participado.
+  const orden = (x: (typeof list)[number]) => (ambito ? x.daysSinceAmbito ?? null : x.daysSince);
   list.sort((x, y) => {
     if (x.assignedOnTarget !== y.assignedOnTarget) return x.assignedOnTarget ? 1 : -1; // ya asignados, al final
-    const xn = x.daysSince === null, yn = y.daysSince === null;
+    const dx = orden(x), dy = orden(y);
+    const xn = dx === null, yn = dy === null;
     if (xn !== yn) return xn ? -1 : 1; // nunca participó → arriba
     if (xn && yn) return x.countMonth - y.countMonth || x.nombre.localeCompare(y.nombre);
-    if (y.daysSince! !== x.daysSince!) return y.daysSince! - x.daysSince!; // más tiempo sin participar arriba
+    if (dy !== dx) return dy! - dx!; // más tiempo sin participar arriba
     return x.countRecent - y.countRecent || x.nombre.localeCompare(y.nombre);
   });
 

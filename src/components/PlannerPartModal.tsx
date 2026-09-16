@@ -11,7 +11,7 @@ import { HelperPicker } from "@/components/HelperPicker";
 import { MinutesInput } from "@/components/MinutesInput";
 import { agoMeetings, agoShort } from "@/components/RosterPanel";
 import { createRecord, esLectura, eligibleLectura, fmtShort } from "@/lib/client";
-import { SECCION_TESOROS, SECCION_VIDA, esEstudio, esNecesidades, norm } from "@/lib/sections";
+import { AMBITO_ESTUDIANTE, AMBITO_ESTUDIANTE_LABEL, SECCION_TESOROS, SECCION_VIDA, esAsignacionEstudiante, esEstudio, esNecesidades, norm } from "@/lib/sections";
 import type { Person, Section } from "@/lib/types";
 
 const soloNombrados = (ps: Person[]) => ps.filter((p) => p.roles.some((r) => r.nombre === "Nombrados"));
@@ -51,13 +51,25 @@ export function PlannerPartModal({ fecha, sections, persons, defaultAsignadoId, 
   const estudio = esEstudio(asignacion);
   const necesidades = esNecesidades(asignacion);
   const porAsignacion = estudio || necesidades; // recencia "por esa parte"
-  // Se piden AMBOS ámbitos: el de sección (o asignación en Estudio/Necesidades) para
-  // la recencia principal, y el de la asignación exacta para avisar de repeticiones.
+  // En una asignación de estudiante, la recencia solo cuenta OTRAS asignaciones de
+  // estudiante: Seamos mejores maestros + Lectura de la Biblia. Las partes de
+  // Nombrados no interrumpen esa rotación.
+  const secNombreRaw = sections.find((s) => s.id === sectionId)?.nombre ?? "";
+  const estudiante = esAsignacionEstudiante(secNombreRaw, asignacion);
+  // Se piden todos los ámbitos que hagan falta: el principal (estudiante, asignación
+  // o sección) y el de la asignación exacta para avisar de repeticiones.
   const asigQuery = useDebounced(asignacion.trim());
-  const { roster } = useRoster(fecha, undefined, undefined, sectionId || undefined, asigQuery || undefined);
+  const { roster } = useRoster(
+    fecha,
+    undefined,
+    undefined,
+    sectionId || undefined,
+    asigQuery || undefined,
+    estudiante ? AMBITO_ESTUDIANTE : undefined,
+  );
 
   const lectura = esLectura(asignacion);
-  const secNombre = norm(sections.find((s) => s.id === sectionId)?.nombre ?? "");
+  const secNombre = norm(secNombreRaw);
   const esTesoros = secNombre === norm(SECCION_TESOROS);
   const esVida = secNombre === norm(SECCION_VIDA);
   // "Asignación de nombrados": toda Nuestra vida + discurso/perlas de Tesoros.
@@ -94,19 +106,28 @@ export function PlannerPartModal({ fecha, sections, persons, defaultAsignadoId, 
             countMonth: r.countMonth,
             countTotal: r.countTotal,
             assignedOnTarget: r.assignedOnTarget,
-            daysSinceSection: porAsignacion ? r.daysSinceAsignacion : r.daysSinceSection,
-            meetingsSinceSection: porAsignacion ? r.meetingsSinceAsignacion : r.meetingsSinceSection,
+            daysSinceSection: estudiante ? r.daysSinceAmbito : porAsignacion ? r.daysSinceAsignacion : r.daysSinceSection,
+            meetingsSinceSection: estudiante ? r.meetingsSinceAmbito : porAsignacion ? r.meetingsSinceAsignacion : r.meetingsSinceSection,
             asignacion: porAsignacion ? undefined : asigMeta(r),
           },
         ]),
       ),
     [roster, porAsignacion],
   );
-  const sectionLabel = useMemo(() => sections.find((s) => s.id === sectionId)?.nombre.split(" ")[0], [sections, sectionId]);
+  const sectionLabel = useMemo(
+    () => (estudiante ? AMBITO_ESTUDIANTE_LABEL : sections.find((s) => s.id === sectionId)?.nombre.split(" ")[0]),
+    [estudiante, sections, sectionId],
+  );
 
   // Los chips miden lo mismo que el desplegable; si no, la misma persona sale con
   // dos numeros distintos en el mismo modal.
   const sugAgo = (s: (typeof roster)[number]) => {
+    if (estudiante)
+      return {
+        txt: agoMeetings(s.meetingsSinceAmbito ?? null, s.daysSinceAmbito ?? null),
+        title: `Última vez en ${AMBITO_ESTUDIANTE_LABEL}: ${agoShort(s.daysSinceAmbito ?? null)}
+En cualquier parte: ${agoShort(s.daysSince)}`,
+      };
     const [reuniones, dias, que] = porAsignacion
       ? [s.meetingsSinceAsignacion ?? null, s.daysSinceAsignacion ?? null, `Última vez en ${asignacion}`]
       : sectionId

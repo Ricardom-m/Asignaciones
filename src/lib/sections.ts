@@ -12,6 +12,16 @@ export const LECTURA_NOMBRE = "Lectura de la Biblia";
 export const PARTE_PERLAS = "Busquemos perlas escondidas";
 export const PARTE_QUE_DIRIA = "¿Qué diría?";
 
+// ── Ámbito "asignaciones de estudiante" ───────────────────
+// Toda la sección "Seamos mejores maestros" más la "Lectura de la Biblia" (que vive
+// en Tesoros). Es la rotación real de Asignados/Asignadas: el resto de Tesoros
+// (discurso, perlas) y todo "Nuestra vida cristiana" son partes de Nombrados, y no
+// deben contar como "participó" al medir a quién le toca una asignación.
+export const AMBITO_ESTUDIANTE = "estudiante";
+export const AMBITO_ESTUDIANTE_LABEL = "Seamos mejores maestros o Lectura de la Biblia";
+export const esAsignacionEstudiante = (seccion: string | null | undefined, asignacion: string) =>
+  norm(seccion ?? "") === norm(SECCION_MAESTROS) || norm(asignacion) === norm(LECTURA_NOMBRE);
+
 // Orden canónico dentro de Tesoros: discurso (0) → perlas (1) → lectura (2).
 export const tesorosRank = (asignacion: string) => {
   const a = norm(asignacion);

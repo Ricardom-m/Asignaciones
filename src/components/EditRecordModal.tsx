@@ -11,7 +11,7 @@ import { HelperPicker } from "@/components/HelperPicker";
 import { DateChips } from "@/components/DateChips";
 import { MinutesInput } from "@/components/MinutesInput";
 import { updateRecord, esLectura, eligibleLectura } from "@/lib/client";
-import { SECCION_TESOROS, SECCION_VIDA, esEstudio, esNecesidades, norm } from "@/lib/sections";
+import { AMBITO_ESTUDIANTE, AMBITO_ESTUDIANTE_LABEL, SECCION_TESOROS, SECCION_VIDA, esAsignacionEstudiante, esEstudio, esNecesidades, norm } from "@/lib/sections";
 import type { Person, RecordItem } from "@/lib/types";
 
 const soloNombrados = (ps: Person[]) => ps.filter((p) => p.roles.some((r) => r.nombre === "Nombrados"));
@@ -59,7 +59,10 @@ export function EditRecordModal({ rec, persons, onClose, onSaved }: Props) {
   const necesidades = esNecesidades(form.asignacion);
   const porAsignacion = estudio || necesidades;
   const lectura = esLectura(form.asignacion);
-  const secNombre = norm(sections.find((s) => s.id === form.sectionId)?.nombre ?? "");
+  const secNombreRaw = sections.find((s) => s.id === form.sectionId)?.nombre ?? "";
+  const secNombre = norm(secNombreRaw);
+  // Mismo ámbito que en "Agregar parte": ver lib/sections.ts.
+  const estudiante = esAsignacionEstudiante(secNombreRaw, form.asignacion);
   const esTesoros = secNombre === norm(SECCION_TESOROS);
   const esVida = secNombre === norm(SECCION_VIDA);
   // "Asignación de nombrados": toda Nuestra vida + discurso/perlas de Tesoros.
@@ -92,7 +95,14 @@ export function EditRecordModal({ rec, persons, onClose, onSaved }: Props) {
   // Ambos ámbitos: sección para la recencia principal, asignación exacta para
   // avisar de que ya hizo esta misma parte.
   const asigQuery = useDebounced(form.asignacion.trim());
-  const { roster } = useRoster(form.fecha || null, undefined, undefined, form.sectionId || undefined, asigQuery || undefined);
+  const { roster } = useRoster(
+    form.fecha || null,
+    undefined,
+    undefined,
+    form.sectionId || undefined,
+    asigQuery || undefined,
+    estudiante ? AMBITO_ESTUDIANTE : undefined,
+  );
   const rosterMeta = useMemo(
     () =>
       new Map(
@@ -104,15 +114,18 @@ export function EditRecordModal({ rec, persons, onClose, onSaved }: Props) {
             countMonth: r.countMonth,
             countTotal: r.countTotal,
             assignedOnTarget: r.assignedOnTarget,
-            daysSinceSection: porAsignacion ? r.daysSinceAsignacion : r.daysSinceSection,
-            meetingsSinceSection: porAsignacion ? r.meetingsSinceAsignacion : r.meetingsSinceSection,
+            daysSinceSection: estudiante ? r.daysSinceAmbito : porAsignacion ? r.daysSinceAsignacion : r.daysSinceSection,
+            meetingsSinceSection: estudiante ? r.meetingsSinceAmbito : porAsignacion ? r.meetingsSinceAsignacion : r.meetingsSinceSection,
             asignacion: porAsignacion ? undefined : asigMeta(r),
           },
         ]),
       ),
     [roster, porAsignacion],
   );
-  const sectionLabel = useMemo(() => sections.find((s) => s.id === form.sectionId)?.nombre.split(" ")[0], [sections, form.sectionId]);
+  const sectionLabel = useMemo(
+    () => (estudiante ? AMBITO_ESTUDIANTE_LABEL : sections.find((s) => s.id === form.sectionId)?.nombre.split(" ")[0]),
+    [estudiante, sections, form.sectionId],
+  );
 
   const patch = (p: Partial<FormState>) => setForm((f) => ({ ...f, ...p }));
 
