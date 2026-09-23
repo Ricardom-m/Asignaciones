@@ -133,22 +133,29 @@ export function buildProgram(
       }
     : null;
 
-  // ── Seamos mejores maestros (agrupado por orden, una fila por parte) ──
-  const seamosByOrden = new Map<number, RecordItem[]>();
+  // ── Seamos mejores maestros (una fila por parte, con las dos salas) ──
+  // Se agrupa por el NÚMERO que reparte lib/numeracion.ts, que empareja la parte
+  // k-ésima de cada sala. Antes se agrupaba por `orden`, pero `orden` es la
+  // posición dentro de fecha+sección+SALA: si las salas no arrancan en el mismo
+  // valor, esa fila juntaba dos partes distintas (p. ej. "Haga revisitas" del
+  // auditorio con "Empiece conversaciones" de la sala auxiliar).
+  const seamosPorNumero = new Map<number, RecordItem[]>();
   for (const r of seamosRecs) {
-    const arr = seamosByOrden.get(r.orden) ?? [];
+    const n = porId.get(r.id);
+    if (n == null) continue;
+    const arr = seamosPorNumero.get(n) ?? [];
     arr.push(r);
-    seamosByOrden.set(r.orden, arr);
+    seamosPorNumero.set(n, arr);
   }
-  const seamos: SeamosPart[] = [...seamosByOrden.keys()]
+  const seamos: SeamosPart[] = [...seamosPorNumero.keys()]
     .sort((a, b) => a - b)
-    .map((orden) => {
-      const grp = seamosByOrden.get(orden)!;
+    .map((numero) => {
+      const grp = seamosPorNumero.get(numero)!;
       const aux = grp.find((r) => r.sala === SALA_AUX);
       const prin = grp.find((r) => r.sala === SALA_PRIN) ?? grp.find((r) => r.sala !== SALA_AUX);
       const any = prin ?? aux ?? grp[0];
       return {
-        numero: numDe(any),
+        numero,
         titulo: any.asignacion,
         minutos: any.minutos,
         aux: { est: nombreAsignado(aux), ay: nombreAyudante(aux) },
