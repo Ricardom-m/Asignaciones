@@ -11,6 +11,11 @@ export const SECCION_VIDA = "Nuestra vida cristiana";
 export const LECTURA_NOMBRE = "Lectura de la Biblia";
 export const PARTE_PERLAS = "Busquemos perlas escondidas";
 export const PARTE_QUE_DIRIA = "¿Qué diría?";
+// Partes habituales de "Seamos mejores maestros". Se fijan aquí para que el nombre
+// canónico viva en el código y no dependa de cómo se tecleó la primera vez.
+export const PARTE_CONVERSACIONES = "Empecemos conversaciones";
+export const PARTE_REVISITAS = "Hagamos revisitas";
+export const PARTE_DISCIPULOS = "Hagamos discípulos";
 
 // ── Ámbito "asignaciones de estudiante" ───────────────────
 // Toda la sección "Seamos mejores maestros" más la "Lectura de la Biblia" (que vive
@@ -106,7 +111,12 @@ export const TESOROS_MAX = 3;
 // registros previos, con su duración típica (editable al usarlas).
 export const SUGERENCIAS_CURADAS: Record<string, { value: string; minutos: number }[]> = {
   [SECCION_TESOROS]: [{ value: PARTE_PERLAS, minutos: 10 }],
-  [SECCION_MAESTROS]: [{ value: PARTE_QUE_DIRIA, minutos: 6 }],
+  [SECCION_MAESTROS]: [
+    { value: PARTE_CONVERSACIONES, minutos: 3 },
+    { value: PARTE_REVISITAS, minutos: 4 },
+    { value: PARTE_DISCIPULOS, minutos: 5 },
+    { value: PARTE_QUE_DIRIA, minutos: 6 },
+  ],
   [SECCION_VIDA]: [
     { value: PARTE_ESTUDIO, minutos: 30 },
     { value: PARTE_NECESIDADES, minutos: 15 },
