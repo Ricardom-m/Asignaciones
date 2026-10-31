@@ -2,7 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { ok, requireSession } from "@/lib/server";
 import { todayYMD } from "@/lib/date";
 import { serializeRole } from "@/lib/serialize";
-import { AMBITO_ESTUDIANTE, esAsignacionEstudiante } from "@/lib/sections";
+import { AMBITO_ESTUDIANTE, canonAsignacion, esAsignacionEstudiante, norm } from "@/lib/sections";
 import type { Prisma } from "@prisma/client";
 
 const toYMD = (d: Date) => d.toISOString().slice(0, 10);
@@ -21,7 +21,10 @@ export async function GET(req: Request) {
   const role = sp.get("role");
   const genero = sp.get("genero");
   const section = sp.get("section"); // recencia por sección (opcional)
-  const asignacion = sp.get("asignacion")?.trim().toLowerCase() || null; // recencia por rol/asignación exacta
+  // Recencia por asignación exacta, comparada en su forma canónica para que una
+  // parte renombrada siga viendo su historial con el nombre antiguo.
+  const asigQ = sp.get("asignacion")?.trim();
+  const asignacion = asigQ ? norm(canonAsignacion(asigQ)) : null;
   // ?ambito=estudiante: la recencia solo mira las asignaciones de estudiante
   // (Seamos mejores maestros + Lectura de la Biblia). Ver lib/sections.ts.
   const ambito = sp.get("ambito") === AMBITO_ESTUDIANTE ? AMBITO_ESTUDIANTE : null;
@@ -63,7 +66,7 @@ export async function GET(req: Request) {
     const f = toYMD(r.fecha);
     const ft = new Date(f + "T00:00:00Z").getTime();
     const inSection = !!section && r.sectionId === section;
-    const inAsig = !!asignacion && r.asignacion.trim().toLowerCase() === asignacion;
+    const inAsig = !!asignacion && norm(canonAsignacion(r.asignacion)) === asignacion;
     const inAmb = !!ambito && esAsignacionEstudiante(secNombre.get(r.sectionId ?? ""), r.asignacion);
     for (const [i, pid] of [r.asignadoId, r.ayudanteId].entries()) {
       if (!pid) continue;

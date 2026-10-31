@@ -17,6 +17,19 @@ export const PARTE_CONVERSACIONES = "Empecemos conversaciones";
 export const PARTE_REVISITAS = "Hagamos revisitas";
 export const PARTE_DISCIPULOS = "Hagamos discípulos";
 
+// Partes que cambiaron de nombre. Los registros viejos NO se tocan: conservan el
+// texto con el que se guardaron. Pero para el sistema son la misma parte, así que
+// todo lo que razona sobre "qué parte es" pasa por canonAsignacion(): las
+// sugerencias (el nombre viejo deja de ofrecerse y cede sus usos al nuevo) y la
+// recencia (el aviso de "ya hizo esta parte" sigue viendo el historial completo).
+const RENOMBRADAS: Record<string, string> = {
+  "empiece conversaciones": PARTE_CONVERSACIONES,
+  "haga revisitas": PARTE_REVISITAS,
+  "haga discípulos": PARTE_DISCIPULOS,
+  "haga discipulos": PARTE_DISCIPULOS, // por si alguna se guardó sin tilde
+};
+export const canonAsignacion = (a: string) => RENOMBRADAS[norm(a)] ?? a.trim();
+
 // ── Ámbito "asignaciones de estudiante" ───────────────────
 // Toda la sección "Seamos mejores maestros" más la "Lectura de la Biblia" (que vive
 // en Tesoros). Es la rotación real de Asignados/Asignadas: el resto de Tesoros

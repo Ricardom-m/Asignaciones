@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { ok, requireSession } from "@/lib/server";
-import { SUGERENCIAS_CURADAS, esParteSinPersona, esRolNombrado, norm } from "@/lib/sections";
+import { SUGERENCIAS_CURADAS, canonAsignacion, esParteSinPersona, esRolNombrado, norm } from "@/lib/sections";
 
 // GET /api/records/asignaciones?section=<id>
 // Devuelve los textos de asignación más usados (para sugerirlos al escribir),
@@ -17,12 +17,15 @@ export async function GET(req: Request) {
   });
 
   // Agrupa por texto: total de usos + minutos por mayoría (moda).
+  // Se agrupa por el nombre CANÓNICO: una parte renombrada no se ofrece ya con su
+  // nombre viejo, y le cede sus usos al nuevo para que no caiga al final de la fila.
   const map = new Map<string, { count: number; votes: Map<number, number> }>();
   for (const r of rows) {
-    const m = map.get(r.asignacion) ?? { count: 0, votes: new Map<number, number>() };
+    const clave = canonAsignacion(r.asignacion);
+    const m = map.get(clave) ?? { count: 0, votes: new Map<number, number>() };
     m.count += r._count._all;
     if (r.minutos != null) m.votes.set(r.minutos, (m.votes.get(r.minutos) ?? 0) + r._count._all);
-    map.set(r.asignacion, m);
+    map.set(clave, m);
   }
 
   // Sugerencias curadas de la sección (aparecen aunque no haya registros).
