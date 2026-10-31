@@ -137,8 +137,8 @@ export function buildProgram(
   // Se agrupa por el NÚMERO que reparte lib/numeracion.ts, que empareja la parte
   // k-ésima de cada sala. Antes se agrupaba por `orden`, pero `orden` es la
   // posición dentro de fecha+sección+SALA: si las salas no arrancan en el mismo
-  // valor, esa fila juntaba dos partes distintas (p. ej. "Haga revisitas" del
-  // auditorio con "Empiece conversaciones" de la sala auxiliar).
+  // valor, esa fila juntaba dos partes distintas (p. ej. "Hagamos revisitas" del
+  // auditorio con "Empecemos conversaciones" de la sala auxiliar).
   const seamosPorNumero = new Map<number, RecordItem[]>();
   for (const r of seamosRecs) {
     const n = porId.get(r.id);

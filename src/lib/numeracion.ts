@@ -9,7 +9,7 @@
 //    (3, 4, 5…). Sala A y Sala B corren el mismo programa en paralelo, así que la
 //    parte k-ésima de cada sala comparte número con la k-ésima de las demás.
 //    El emparejamiento es POSICIONAL a propósito: no vale por nombre (puede haber
-//    dos "Empiece conversaciones" en la misma sala) ni por `orden`, que es la
+//    dos "Empecemos conversaciones" en la misma sala) ni por `orden`, que es la
 //    posición dentro de fecha+sección+SALA y por tanto cada sala lleva la suya.
 //  - "Nuestra vida cristiana" sigue la cuenta donde la dejó Seamos.
 //  - NO se numeran las partes fijas: Canción, Oración, Palabras de introducción y
